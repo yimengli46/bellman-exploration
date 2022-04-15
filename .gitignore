@@ -1,0 +1,3 @@
+output/
+__pycache__/
+trained_weights
