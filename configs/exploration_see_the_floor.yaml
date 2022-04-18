@@ -8,7 +8,7 @@ SIMULATOR:
   AGENT_0:
     SENSORS: ['RGB_SENSOR', 'DEPTH_SENSOR', 'SEMANTIC_SENSOR']
     HEIGHT: 0.88
-    RADIUS: 0.18
+    RADIUS: 0.001 # this is important, otherwise agent will collide with walls. is_navigable not accurate.
   HABITAT_SIM_V0:
     GPU_DEVICE_ID: 0
     ALLOW_SLIDING: True 

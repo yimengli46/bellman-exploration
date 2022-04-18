@@ -10,6 +10,7 @@ import habitat_sim
 import random
 from baseline_utils import read_map_npy, pose_to_coords, save_fig_through_plt
 from navigation_utils import SimpleRLEnv, get_scene_name
+from core import cfg
 
 #=========================================== fix the habitat scene shuffle ===============================
 SEED = 5
@@ -17,9 +18,11 @@ random.seed(SEED)
 np.random.seed(SEED)
 
 output_folder = 'output/semantic_map'
-scene_list = ['Allensville_0']
-#scene_list = ['Collierville_1', 'Darden_0', 'Markleeville_0', 'Wiconisco_0']
+scene_list = ['gZ6f7yhEvPG_0', '1LXtFkjw3qL_0', '17DRP5sb8fy_0']
 
+semantic_map_folder = '/home/yimeng/work/composable_behavior/output'
+
+'''
 scene_dict = {}
 for scene in scene_list:
 	scene_name = scene[:-2]
@@ -28,6 +31,7 @@ for scene in scene_list:
 	temp['name'] = scene
 	temp['floor'] = floor 
 	scene_dict[scene_name] = temp
+'''
 
 # after testing, using 8 angles is most efficient
 theta_lst = [0]
@@ -35,80 +39,102 @@ theta_lst = [0]
 built_scenes = [] 
 cell_size = 0.1
 
-scene_heights_dict = np.load(f'/home/yimeng/Datasets/habitat-lab/habitat_nav/build_avd_like_scenes/output/scene_height_distribution/scene_heights.npy', allow_pickle=True).item()
+scene_height_path_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}', allow_pickle=True).item()
 
 #============================= build a grid =========================================
-x = np.arange(-30, 30, cell_size)
-z = np.arange(-30, 30, cell_size)
+x = np.arange(-cfg.SEM_MAP.WORLD_SIZE, cfg.SEM_MAP.WORLD_SIZE, cell_size)
+z = np.arange(-cfg.SEM_MAP.WORLD_SIZE, cfg.SEM_MAP.WORLD_SIZE, cell_size)
 xv, zv = np.meshgrid(x, z)
 #xv = xv.flatten()
 #zv = zv.flatten()
 grid_H, grid_W = zv.shape
 
 
-config = habitat.get_config(config_paths="/home/yimeng/Datasets/habitat-lab/configs/tasks/devendra_objectnav_gibson.yaml")
+config = habitat.get_config(config_paths=cfg.GENERAL.HABITAT_CONFIG_PATH)
 config.defrost()
 #assert 1==2
-config.DATASET.DATA_PATH = '/home/yimeng/Datasets/habitat-lab/data/datasets/objectnav/gibson/all.json.gz'
-config.DATASET.SCENES_DIR = '/home/yimeng/Datasets/habitat-lab/data/scene_datasets/'
+config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_EPISODE_DATA_PATH 
+config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-for episode_id in range(5):
+for episode_id in range(1):
 	env.reset()
 	print('episode_id = {}'.format(episode_id))
 	print('env.current_episode = {}'.format(env.current_episode))
 
-	scene_name_no_floor = get_scene_name(env.current_episode)
+	env_scene = get_scene_name(env.current_episode)
+	#================== search in VLN scenes =============================
+	flag_found_scene = False
+	for scene_name in list(scene_height_path_dict.keys()):
+		if scene_name[:-2] == env_scene:
+			flag_found_scene = True
+			break
 
-	if scene_name_no_floor in scene_dict:
-		scene_name = scene_dict[scene_name_no_floor]['name']
-		floor_id   = scene_dict[scene_name_no_floor]['floor']
-	
-		height = scene_heights_dict[scene_name_no_floor][floor_id]
-	
-		#=============================== traverse each floor ===========================
-		print(f'*****scene_name = {scene_name}***********')
+	if scene_name in built_scenes:
+		continue
 
-		saved_folder = f'{output_folder}/{scene_name}'
-		#create_folder(saved_folder, clean_up=False)
+	if flag_found_scene:
+		scene_dict = scene_height_path_dict[scene_name]
+		height = scene_dict['y']
+	else:
+		print(f'{env_scene} not include in VLN, start a new episode ....')
+		continue
 
-		#'''
-		sem_map_npy = np.load(f'{saved_folder}/BEV_semantic_map.npy', allow_pickle=True).item()
-		_, pose_range, coords_range = read_map_npy(sem_map_npy)
-		#cropped_semantic_map = semantic_map[coords_range[1]:coords_range[3]+1, coords_range[0]:coords_range[2]+1]
-		#'''
+	#=============================== traverse each floor ===========================
+	print(f'*****scene_name = {scene_name}***********')
 
-		occ_map = np.zeros((grid_H, grid_W), dtype=int)
+	saved_folder = f'{output_folder}/{scene_name}'
+	create_folder(saved_folder, clean_up=False)
 
-		count_ = 0
-		#========================= generate observations ===========================
-		for grid_z in range(grid_H):
-			for grid_x in range(grid_W):
+	#'''
+	sem_map_npy = np.load(f'{semantic_map_folder}/{scene_name}/BEV_semantic_map.npy', allow_pickle=True).item()
+	_, pose_range, coords_range, WH = read_map_npy(sem_map_npy)
+	#cropped_semantic_map = semantic_map[coords_range[1]:coords_range[3]+1, coords_range[0]:coords_range[2]+1]
+	#'''
+
+	occ_map = np.zeros((grid_H, grid_W), dtype=int)
+
+	count_ = 0
+	#========================= generate observations ===========================
+	for grid_z in range(grid_H):
+		for grid_x in range(grid_W):
+
+			x = xv[grid_z, grid_x] + cell_size/2.
+			z = zv[grid_z, grid_x] + cell_size/2.
+			y = height
+
+			agent_pos = np.array([x, y, z])
+			flag_nav = env.habitat_env.sim.is_navigable(agent_pos)
+
+			if flag_nav:
 				x = xv[grid_z, grid_x] + cell_size/2.
 				z = zv[grid_z, grid_x] + cell_size/2.
-				y = height
+				# should be map pose
+				z = -z
+				x_coord, z_coord = pose_to_coords((x, z), pose_range, coords_range, WH, flag_cropped=False)
+				occ_map[z_coord, x_coord] = 1
 
-				agent_pos = np.array([x, y, z])
+	#assert 1==2
+	occ_map = occ_map[coords_range[1]:coords_range[3]+1, coords_range[0]:coords_range[2]+1]
 
-				flag_nav = env.habitat_env.sim.is_navigable(agent_pos)
-				#print(f'after teleportation, flag_nav = {flag_nav}')
+	# save the final results
+	map_dict = {}
+	map_dict['occupancy'] = occ_map
+	map_dict['min_x'] = coords_range[0]
+	map_dict['max_x'] = coords_range[2]
+	map_dict['min_z'] = coords_range[1]
+	map_dict['max_z'] = coords_range[3]
+	map_dict['min_X'] = pose_range[0]
+	map_dict['max_X'] = pose_range[2]
+	map_dict['min_Z'] = pose_range[1]
+	map_dict['max_Z'] = pose_range[3]
+	map_dict['W']     = WH[0]
+	map_dict['H']     = WH[1]
+	np.save(f'{saved_folder}/BEV_occupancy_map.npy', map_dict)
 
-				x_coord, z_coord = pose_to_coords((x, -z), pose_range, coords_range, flag_cropped=False)
-
-				if flag_nav:
-					occ_map[z_coord, x_coord] = 1
-
-		#assert 1==2
-		occ_map = occ_map[coords_range[1]:coords_range[3]+1, coords_range[0]:coords_range[2]+1]
-
-		# save the final results
-		map_dict = {}
-		map_dict['occupancy'] = occ_map
-		np.save(f'{saved_folder}/BEV_occupancy_map.npy', occ_map)
-
-		# save the final color image
-		save_fig_through_plt(occ_map, f'{saved_folder}/occ_map.jpg')
-		#assert 1==2
+	# save the final color image
+	save_fig_through_plt(occ_map, f'{saved_folder}/occ_map.jpg')
+	#assert 1==2
 
 env.close()

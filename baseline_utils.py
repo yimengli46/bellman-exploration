@@ -138,13 +138,11 @@ def project_pixels_to_world_coords (sseg_img, current_depth, current_pose, gap=2
 
   return points_3d, sseg_points.astype(int)
 
-def convertInsSegToSSeg (InsSeg, scene_graph_npz, cat2id_dict):
-  ins_id_list = list(scene_graph_npz['object'].keys())
-  SSeg = np.zeros(InsSeg.shape, dtype=np.int32)
+def convertInsSegToSSeg (InsSeg, ins2cat_dict):
+  ins_id_list = list(ins2cat_dict.keys())
+  SSeg = np.zeros(InsSeg.shape, dtype=np.bool)
   for ins_id in ins_id_list:
-    cat_id = cat2id_dict[scene_graph_npz['object'][ins_id]['class_']]
-    SSeg = np.where(InsSeg==ins_id, cat_id, SSeg)
-
+    SSeg = np.where(InsSeg==ins_id, ins2cat_dict[ins_id], SSeg)
   return SSeg
 
 def convertMaskRCNNToSSeg (detectron2_npy, H=480, W=640, det_thresh=0.5):
@@ -216,8 +214,24 @@ def read_map_npy(map_npy):
   max_X = map_npy['max_X']
   min_Z = map_npy['min_Z']
   max_Z = map_npy['max_Z']
+  W     = map_npy['W']
+  H     = map_npy['H']
   semantic_map = map_npy['semantic_map']
-  return semantic_map, (min_X, min_Z, max_X, max_Z), (min_x, min_z, max_x, max_z)
+  return semantic_map, (min_X, min_Z, max_X, max_Z), (min_x, min_z, max_x, max_z), (W, H)
+
+def read_occ_map_npy(map_npy):
+  min_x = map_npy['min_x']
+  max_x = map_npy['max_x']
+  min_z = map_npy['min_z']
+  max_z = map_npy['max_z']
+  min_X = map_npy['min_X']
+  max_X = map_npy['max_X']
+  min_Z = map_npy['min_Z']
+  max_Z = map_npy['max_Z']
+  occ_map = map_npy['occupancy']
+  W     = map_npy['W']
+  H     = map_npy['H']
+  return occ_map, (min_X, min_Z, max_X, max_Z), (min_x, min_z, max_x, max_z), (W, H)
 
 def semanticMap_to_binary(sem_map):
   sem_map.astype('uint8')
@@ -242,17 +256,17 @@ def get_room_class_mapper(dataset='gibson'):
   class_dict = {v: k+1 for k, v in enumerate(room_list)}
   return class_dict
 
-def pxl_coords_to_pose(coords, pose_range, coords_range, cell_size=0.1, flag_cropped=True):
+def pxl_coords_to_pose(coords, pose_range, coords_range, WH, cell_size=0.1, flag_cropped=True):
   x, y = coords
   min_X, min_Z, max_X, max_Z = pose_range
   min_x, min_z, max_x, max_z = coords_range
 
   if flag_cropped:
     X = (x + 0.5 + min_x) * cell_size + min_X
-    Z = (y + 0.5 + min_z) * cell_size + min_Z
+    Z = (WH[0] - (y + 0.5 + min_z)) * cell_size + min_Z
   else:
     X = (x + 0.5) * cell_size + min_X
-    Z = (y + 0.5) * cell_size + min_Z
+    Z = (WH[0] - (y + 0.5)) * cell_size + min_Z
   return (X, Z)
 
 def pxl_coords_to_pose_numpy(coords, pose_range, coords_range, cell_size=0.1, flag_cropped=True):
@@ -268,30 +282,17 @@ def pxl_coords_to_pose_numpy(coords, pose_range, coords_range, cell_size=0.1, fl
     pose[:, 1] = (coords[:, 1]) * cell_size + min_Z
   return pose
 
-
-def pose_to_coords(cur_pose, pose_range, coords_range, cell_size=0.1, flag_cropped=True):
+def pose_to_coords(cur_pose, pose_range, coords_range, WH, cell_size=0.1, flag_cropped=True):
   tx, tz = cur_pose[:2]
     
   if flag_cropped:
     x_coord = int(floor((tx - pose_range[0]) / cell_size) - coords_range[0])
-    z_coord = int(floor((tz - pose_range[1]) / cell_size) - coords_range[1])
+    z_coord = int((WH[0] - floor((tz - pose_range[1]) / cell_size)) - coords_range[1])
   else:
     x_coord = int(floor((tx - pose_range[0]) / cell_size))
-    z_coord = int(floor((tz - pose_range[1]) / cell_size))
+    z_coord = int(WH[0] - floor((tz - pose_range[1]) / cell_size))
 
   return (x_coord, z_coord)
-
-def pose_to_coords_numpy(cur_pose, pose_range, coords_range, cell_size=0.1, flag_cropped=True):    
-  coords = np.zeros(cur_pose.shape)
-  if flag_cropped:
-    coords[:, 0] = (np.floor((cur_pose[:, 0] - pose_range[0]) / cell_size) - coords_range[0]).astype(int)
-    coords[:, 1] = (np.floor((cur_pose[:, 1] - pose_range[1]) / cell_size) - coords_range[1]).astype(int)
-  else:
-    coords[:, 0] = np.floor((cur_pose[:, 0] - pose_range[0]) / cell_size)
-    coords[:, 1] = np.floor((cur_pose[:, 1] - pose_range[1]) / cell_size)
-
-  coords = coords.astype(int)
-  return coords
 
 # for particle visualization only
 def pose_to_coords_frame(cur_pose, pose_range, coords_range, cell_size=0.1, flag_cropped=True):
@@ -372,7 +373,7 @@ def gen_arrow_head_marker(rot):
     """
 
     # rotate the rot to the marker's coordinate system
-    rotate_rot = rot - .5*pi
+    rotate_rot = -(rot - .5*pi)
     #print(f'rot in drawing is {math.degrees(rot)}, rotate_rot is {math.degrees(rotate_rot)}')
     rot = math.degrees(rotate_rot)
     #print(f'visualized angle = {rot}')

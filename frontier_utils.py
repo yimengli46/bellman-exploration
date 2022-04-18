@@ -60,12 +60,25 @@ class Frontier(object):
 
 	@property
 	def centroid(self):
-		return self.get_centroid()
+		#return self.get_centroid()
+		return self.get_frontier_point()
 
+	#'''
 	def get_centroid(self):
 		"""Returns the point that is the centroid of the frontier"""
 		centroid = np.mean(self.points, axis=1)
 		return centroid
+	#'''
+
+	'''
+	def get_centroid(self):
+		#print(f'points.shape = {self.points.shape}')
+		points = self.points.transpose()
+		distMatrix = np.sum((points[:, np.newaxis, :] - points[np.newaxis, :, :]) ** 2, axis=-1)
+		centroid_idx = np.argmin(distMatrix.sum(axis=0))
+		centroid = self.points[:, centroid_idx]
+		return centroid
+	'''
 
 	def get_frontier_point(self):
 		"""Returns the point that is on the frontier that is closest to the
@@ -172,11 +185,15 @@ def count_free_space_at_frontiers(frontiers, gt_occupancy_grid, area=10):
 	H, W = gt_occupancy_grid.shape
 	for fron in frontiers:
 		centroid = (int(fron.centroid[1]), int(fron.centroid[0]))
-		x1 = max(0, centroid[1] - area)
-		x2 = min(W, centroid[1] + area)
-		y1 = max(0, centroid[0] - area)
-		y2 = min(H, centroid[0] + area)
+		x1 = max(0, centroid[0] - area)
+		x2 = min(W, centroid[0] + area)
+		y1 = max(0, centroid[1] - area)
+		y2 = min(H, centroid[1] + area)
 		fron_neigh = gt_occupancy_grid[y1:y2, x1:x2]
+		#print(f'centroid[0] = {centroid[0]}, y1 = {y1}, y2= {y2}, x1 = {x1}, x2 = {x2}')
+		#plt.imshow(fron_neigh)
+		#plt.show()
 		fron.area_neigh = np.sum(fron_neigh == cfg.FE.FREE_VAL)
+		#print(f'fron.area_neigh = {fron.area_neigh}')
 
 

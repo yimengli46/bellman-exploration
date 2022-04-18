@@ -8,7 +8,7 @@ import math
 from math import cos, sin, acos, atan2, pi, floor, degrees
 import random
 from navigation_utils import change_brightness, SimpleRLEnv
-from baseline_utils import apply_color_to_map, pose_to_coords, gen_arrow_head_marker, pose_to_coords_numpy, read_map_npy
+from baseline_utils import apply_color_to_map, pose_to_coords, gen_arrow_head_marker, read_map_npy, read_occ_map_npy
 from map_utils import SemanticMap
 from localNavigator_Astar import localNav_Astar
 import habitat
@@ -19,8 +19,8 @@ from core import cfg
 import frontier_utils as fr_utils
 
 
-scene_name = 'Allensville_0'
-scene_heights_dict = np.load(cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH, allow_pickle=True).item()
+scene_name = '17DRP5sb8fy_0'
+scene_heights_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}', allow_pickle=True).item()
 
 #================================ load habitat env============================================
 config = habitat.get_config(config_paths=cfg.GENERAL.HABITAT_CONFIG_PATH)
@@ -30,28 +30,32 @@ config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-scene_height = scene_heights_dict['Allensville'][0]
-start_pose = (6.6, -6.9)
+scene_height = scene_heights_dict[scene_name]['y']
+start_pose = (0.0, 1.0)
 saved_folder = f'output/TESTING_RESULTS_Frontier'
+
+#============================ get scene ins to cat dict
+scene = env.habitat_env.sim.semantic_annotations()
+ins2cat_dict = {int(obj.id.split("_")[-1]): obj.category.index() for obj in scene.objects}
 
 #=================================== start original navigation code ========================
 np.random.seed(cfg.GENERAL.RANDOM_SEED)
 random.seed(cfg.GENERAL.RANDOM_SEED)
 
-if cfg.NAVI.FLAG_GT_SEM_MAP:
-	sem_map_npy = np.load(f'{cfg.SAVE.SEM_MAP_FROM_SCENE_GRAPH_PATH}/{scene_name}/gt_semantic_map.npy', allow_pickle=True).item()
-gt_semantic_map, pose_range, coords_range = read_map_npy(sem_map_npy)
-H, W = gt_semantic_map.shape[:2]
+if cfg.NAVI.FLAG_GT_OCC_MAP:
+	occ_map_npy = np.load(f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{scene_name}/BEV_occupancy_map.npy', allow_pickle=True).item()
+gt_occ_map, pose_range, coords_range, WH = read_occ_map_npy(occ_map_npy)
+H, W = gt_occ_map.shape[:2]
 
-LN = localNav_Astar(pose_range, coords_range, scene_name)
+LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 
-semMap_module = SemanticMap(scene_name, pose_range, coords_range) # build the observed sem map
+semMap_module = SemanticMap(scene_name, pose_range, coords_range, WH, ins2cat_dict) # build the observed sem map
 traverse_lst = []
 
 #===================================== setup the start location ===============================#
 
 agent_pos = np.array([start_pose[0], scene_height, start_pose[1]]) # (6.6, -6.9), (3.6, -4.5)
-agent_rot = habitat_sim.utils.common.quat_from_angle_axis(2.36, habitat_sim.geo.GRAVITY)
+agent_rot = habitat_sim.utils.common.quat_from_angle_axis(3.14, habitat_sim.geo.GRAVITY)
 # check if the start point is navigable
 if not env.habitat_env.sim.is_navigable(agent_pos):
 	print(f'start pose is not navigable ...')
@@ -89,7 +93,6 @@ while step < cfg.NAVI.NUM_STEPS:
 
 		improved_observed_occupancy_map = fr_utils.remove_isolated_points(observed_occupancy_map)
 
-		frontiers1 = fr_utils.get_frontiers(observed_occupancy_map)
 		frontiers2 = fr_utils.get_frontiers(improved_observed_occupancy_map)
 
 		chosen_frontier = fr_utils.get_frontier_with_maximum_area(frontiers2, visited_frontier, gt_occupancy_map)
@@ -97,14 +100,7 @@ while step < cfg.NAVI.NUM_STEPS:
 		#============================================= visualize semantic map ===========================================#
 		if True:
 			#==================================== visualize the path on the map ==============================
-			built_semantic_map, observed_area_flag, occupancy_map = semMap_module.get_semantic_map()
-
-			## for the explored free space visualization
-			mask_observed_and_non_obj = np.logical_and(observed_area_flag, gt_semantic_map == 0)
-			gt_semantic_map[mask_observed_and_non_obj] = 59 # class index for explored non-object area
-
-			color_gt_semantic_map = apply_color_to_map(gt_semantic_map)
-			color_gt_semantic_map = change_brightness(color_gt_semantic_map, observed_area_flag, value=60)
+			built_semantic_map, observed_area_flag, _ = semMap_module.get_semantic_map()
 
 			built_semantic_map = built_semantic_map[coords_range[1]:coords_range[3]+1, coords_range[0]:coords_range[2]+1]
 			color_built_semantic_map = apply_color_to_map(built_semantic_map)
@@ -113,37 +109,31 @@ while step < cfg.NAVI.NUM_STEPS:
 			#=================================== visualize the agent pose as red nodes =======================
 			x_coord_lst, z_coord_lst, theta_lst = [], [], []
 			for cur_pose in traverse_lst:
-				x_coord, z_coord = pose_to_coords((cur_pose[0], cur_pose[1]), pose_range, coords_range)
+				x_coord, z_coord = pose_to_coords((cur_pose[0], cur_pose[1]), pose_range, coords_range, WH)
 				x_coord_lst.append(x_coord)
 				z_coord_lst.append(z_coord)			
 				theta_lst.append(cur_pose[2])
 
 			#'''
 			fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(25, 10))
-			# visualize gt semantic map
-			ax[0].imshow(color_gt_semantic_map)
+			ax[0].imshow(improved_observed_occupancy_map)
+			marker, scale = gen_arrow_head_marker(theta_lst[-1])
+			ax[0].scatter(x_coord_lst[-1], z_coord_lst[-1], marker=marker, s=(30*scale)**2, c='red', zorder=5)
+			ax[0].plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
+			for f in frontiers2:
+				ax[0].scatter(f.points[1], f.points[0], c='white', zorder=2)
+				ax[0].scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
+			if chosen_frontier is not None:
+				ax[0].scatter(chosen_frontier.points[1], chosen_frontier.points[0], c='green', zorder=4)
+				ax[0].scatter(chosen_frontier.centroid[1], chosen_frontier.centroid[0], c='red', zorder=4)
 			ax[0].get_xaxis().set_visible(False)
 			ax[0].get_yaxis().set_visible(False)
-			marker, scale = gen_arrow_head_marker(theta_lst[-1])
-			ax[0].scatter(x_coord_lst[-1], z_coord_lst[-1], marker=marker, s=(30*scale)**2, c='red', zorder=2)
-			ax[0].plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=1)
-			# draw the subgoal
-			#if subgoal_coords is not None:
-			#	ax[0].scatter(subgoal_coords[0], subgoal_coords[1], marker='X', s=70, c='yellow', zorder=4)
-			if chosen_frontier is not None:
-				ax[0].scatter(chosen_frontier.centroid[1], chosen_frontier.centroid[0], marker='X', s=70, c='yellow', zorder=4)
-			ax[0].set_title('gt semantic map')
+			ax[0].set_title('improved observed_occ_map + frontiers')
 
-			ax[1].imshow(improved_observed_occupancy_map)
-			for f in frontiers2:
-				ax[1].scatter(f.points[1], f.points[0], c='white', zorder=2)
-				ax[1].scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
-			if chosen_frontier is not None:
-				ax[1].scatter(chosen_frontier.points[1], chosen_frontier.points[0], c='green', zorder=2)
-				ax[1].scatter(chosen_frontier.centroid[1], chosen_frontier.centroid[0], c='red', zorder=2)
+			ax[1].imshow(color_built_semantic_map)
 			ax[1].get_xaxis().set_visible(False)
 			ax[1].get_yaxis().set_visible(False)
-			ax[1].set_title('improved observed_occ_map + frontiers')
+			ax[1].set_title('built semantic map')
 
 			fig.tight_layout()
 			plt.title('observed area')
@@ -162,7 +152,7 @@ while step < cfg.NAVI.NUM_STEPS:
 		print(f'subgoal_coords = {subgoal_coords}')
 		
 	#====================================== take next action ================================
-	action, next_pose = LN.next_action(occupancy_map, env, scene_height)
+	action, next_pose = LN.next_action(env, scene_height)
 	print(f'action = {action}')
 	if action == "collision":
 		step += 1

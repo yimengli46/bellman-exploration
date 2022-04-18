@@ -4,29 +4,29 @@ import cv2
 import matplotlib.pyplot as plt
 import math
 from math import cos, sin, acos, atan2, pi, floor
-from baseline_utils import project_pixels_to_world_coords, convertPanopSegToSSeg, apply_color_to_map, pose_to_coords
-from panoptic_prediction import PanopPred
+from baseline_utils import project_pixels_to_world_coords, convertPanopSegToSSeg, apply_color_to_map, pose_to_coords, convertInsSegToSSeg
 from baseline_utils import pose_to_coords_frame, pxl_coords_to_pose
 from core import cfg
 
 class SemanticMap:
-	def __init__(self, scene_name, pose_range, coords_range):
+	def __init__(self, scene_name, pose_range, coords_range, WH, ins2cat_dict):
 		self.scene_name = scene_name
 		self.cell_size = cfg.SEM_MAP.CELL_SIZE
 		self.detector = cfg.NAVI.DETECTOR
-		self.panop_pred = PanopPred()
+		#self.panop_pred = PanopPred()
 		self.pose_range = pose_range
 		self.coords_range = coords_range
+		self.WH = WH
 		self.occupied_poses = [] # detected during navigation
 
 		self.IGNORED_CLASS = cfg.SEM_MAP.IGNORED_SEM_CLASS # ceiling class is ignored
 		self.UNDETECTED_PIXELS_CLASS = cfg.SEM_MAP.UNDETECTED_PIXELS_CLASS
 
-		self.id2class_mapper = np.load('configs/COCO_PanopticSeg_labels_dict.npy', allow_pickle=True).item()
+		self.ins2cat_dict = ins2cat_dict
 
 		# load occupancy map
 		occ_map_path = f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{self.scene_name}'
-		self.occupancy_map = np.load(f'{occ_map_path}/BEV_occupancy_map.npy')
+		self.occupancy_map = np.load(f'{occ_map_path}/BEV_occupancy_map.npy', allow_pickle=True).item()['occupancy']
 		#kernel = np.ones((5,5), np.uint8)
 		#self.occupancy_map = cv2.erode(occupancy_map.astype(np.uint8), kernel, iterations=1)
 		print(f'self.occupancy_map.shape = {self.occupancy_map.shape}')
@@ -48,10 +48,9 @@ class SemanticMap:
 		rgb_img = obs['rgb']
 		depth_img = 5. * obs['depth']
 		depth_img = cv2.blur(depth_img, (3,3))
-		if self.detector == 'PanopticSeg':
-			panopSeg_img, _ = self.panop_pred.get_prediction(rgb_img, flag_vis=False)
-			sseg_img = convertPanopSegToSSeg(panopSeg_img, self.id2class_mapper)
-		sseg_img = np.where(sseg_img==0, self.UNDETECTED_PIXELS_CLASS, sseg_img) # label 59 for pixels observed but undetected by the detector
+		#print(f'depth_img.shape = {depth_img.shape}')
+		InsSeg_img = obs["semantic"]
+		sseg_img = convertInsSegToSSeg(InsSeg_img, self.ins2cat_dict)
 		sem_map_pose = (pose[0], -pose[1], -pose[2]) # x, z, theta
 		print('pose = {}'.format(pose))
 
@@ -88,7 +87,7 @@ class SemanticMap:
 
 		x_coord = np.floor((xyz_points[0, :] - self.min_X) / self.cell_size).astype(int)
 		y_coord = np.floor(xyz_points[1, :] / self.cell_size).astype(int)
-		z_coord = np.floor((xyz_points[2, :] - self.min_Z) / self.cell_size).astype(int)
+		z_coord = (self.H-1) - np.floor((xyz_points[2, :] - self.min_Z) / self.cell_size).astype(int)
 		mask_y_coord = y_coord < cfg.SEM_MAP.GRID_Y_SIZE
 		x_coord = x_coord[mask_y_coord]
 		y_coord = y_coord[mask_y_coord]
@@ -125,14 +124,14 @@ class SemanticMap:
 		'''
 
 		occupancy_map = self.occupancy_map.copy()
-		occupancy_map = np.where(occupancy_map==1, 3, occupancy_map) # free cell
-		occupancy_map = np.where(occupancy_map==0, 1, occupancy_map) # occupied cell
+		occupancy_map = np.where(occupancy_map==1, cfg.FE.FREE_VAL, occupancy_map) # free cell
+		occupancy_map = np.where(occupancy_map==0, cfg.FE.COLLISION_VAL, occupancy_map) # occupied cell
 
 		# add occupied cells
 		for pose in self.occupied_poses:
-			coords = pose_to_coords(pose, self.pose_range, self.coords_range, flag_cropped=True)
+			coords = pose_to_coords(pose, self.pose_range, self.coords_range, self.WH, flag_cropped=True)
 			print(f'occupied cell coords = {coords}')
-			occupancy_map[coords[1], coords[0]] = 1
+			occupancy_map[coords[1], coords[0]] = cfg.FE.COLLISION_VAL
 
 		'''
 		temp_semantic_map = semantic_map[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1]
@@ -164,6 +163,13 @@ class SemanticMap:
 		mask_explored_undetected_area = np.logical_and(semantic_map==0, grid_undetected_class > 0)
 		semantic_map[mask_explored_undetected_area] = self.UNDETECTED_PIXELS_CLASS
 
+		#plt.imshow(semantic_map)
+		#plt.show()
+
+		#semantic_map = (semantic_map[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1])
+		#plt.imshow(semantic_map)
+		#plt.show()
+
 		grid_sum_cat = np.sum(grid_sum_height, axis=2)
 		observed_area_flag = (grid_sum_cat > 0)
 		observed_area_flag = (observed_area_flag[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1])
@@ -174,7 +180,7 @@ class SemanticMap:
 
 		# add occupied cells
 		for pose in self.occupied_poses:
-			coords = pose_to_coords(pose, self.pose_range, self.coords_range, flag_cropped=True)
+			coords = pose_to_coords(pose, self.pose_range, self.coords_range, self.WH, flag_cropped=True)
 			print(f'occupied cell coords = {coords}')
 			occupancy_map[coords[1], coords[0]] = 1
 
