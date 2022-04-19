@@ -27,7 +27,7 @@ class SemanticMap:
 		self.cell_size = 0.1
 		self.UNIGNORED_CLASS = [1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 15, 16, 18, 19, 22, 23, 25, 27, 28, 31, 33, \
 			34, 36, 37, 38, 39, 40]
-		self.step_size = 100
+		self.step_size = 1000
 		self.map_boundary = 5
 		self.detector = None
 		self.saved_folder = saved_folder
@@ -63,7 +63,7 @@ class SemanticMap:
 		print('sem_map_pose = {}'.format(sem_map_pose))
 
 		#'''
-		if True:
+		if False:
 			fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(15, 6))
 			ax[0].imshow(rgb_img)
 			ax[0].get_xaxis().set_visible(False)

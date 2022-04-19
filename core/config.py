@@ -4,8 +4,9 @@ _C = CN()
 
 #=============================== dataset and files =============================
 _C.GENERAL = CN()
-_C.GENERAL.SCENE_HEIGHTS_DICT_PATH = 'output/scene_height_distribution/scene_height_path.npy'
+_C.GENERAL.SCENE_HEIGHTS_DICT_PATH = 'output/scene_height_distribution'
 _C.GENERAL.HABITAT_CONFIG_PATH = 'configs/exploration_see_the_floor.yaml'
+_C.GENERAL.BUILD_MAP_CONFIG_PATH = 'configs/build_map_mp3d.yaml'
 _C.GENERAL.HABITAT_EPISODE_DATA_PATH = '/home/yimeng/Datasets/habitat-lab/data/datasets/pointnav/mp3d/temp/all.json.gz'
 _C.GENERAL.HABITAT_SCENE_DATA_PATH = '/home/yimeng/Datasets/habitat-lab/data/scene_datasets/'
 _C.GENERAL.RANDOM_SEED = 5

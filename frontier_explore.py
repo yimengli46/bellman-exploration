@@ -19,7 +19,7 @@ from core import cfg
 import frontier_utils as fr_utils
 
 
-scene_name = '17DRP5sb8fy_0'
+scene_name = '2t7WUuJeko7_0'
 scene_heights_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}', allow_pickle=True).item()
 
 #================================ load habitat env============================================

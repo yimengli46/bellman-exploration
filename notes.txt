@@ -1,0 +1,11 @@
+1. create soft link for the data
+$ ln -s /home/yimeng/Datasets/habitat-lab/data habitat_data
+
+2. run tools/analyze.py to analyze mp3d pointnav episodes.
+
+3. save scene_floor_dict.npy as
+npy[scene][floor], each floor has two keys y and a list of nodes.
+
+
+4. First build semantic maps
+then build occupancy maps

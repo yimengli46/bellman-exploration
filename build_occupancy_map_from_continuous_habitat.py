@@ -18,20 +18,8 @@ random.seed(SEED)
 np.random.seed(SEED)
 
 output_folder = 'output/semantic_map'
-scene_list = ['gZ6f7yhEvPG_0', '1LXtFkjw3qL_0', '17DRP5sb8fy_0']
+semantic_map_folder = 'output/semantic_map'
 
-semantic_map_folder = '/home/yimeng/work/composable_behavior/output'
-
-'''
-scene_dict = {}
-for scene in scene_list:
-	scene_name = scene[:-2]
-	floor = int(scene[-1])
-	temp = {}
-	temp['name'] = scene
-	temp['floor'] = floor 
-	scene_dict[scene_name] = temp
-'''
 
 # after testing, using 8 angles is most efficient
 theta_lst = [0]
@@ -39,7 +27,8 @@ theta_lst = [0]
 built_scenes = [] 
 cell_size = 0.1
 
-scene_height_path_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}', allow_pickle=True).item()
+split = 'test'
+scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
 
 #============================= build a grid =========================================
 x = np.arange(-cfg.SEM_MAP.WORLD_SIZE, cfg.SEM_MAP.WORLD_SIZE, cell_size)
@@ -50,91 +39,81 @@ xv, zv = np.meshgrid(x, z)
 grid_H, grid_W = zv.shape
 
 
-config = habitat.get_config(config_paths=cfg.GENERAL.HABITAT_CONFIG_PATH)
+config = habitat.get_config(config_paths=cfg.GENERAL.BUILD_MAP_CONFIG_PATH)
 config.defrost()
-#assert 1==2
 config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_EPISODE_DATA_PATH 
 config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-for episode_id in range(1):
+for episode_id in range(18):
 	env.reset()
 	print('episode_id = {}'.format(episode_id))
 	print('env.current_episode = {}'.format(env.current_episode))
 
 	env_scene = get_scene_name(env.current_episode)
-	#================== search in VLN scenes =============================
-	flag_found_scene = False
-	for scene_name in list(scene_height_path_dict.keys()):
-		if scene_name[:-2] == env_scene:
-			flag_found_scene = True
-			break
-
-	if scene_name in built_scenes:
-		continue
-
-	if flag_found_scene:
-		scene_dict = scene_height_path_dict[scene_name]
-		height = scene_dict['y']
-	else:
-		print(f'{env_scene} not include in VLN, start a new episode ....')
-		continue
+	
+	scene_dict = scene_floor_dict[env_scene]
 
 	#=============================== traverse each floor ===========================
-	print(f'*****scene_name = {scene_name}***********')
+	for floor_id in list(scene_dict.keys()):
+		height = scene_dict[floor_id]['y']
+		scene_name = f'{env_scene}_{floor_id}'
 
-	saved_folder = f'{output_folder}/{scene_name}'
-	create_folder(saved_folder, clean_up=False)
+		#=============================== traverse each floor ===========================
+		print(f'*****scene_name = {scene_name}***********')
 
-	#'''
-	sem_map_npy = np.load(f'{semantic_map_folder}/{scene_name}/BEV_semantic_map.npy', allow_pickle=True).item()
-	_, pose_range, coords_range, WH = read_map_npy(sem_map_npy)
-	#cropped_semantic_map = semantic_map[coords_range[1]:coords_range[3]+1, coords_range[0]:coords_range[2]+1]
-	#'''
+		saved_folder = f'{output_folder}/{scene_name}'
+		create_folder(saved_folder, clean_up=False)
 
-	occ_map = np.zeros((grid_H, grid_W), dtype=int)
+		#'''
+		sem_map_npy = np.load(f'{semantic_map_folder}/{scene_name}/BEV_semantic_map.npy', allow_pickle=True).item()
+		_, pose_range, coords_range, WH = read_map_npy(sem_map_npy)
+		#cropped_semantic_map = semantic_map[coords_range[1]:coords_range[3]+1, coords_range[0]:coords_range[2]+1]
+		#'''
 
-	count_ = 0
-	#========================= generate observations ===========================
-	for grid_z in range(grid_H):
-		for grid_x in range(grid_W):
+		occ_map = np.zeros((grid_H, grid_W), dtype=int)
 
-			x = xv[grid_z, grid_x] + cell_size/2.
-			z = zv[grid_z, grid_x] + cell_size/2.
-			y = height
+		count_ = 0
+		#========================= generate observations ===========================
+		for grid_z in range(grid_H):
+			for grid_x in range(grid_W):
 
-			agent_pos = np.array([x, y, z])
-			flag_nav = env.habitat_env.sim.is_navigable(agent_pos)
-
-			if flag_nav:
 				x = xv[grid_z, grid_x] + cell_size/2.
 				z = zv[grid_z, grid_x] + cell_size/2.
-				# should be map pose
-				z = -z
-				x_coord, z_coord = pose_to_coords((x, z), pose_range, coords_range, WH, flag_cropped=False)
-				occ_map[z_coord, x_coord] = 1
+				y = height
 
-	#assert 1==2
-	occ_map = occ_map[coords_range[1]:coords_range[3]+1, coords_range[0]:coords_range[2]+1]
+				agent_pos = np.array([x, y, z])
+				flag_nav = env.habitat_env.sim.is_navigable(agent_pos)
 
-	# save the final results
-	map_dict = {}
-	map_dict['occupancy'] = occ_map
-	map_dict['min_x'] = coords_range[0]
-	map_dict['max_x'] = coords_range[2]
-	map_dict['min_z'] = coords_range[1]
-	map_dict['max_z'] = coords_range[3]
-	map_dict['min_X'] = pose_range[0]
-	map_dict['max_X'] = pose_range[2]
-	map_dict['min_Z'] = pose_range[1]
-	map_dict['max_Z'] = pose_range[3]
-	map_dict['W']     = WH[0]
-	map_dict['H']     = WH[1]
-	np.save(f'{saved_folder}/BEV_occupancy_map.npy', map_dict)
+				if flag_nav:
+					x = xv[grid_z, grid_x] + cell_size/2.
+					z = zv[grid_z, grid_x] + cell_size/2.
+					# should be map pose
+					z = -z
+					x_coord, z_coord = pose_to_coords((x, z), pose_range, coords_range, WH, flag_cropped=False)
+					occ_map[z_coord, x_coord] = 1
 
-	# save the final color image
-	save_fig_through_plt(occ_map, f'{saved_folder}/occ_map.jpg')
-	#assert 1==2
+		#assert 1==2
+		occ_map = occ_map[coords_range[1]:coords_range[3]+1, coords_range[0]:coords_range[2]+1]
+
+		# save the final results
+		map_dict = {}
+		map_dict['occupancy'] = occ_map
+		map_dict['min_x'] = coords_range[0]
+		map_dict['max_x'] = coords_range[2]
+		map_dict['min_z'] = coords_range[1]
+		map_dict['max_z'] = coords_range[3]
+		map_dict['min_X'] = pose_range[0]
+		map_dict['max_X'] = pose_range[2]
+		map_dict['min_Z'] = pose_range[1]
+		map_dict['max_Z'] = pose_range[3]
+		map_dict['W']     = WH[0]
+		map_dict['H']     = WH[1]
+		np.save(f'{saved_folder}/BEV_occupancy_map.npy', map_dict)
+
+		# save the final color image
+		save_fig_through_plt(occ_map, f'{saved_folder}/occ_map.jpg')
+		#assert 1==2
 
 env.close()
