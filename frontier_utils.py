@@ -122,8 +122,8 @@ def mask_grid_with_frontiers(occupancy_grid, frontiers, do_not_mask=None):
 	return masked_grid
 
 def get_frontiers(occupancy_grid):
-	filtered_grid = scipy.ndimage.maximum_filter(occupancy_grid == cfg.FE.FREE_VAL, size=3)
-	frontier_point_mask = np.logical_and(filtered_grid, occupancy_grid == cfg.FE.UNOBSERVED_VAL)
+	filtered_grid = scipy.ndimage.maximum_filter(occupancy_grid == cfg.FE.UNOBSERVED_VAL, size=3)
+	frontier_point_mask = np.logical_and(filtered_grid, occupancy_grid == cfg.FE.FREE_VAL)
 
 	if cfg.FE.GROUP_INFLATION_RADIUS < 1:
 		inflated_frontier_mask = frontier_point_mask

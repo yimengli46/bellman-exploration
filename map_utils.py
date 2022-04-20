@@ -76,7 +76,7 @@ class SemanticMap:
 			#plt.close()
 		#'''
 
-		xyz_points, sseg_points = project_pixels_to_world_coords(sseg_img, depth_img, sem_map_pose, gap=2, FOV=90, cx=320, cy=640, resolution_x=640, resolution_y=1280, theta_x=-0.785, ignored_classes=self.IGNORED_CLASS)
+		xyz_points, sseg_points = project_pixels_to_world_coords(sseg_img, depth_img, sem_map_pose, gap=2, FOV=90, cx=160, cy=320, resolution_x=320, resolution_y=640, theta_x=-0.785, ignored_classes=self.IGNORED_CLASS)
 
 		mask_X = np.logical_and(xyz_points[0, :] > self.min_X, xyz_points[0, :] < self.max_X) 
 		mask_Y = np.logical_and(xyz_points[1, :] > 0.0, xyz_points[1, :] < 100.0)

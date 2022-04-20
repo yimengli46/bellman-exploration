@@ -80,7 +80,7 @@ for scene_name in list(scene_height_dict.keys()):
             count_floor += 1
     '''
 
-gap_thresh = 0.2
+gap_thresh = 0.01
 for episode in episodes:
     scene_id = episode['scene_id']
 

@@ -199,7 +199,7 @@ class localNav_Astar:
 
 		#================================ find a reachable subgoal on the map ==============================
 		local_occupancy_map = occupancy_map.copy()
-		local_occupancy_map[local_occupancy_map == 0] = 1
+		local_occupancy_map[local_occupancy_map == cfg.FE.UNOBSERVED_VAL] = cfg.FE.COLLISION_VAL
 
 
 		'''
@@ -213,7 +213,7 @@ class localNav_Astar:
 		map_coords = np.stack((xv, yv), axis=2).astype(np.int16)
 
 		# take the non-obj pixels
-		mask_free = (local_occupancy_map != 1)
+		mask_free = (local_occupancy_map != cfg.FE.COLLISION_VAL)
 		free_map_coords = map_coords[mask_free]
 
 		if free_map_coords.shape[0] == 0:
@@ -255,12 +255,7 @@ class localNav_Astar:
 
 		#print(f'roadmap = {roadmap}')
 		#===================== find the subgoal (closest to peak and reachable from agent)
-		reachable_locs = breadthFirstSearch(agent_coords, roadmap)
-		reachable_locs = np.array(list(map(list, reachable_locs)))
-		# return the closest location on the free map
-		manhatten_dist = np.sum(np.absolute(reachable_locs - fron_centroid_coords), axis=1)
-		min_idx = np.argmin(manhatten_dist)
-		subgoal_coords = reachable_locs[min_idx]
+		subgoal_coords = np.array(fron_centroid_coords)
 		subgoal_pose = pxl_coords_to_pose(subgoal_coords, self.pose_range, self.coords_range, self.WH)
 
 		#===================== Using A* to navigate to the subgoal
@@ -428,6 +423,73 @@ class localNav_Astar:
 
 		return (xmin, zmin, xmax, zmax), agent_local_coords, subgoal_local_coords
 
+	def filter_unreachable_frontiers(self, frontiers, agent_pose, occupancy_map):
+		agent_coords = pose_to_coords(agent_pose, self.pose_range, self.coords_range, self.WH)
+		#print(f'agent_coords = {agent_coords}')
+
+		#================================ find a reachable subgoal on the map ==============================
+		local_occupancy_map = occupancy_map.copy()
+		local_occupancy_map[local_occupancy_map == cfg.FE.UNOBSERVED_VAL] = cfg.FE.COLLISION_VAL
+
+		H, W = local_occupancy_map.shape
+		x = np.linspace(0, W-1, W)
+		y = np.linspace(0, H-1, H)
+		xv, yv = np.meshgrid(x, y)
+		map_coords = np.stack((xv, yv), axis=2).astype(np.int16)
+
+		# take the non-obj pixels
+		mask_free = (local_occupancy_map != cfg.FE.COLLISION_VAL)
+		free_map_coords = map_coords[mask_free]
+
+		if free_map_coords.shape[0] == 0:
+			print(f'no free space cells on the occupancy map')
+			assert 1==2
+
+		#===================== build the graph ======================
+		roadmap = {}
+		num_nodes = free_map_coords.shape[0]
+		for i in range(num_nodes):
+			neighbors = []
+			x, y = free_map_coords[i]
+			# bottom
+			if y+1 < H and mask_free[y+1, x]:
+				neighbors.append((x, y+1))
+			# top
+			if y-1 >= 0 and mask_free[y-1, x]:
+				neighbors.append((x, y-1))
+			# left
+			if x-1 >= 0 and mask_free[y, x-1]:
+				neighbors.append((x-1, y))
+			# right
+			if x+1 < W and mask_free[y, x+1]:
+				neighbors.append((x+1, y))
+			# top left
+			if x-1 >= 0 and y-1 >= 0 and mask_free[y-1, x-1]:
+				neighbors.append((x-1, y-1))
+			# top right
+			if x+1 < W and y-1 >= 0 and mask_free[y-1, x+1]:
+				neighbors.append((x+1, y-1))
+			# bottom left
+			if x-1 >= 0 and y+1 < H and mask_free[y+1, x-1]:
+				neighbors.append((x-1, y+1))
+			# bottom right
+			if x+1 < W and y+1 < H and mask_free[y+1, x+1]:
+				neighbors.append((x+1, y+1))
+
+			roadmap[tuple(free_map_coords[i])] = neighbors
+
+		#print(f'roadmap = {roadmap}')
+		#===================== find the subgoal (closest to peak and reachable from agent)
+		reachable_locs = breadthFirstSearch(agent_coords, roadmap)
+		reachable_locs = np.array(list(map(list, reachable_locs)))
+
+		filtered_frontiers = set()
+		for fron in frontiers:
+			fron_centroid_coords = (int(fron.centroid[1]), int(fron.centroid[0]))
+			manhatten_dist = np.sum(np.absolute(reachable_locs - fron_centroid_coords), axis=1)
+			if (manhatten_dist == 0).any():
+				filtered_frontiers.add(fron)
+		return filtered_frontiers
 	
 
 

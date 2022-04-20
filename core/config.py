@@ -14,20 +14,11 @@ _C.GENERAL.RANDOM_SEED = 5
 #================================= for save =======================================
 _C.SAVE = CN()
 _C.SAVE.OCCUPANCY_MAP_PATH = 'output/semantic_map' # built occupancy map
-_C.SAVE.TESTING_DATA_FOLDER = 'output/TESTING_DATA'
-_C.SAVE.TESTING_RESULTS_FOLDER = 'output/TESTING_RESULTS_USE_ROOM_TYPES'
+_C.SAVE.TESTING_RESULTS_FOLDER = 'output/TESTING_RESULTS_90degree_Greedy_Frontier_Occupancy'
 
 #================================== for main_nav.py =====================
 _C.MAIN = CN()
-_C.MAIN.SCENE_LIST = ['Collierville_1', 'Darden_0', 'Markleeville_0', 'Wiconisco_0'] # ['Allensville_0']
-
-
-#================================== for gen_testing_data.py =====================
-_C.GEN_TEST = CN()
-_C.GEN_TEST.SCENE_LIST = ['Collierville_1', 'Darden_0', 'Markleeville_0', 'Wiconisco_0']
-_C.GEN_TEST.NUM_EPISODES = 100
-_C.GEN_TEST.ALLOWED_CATS = ['couch', 'potted_plant', 'refrigerator', 'oven', 'tv', 'chair', 'vase', 'potted plant', \
-	'toilet', 'clock', 'cup', 'bottle', 'bed', 'sink']
+_C.MAIN.SCENE_LIST = ['2t7WUuJeko7_0', '5ZKStnWn8Zo_0', 'ARNzJeq3xxb_0', 'RPmz2sHmrrY_0', 'UwV83HsGsw3_0', 'Vt2qJdWjCF2_0', 'WYY7iVyf5p8_0', 'YFuZgdQ5vWj_0', 'YVUC4YcDtcY_0', 'fzynW3qQPVF_0', 'gYvKGZ5eRqb_0', 'gxdoqLR6rwA_0', 'jtcxE69GiFV_0', 'pa4otMbVnkk_0', 'q9vSo1VnCiC_0', 'rqfALeAoiTq_0', 'wc2JMjhGNzB_0', 'yqstnuAEVhm_0']
 
 #================================ for semantic map ===============================
 _C.SEM_MAP = CN()
@@ -69,6 +60,7 @@ _C.FE.OBSTACLE_THRESHOLD = 1
 _C.FE.GROUP_INFLATION_RADIUS = 0
 
 #================================ for visualization ============================
-_C.NAVI.NUM_STEPS_VIS = 50 # visualize the traj after every X steps
 _C.SEM_MAP.FLAG_VISUALIZE_EGO_OBS = False
 _C.LN.FLAG_VISUALIZE_LOCAL_MAP = False
+_C.NAVI.FLAG_VISUALIZE_FINAL_TRAJ = True
+_C.NAVI.FLAG_VISUALIZE_MIDDLE_TRAJ = True
