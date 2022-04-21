@@ -59,6 +59,11 @@ _C.FE.UNOBSERVED_VAL = 0
 _C.FE.OBSTACLE_THRESHOLD = 1
 _C.FE.GROUP_INFLATION_RADIUS = 0
 
+
+#=============================== for Evaluation =====================================
+_C.EVAL = CN()
+_C.EVAL.USE_ALL_START_POINTS = True
+
 #================================ for visualization ============================
 _C.SEM_MAP.FLAG_VISUALIZE_EGO_OBS = False
 _C.LN.FLAG_VISUALIZE_LOCAL_MAP = False

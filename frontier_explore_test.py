@@ -90,7 +90,10 @@ while step < cfg.NAVI.NUM_STEPS:
 	traverse_lst.append(agent_map_pose)
 
 	# add the observed area
+	t0 = timer()
 	semMap_module.build_semantic_map(obs, pose, step=step, saved_folder=saved_folder)
+	t1 = timer()
+	print(f'build map time = {t1 - t0}')
 
 	if MODE_FIND_SUBGOAL:
 		t1 = timer()
@@ -114,7 +117,7 @@ while step < cfg.NAVI.NUM_STEPS:
 			#==================================== visualize the path on the map ==============================
 			built_semantic_map, observed_area_flag, _ = semMap_module.get_semantic_map()
 
-			built_semantic_map = built_semantic_map[coords_range[1]:coords_range[3]+1, coords_range[0]:coords_range[2]+1]
+			#built_semantic_map = built_semantic_map[coords_range[1]:coords_range[3]+1, coords_range[0]:coords_range[2]+1]
 			color_built_semantic_map = apply_color_to_map(built_semantic_map)
 			color_built_semantic_map = change_brightness(color_built_semantic_map, observed_area_flag, value=60)
 

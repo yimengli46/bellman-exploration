@@ -269,75 +269,17 @@ def pxl_coords_to_pose(coords, pose_range, coords_range, WH, cell_size=0.1, flag
     Z = (WH[0] - (y + 0.5)) * cell_size + min_Z
   return (X, Z)
 
-def pxl_coords_to_pose_numpy(coords, pose_range, coords_range, cell_size=0.1, flag_cropped=True):
-  min_X, min_Z, max_X, max_Z = pose_range
-  min_x, min_z, max_x, max_z = coords_range
-
-  pose = np.zeros(coords.shape)
-  if flag_cropped:
-    pose[:, 0] = (coords[:, 0] + min_x) * cell_size + min_X
-    pose[:, 1] = (coords[:, 1] + min_z) * cell_size + min_Z
-  else:
-    pose[:, 0] = (coords[:, 0]) * cell_size + min_X
-    pose[:, 1] = (coords[:, 1]) * cell_size + min_Z
-  return pose
-
 def pose_to_coords(cur_pose, pose_range, coords_range, WH, cell_size=0.1, flag_cropped=True):
   tx, tz = cur_pose[:2]
     
   if flag_cropped:
-    x_coord = int(floor((tx - pose_range[0]) / cell_size) - coords_range[0])
-    z_coord = int((WH[0] - floor((tz - pose_range[1]) / cell_size)) - coords_range[1])
+    x_coord = floor((tx - pose_range[0]) / cell_size - coords_range[0])
+    z_coord = floor((WH[0] - (tz - pose_range[1]) / cell_size) - coords_range[1])
   else:
-    x_coord = int(floor((tx - pose_range[0]) / cell_size))
-    z_coord = int(WH[0] - floor((tz - pose_range[1]) / cell_size))
+    x_coord = floor((tx - pose_range[0]) / cell_size)
+    z_coord = floor(WH[0] - (tz - pose_range[1]) / cell_size)
 
   return (x_coord, z_coord)
-
-# for particle visualization only
-def pose_to_coords_frame(cur_pose, pose_range, coords_range, cell_size=0.1, flag_cropped=True):
-  tx, tz = cur_pose[:2]
-    
-  if flag_cropped:
-    x_coord = (tx - pose_range[0]) / cell_size - coords_range[0]
-    z_coord = (tz - pose_range[1]) / cell_size - coords_range[1]
-    if x_coord < 0:
-      x_coord = 0.
-    if z_coord < 0:
-      z_coord = 0.
-    coords_0_max = coords_range[2] - coords_range[0]
-    coords_1_max = coords_range[3] - coords_range[1]
-    if x_coord > coords_0_max:
-      x_coord = coords_0_max
-    if z_coord > coords_1_max:
-      z_coord = coords_1_max
-  else:
-    x_coord = (tx - pose_range[0]) / cell_size
-    z_coord = (tz - pose_range[1]) / cell_size
-
-  return (x_coord, z_coord)
-
-# for particle visualization only
-def pose_to_coords_frame_numpy(cur_pose, pose_range, coords_range, cell_size=0.1, flag_cropped=True):    
-  coords = np.zeros(cur_pose.shape, dtype=np.float32)
-  if flag_cropped:
-    coords[:, 0] = (cur_pose[:, 0] - pose_range[0]) / cell_size - coords_range[0]
-    coords[:, 1] = (cur_pose[:, 1] - pose_range[1]) / cell_size - coords_range[1]
-    mask = (coords[:, 0] < 0.)
-    coords[mask, 0] = 0.
-    mask = (coords[:, 1] < 0.)
-    coords[mask, 1] = 0.
-    coords_0_max = coords_range[2] - coords_range[0]
-    coords_1_max = coords_range[3] - coords_range[1]
-    mask = (coords[:, 0] > coords_0_max)
-    coords[mask, 0] = coords_0_max
-    mask = (coords[:, 1] > coords_1_max)
-    coords[mask, 1] = coords_1_max
-  else:
-    coords[:, 0] = (cur_pose[:, 0] - pose_range[0]) / cell_size
-    coords[:, 1] = (cur_pose[:, 1] - pose_range[1]) / cell_size
-
-  return coords
 
 def save_fig_through_plt(img, name):
   fig, ax = plt.subplots(nrows=1, ncols=1)

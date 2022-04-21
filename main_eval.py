@@ -50,8 +50,9 @@ for episode_id in range(18):
 			create_folder(scene_output_folder)
 			
 			testing_data = scene_dict[floor_id]['start_pose']
-			if len(testing_data) > 3:
-				testing_data = testing_data[:3]
+			if not cfg.EVAL.USE_ALL_START_POINTS:
+				if len(testing_data) > 3:
+					testing_data = testing_data[:3]
 
 			#'''
 			results = {}
@@ -66,7 +67,7 @@ for episode_id in range(18):
 				steps = 0
 				covered_area_percent = 0
 				try:
-					covered_area_percent, steps = nav(env, idx, scene_name, height, start_pose, saved_folder)
+					flag, covered_area_percent, steps = nav(env, idx, scene_name, height, start_pose, saved_folder)
 				except:
 					print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
 

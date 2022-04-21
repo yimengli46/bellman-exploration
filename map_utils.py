@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import math
 from math import cos, sin, acos, atan2, pi, floor
 from baseline_utils import project_pixels_to_world_coords, convertPanopSegToSSeg, apply_color_to_map, pose_to_coords, convertInsSegToSSeg
-from baseline_utils import pose_to_coords_frame, pxl_coords_to_pose
+from baseline_utils import pxl_coords_to_pose
 from core import cfg
 
 class SemanticMap:
@@ -100,6 +100,8 @@ class SemanticMap:
 
 		# sum over the height axis
 		grid_sum_height = np.sum(self.four_dim_grid, axis=1)
+		grid_sum_height = (grid_sum_height[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1, :])
+
 		grid_undetected_class = grid_sum_height[:, :, self.UNDETECTED_PIXELS_CLASS]
 		grid_detected_class = grid_sum_height[:, :, :self.UNDETECTED_PIXELS_CLASS]
 		# argmax over the detected category axis
@@ -109,7 +111,7 @@ class SemanticMap:
 
 		grid_sum_cat = np.sum(grid_sum_height, axis=2)
 		observed_area_flag = (grid_sum_cat > 0)
-		observed_area_flag = (observed_area_flag[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1])
+		#observed_area_flag = (observed_area_flag[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1])
 
 		# get occupancy map
 		'''
@@ -153,9 +155,10 @@ class SemanticMap:
 
 
 	def get_observed_occupancy_map(self):
-
 		# sum over the height axis
 		grid_sum_height = np.sum(self.four_dim_grid, axis=1)
+		grid_sum_height = (grid_sum_height[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1, :])
+
 		grid_undetected_class = grid_sum_height[:, :, self.UNDETECTED_PIXELS_CLASS]
 		grid_detected_class = grid_sum_height[:, :, :self.UNDETECTED_PIXELS_CLASS]
 		# argmax over the detected category axis
@@ -172,7 +175,7 @@ class SemanticMap:
 
 		grid_sum_cat = np.sum(grid_sum_height, axis=2)
 		observed_area_flag = (grid_sum_cat > 0)
-		observed_area_flag = (observed_area_flag[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1])
+		#observed_area_flag = (observed_area_flag[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1])
 
 		occupancy_map = self.occupancy_map.copy()
 		occupancy_map = np.where(self.occupancy_map==1, cfg.FE.FREE_VAL, occupancy_map) # free cell

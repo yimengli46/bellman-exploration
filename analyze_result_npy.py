@@ -2,6 +2,10 @@ import numpy as np
 from core import cfg
 
 scene_list = cfg.MAIN.SCENE_LIST
+
+avg_percent_list = []
+avg_step_list = []
+
 for scene_name in scene_list:
 	try:
 		output_folder = cfg.SAVE.TESTING_RESULTS_FOLDER
@@ -18,18 +22,27 @@ for scene_name in scene_list:
 			flag_suc = result['flag']
 			if flag_suc:
 				percent = result['covered_area']
-				percent_list.append(flag_suc)
+				percent_list.append(percent)
 				step = result['steps']
 				step_list.append(step)
 
-
-		
 		percent_list = np.array(percent_list)
 		print(f'percent_list = {percent_list}')
 		avg_percent = np.sum(percent_list) / percent_list.shape[0]
 
-		print(f'scene_name = {scene_name}, avg_percent = {avg_percent}')
+		step_list = np.array(step_list)
+		print(f'step_list = {step_list}')
+		avg_step = np.sum(step_list) / step_list.shape[0]
+
+		print(f'scene_name = {scene_name}, avg_percent = {avg_percent}, avg_step = {avg_step}')
+
+		if avg_percent > 0:
+			avg_percent_list.append(avg_percent)
+			avg_step_list.append(avg_step)
 	except:
 		print(f'failed to process scene {scene_name}.')
 
-
+print('=========================================================================================')
+avg_percent_list = np.array(avg_percent_list)
+avg_step_list = np.array(avg_step_list)
+print(f'avg percent = {np.mean(avg_percent_list)}, avg step = {np.mean(avg_step_list)}')

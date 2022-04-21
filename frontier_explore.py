@@ -89,7 +89,6 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 				#==================================== visualize the path on the map ==============================
 				built_semantic_map, observed_area_flag, _ = semMap_module.get_semantic_map()
 
-				built_semantic_map = built_semantic_map[coords_range[1]:coords_range[3]+1, coords_range[0]:coords_range[2]+1]
 				color_built_semantic_map = apply_color_to_map(built_semantic_map)
 				color_built_semantic_map = change_brightness(color_built_semantic_map, observed_area_flag, value=60)
 
@@ -177,7 +176,6 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 		#==================================== visualize the path on the map ==============================
 		built_semantic_map, observed_area_flag, _ = semMap_module.get_semantic_map()
 
-		built_semantic_map = built_semantic_map[coords_range[1]:coords_range[3]+1, coords_range[0]:coords_range[2]+1]
 		color_built_semantic_map = apply_color_to_map(built_semantic_map)
 		color_built_semantic_map = change_brightness(color_built_semantic_map, observed_area_flag, value=60)
 
@@ -194,13 +192,8 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 		ax[0].imshow(improved_observed_occupancy_map)
 		marker, scale = gen_arrow_head_marker(theta_lst[-1])
 		ax[0].scatter(x_coord_lst[-1], z_coord_lst[-1], marker=marker, s=(30*scale)**2, c='red', zorder=5)
+		ax[0].scatter(x_coord_lst[0], z_coord_lst[0], marker='s', s=50, c='red', zorder=5)
 		ax[0].plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
-		for f in frontiers2:
-			ax[0].scatter(f.points[1], f.points[0], c='white', zorder=2)
-			ax[0].scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
-		if chosen_frontier is not None:
-			ax[0].scatter(chosen_frontier.points[1], chosen_frontier.points[0], c='green', zorder=4)
-			ax[0].scatter(chosen_frontier.centroid[1], chosen_frontier.centroid[0], c='red', zorder=4)
 		ax[0].get_xaxis().set_visible(False)
 		ax[0].get_yaxis().set_visible(False)
 		ax[0].set_title('improved observed_occ_map + frontiers')
@@ -219,9 +212,12 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 		#'''
 
 	#====================================== compute statistics =================================
-	gt_free_area = np.sum(gt_occ_map > 0)
 	_, observed_area_flag, _ = semMap_module.get_semantic_map()
-	explored_free_area = np.sum(observed_area_flag > 0)
-	percent = explored_free_area * 1. / gt_free_area
+	explored_free_area_flag = np.logical_and(gt_occ_map, observed_area_flag)
+
+	sum_gt_free_area = np.sum(gt_occ_map > 0)
+	sum_explored_free_area = np.sum(explored_free_area_flag > 0)
+	percent = sum_explored_free_area * 1. / sum_gt_free_area
+	print(f'********percent = {percent}, step = {step}')
 
 	return True, percent, step

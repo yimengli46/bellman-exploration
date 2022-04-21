@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt 
-from baseline_utils import pose_to_coords_frame, pose_to_coords, pxl_coords_to_pose, map_rot_to_planner_rot, planner_rot_to_map_rot
+from baseline_utils import pose_to_coords, pxl_coords_to_pose, map_rot_to_planner_rot, planner_rot_to_map_rot
 import math
 import heapq as hq
 from collections import deque
 from core import cfg
+import networkx as nx
 
 upper_thresh_theta = math.pi / 6
 lower_thresh_theta = math.pi / 12
@@ -177,6 +178,35 @@ def AStarSearch(start_coords, goal_coords, graph):
 				# add node to visited
 				visited.append(node_loc)
 
+def build_graph(occupancy_map):
+	H, W = occupancy_map.shape
+	G = nx.grid_2d_graph(*occupancy_map.shape)
+
+	G.add_edges_from([
+	    ((x, y), (x+1, y+1))
+	    for x in range(1, H-1)
+	    for y in range(1, W-1)
+	] + [
+	    ((x, y), (x-1, y-1))
+	    for x in range(1, H-1)
+	    for y in range(1, W-1)
+	] + [
+	    ((x, y), (x-1, y+1))
+	    for x in range(1, H-1)
+	    for y in range(1, W-1)
+	] + [
+	    ((x, y), (x+1, y-1))
+	    for x in range(1, H-1)
+	    for y in range(1, W-1)
+	])
+
+	# remove those nodes where the corresponding value is != 0
+	for val, node in zip(occupancy_map.ravel(), sorted(G.nodes())):
+	    if val!=cfg.FE.FREE_VAL:
+	        G.remove_node(node)
+
+	return G
+
 class localNav_Astar:
 	def __init__(self, pose_range, coords_range, WH, scene_name):
 		self.pose_range = pose_range
@@ -201,66 +231,16 @@ class localNav_Astar:
 		local_occupancy_map = occupancy_map.copy()
 		local_occupancy_map[local_occupancy_map == cfg.FE.UNOBSERVED_VAL] = cfg.FE.COLLISION_VAL
 
+		G = build_graph(local_occupancy_map)
 
-		'''
-		plt.imshow(local_occupancy_map)
-		plt.show()
-		'''
-		H, W = local_occupancy_map.shape
-		x = np.linspace(0, W-1, W)
-		y = np.linspace(0, H-1, H)
-		xv, yv = np.meshgrid(x, y)
-		map_coords = np.stack((xv, yv), axis=2).astype(np.int16)
-
-		# take the non-obj pixels
-		mask_free = (local_occupancy_map != cfg.FE.COLLISION_VAL)
-		free_map_coords = map_coords[mask_free]
-
-		if free_map_coords.shape[0] == 0:
-			print(f'no free space cells on the occupancy map')
-			assert 1==2
-
-		#===================== build the graph ======================
-		roadmap = {}
-		num_nodes = free_map_coords.shape[0]
-		for i in range(num_nodes):
-			neighbors = []
-			x, y = free_map_coords[i]
-			# bottom
-			if y+1 < H and mask_free[y+1, x]:
-				neighbors.append((x, y+1))
-			# top
-			if y-1 >= 0 and mask_free[y-1, x]:
-				neighbors.append((x, y-1))
-			# left
-			if x-1 >= 0 and mask_free[y, x-1]:
-				neighbors.append((x-1, y))
-			# right
-			if x+1 < W and mask_free[y, x+1]:
-				neighbors.append((x+1, y))
-			# top left
-			if x-1 >= 0 and y-1 >= 0 and mask_free[y-1, x-1]:
-				neighbors.append((x-1, y-1))
-			# top right
-			if x+1 < W and y-1 >= 0 and mask_free[y-1, x+1]:
-				neighbors.append((x+1, y-1))
-			# bottom left
-			if x-1 >= 0 and y+1 < H and mask_free[y+1, x-1]:
-				neighbors.append((x-1, y+1))
-			# bottom right
-			if x+1 < W and y+1 < H and mask_free[y+1, x+1]:
-				neighbors.append((x+1, y+1))
-
-			roadmap[tuple(free_map_coords[i])] = neighbors
-
-		#print(f'roadmap = {roadmap}')
 		#===================== find the subgoal (closest to peak and reachable from agent)
-		subgoal_coords = np.array(fron_centroid_coords)
+		subgoal_coords = fron_centroid_coords
 		subgoal_pose = pxl_coords_to_pose(subgoal_coords, self.pose_range, self.coords_range, self.WH)
 
-		#===================== Using A* to navigate to the subgoal
-		path = AStarSearch(agent_coords, subgoal_coords, roadmap)
-		#print(f'path = {path}')
+		#============================== Using A* to navigate to the subgoal ==============================
+		print(f'agent_coords = {agent_coords[::-1]}, subgoal_coords = {subgoal_coords[::-1]}')
+		path = nx.shortest_path(G, source=agent_coords[::-1], target=subgoal_coords[::-1])
+		path = [t[::-1] for t in path]
 
 		#========================== visualize the path ==========================
 		#'''
@@ -431,66 +411,17 @@ class localNav_Astar:
 		local_occupancy_map = occupancy_map.copy()
 		local_occupancy_map[local_occupancy_map == cfg.FE.UNOBSERVED_VAL] = cfg.FE.COLLISION_VAL
 
-		H, W = local_occupancy_map.shape
-		x = np.linspace(0, W-1, W)
-		y = np.linspace(0, H-1, H)
-		xv, yv = np.meshgrid(x, y)
-		map_coords = np.stack((xv, yv), axis=2).astype(np.int16)
+		G = build_graph(local_occupancy_map)
 
-		# take the non-obj pixels
-		mask_free = (local_occupancy_map != cfg.FE.COLLISION_VAL)
-		free_map_coords = map_coords[mask_free]
-
-		if free_map_coords.shape[0] == 0:
-			print(f'no free space cells on the occupancy map')
-			assert 1==2
-
-		#===================== build the graph ======================
-		roadmap = {}
-		num_nodes = free_map_coords.shape[0]
-		for i in range(num_nodes):
-			neighbors = []
-			x, y = free_map_coords[i]
-			# bottom
-			if y+1 < H and mask_free[y+1, x]:
-				neighbors.append((x, y+1))
-			# top
-			if y-1 >= 0 and mask_free[y-1, x]:
-				neighbors.append((x, y-1))
-			# left
-			if x-1 >= 0 and mask_free[y, x-1]:
-				neighbors.append((x-1, y))
-			# right
-			if x+1 < W and mask_free[y, x+1]:
-				neighbors.append((x+1, y))
-			# top left
-			if x-1 >= 0 and y-1 >= 0 and mask_free[y-1, x-1]:
-				neighbors.append((x-1, y-1))
-			# top right
-			if x+1 < W and y-1 >= 0 and mask_free[y-1, x+1]:
-				neighbors.append((x+1, y-1))
-			# bottom left
-			if x-1 >= 0 and y+1 < H and mask_free[y+1, x-1]:
-				neighbors.append((x-1, y+1))
-			# bottom right
-			if x+1 < W and y+1 < H and mask_free[y+1, x+1]:
-				neighbors.append((x+1, y+1))
-
-			roadmap[tuple(free_map_coords[i])] = neighbors
-
-		#print(f'roadmap = {roadmap}')
-		#===================== find the subgoal (closest to peak and reachable from agent)
-		reachable_locs = breadthFirstSearch(agent_coords, roadmap)
-		reachable_locs = np.array(list(map(list, reachable_locs)))
-
+		reachable_locs = list(nx.node_connected_component(G, (agent_coords[1], agent_coords[0])))
+		reachable_locs = [t[::-1] for t in reachable_locs]
+		
 		filtered_frontiers = set()
 		for fron in frontiers:
 			fron_centroid_coords = (int(fron.centroid[1]), int(fron.centroid[0]))
-			manhatten_dist = np.sum(np.absolute(reachable_locs - fron_centroid_coords), axis=1)
-			if (manhatten_dist == 0).any():
+			if fron_centroid_coords in reachable_locs:
 				filtered_frontiers.add(fron)
 		return filtered_frontiers
-	
 
 
 ''' test
