@@ -43,57 +43,65 @@ class SemanticMap:
 		self.four_dim_grid = np.zeros((len(self.z_grid), cfg.SEM_MAP.GRID_Y_SIZE, len(self.x_grid), cfg.SEM_MAP.GRID_CLASS_SIZE), dtype=np.int16) # x, y, z, C
 		self.H, self.W = len(self.z_grid), len(self.x_grid)
 
-	def build_semantic_map(self, obs, pose, step=0, saved_folder=''):
-		# load rgb image, depth and sseg
-		rgb_img = obs['rgb']
-		depth_img = 5. * obs['depth']
-		depth_img = cv2.blur(depth_img, (3,3))
-		#print(f'depth_img.shape = {depth_img.shape}')
-		InsSeg_img = obs["semantic"]
-		sseg_img = convertInsSegToSSeg(InsSeg_img, self.ins2cat_dict)
-		sem_map_pose = (pose[0], -pose[1], -pose[2]) # x, z, theta
-		print('pose = {}'.format(pose))
+	def build_semantic_map(self, obs_list, pose_list, step=0, saved_folder=''):
+		assert len(obs_list) == len(pose_list)
+		for idx, obs in enumerate(obs_list):
+			pose = pose_list[idx]
+			# load rgb image, depth and sseg
+			rgb_img = obs['rgb']
+			depth_img = 5. * obs['depth']
+			depth_img = cv2.blur(depth_img, (3,3))
+			#print(f'depth_img.shape = {depth_img.shape}')
+			InsSeg_img = obs["semantic"]
+			sseg_img = convertInsSegToSSeg(InsSeg_img, self.ins2cat_dict)
+			sem_map_pose = (pose[0], -pose[1], -pose[2]) # x, z, theta
+			#print('pose = {}'.format(pose))
 
-		#'''
-		#if step % 10 == 0:
-		if cfg.SEM_MAP.FLAG_VISUALIZE_EGO_OBS:
-			fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(15, 6))
-			ax[0].imshow(rgb_img)
-			ax[0].get_xaxis().set_visible(False)
-			ax[0].get_yaxis().set_visible(False)
-			ax[0].set_title("rgb")
-			ax[1].imshow(apply_color_to_map(sseg_img))
-			ax[1].get_xaxis().set_visible(False)
-			ax[1].get_yaxis().set_visible(False)
-			ax[1].set_title("sseg")
-			ax[2].imshow(depth_img)
-			ax[2].get_xaxis().set_visible(False)
-			ax[2].get_yaxis().set_visible(False)
-			ax[2].set_title("depth")
-			fig.tight_layout()
-			plt.show()
-			#fig.savefig(f'{saved_folder}/step_{step}_obs.jpg')
-			#plt.close()
-		#'''
+			#'''
+			#if step % 10 == 0:
+			if cfg.SEM_MAP.FLAG_VISUALIZE_EGO_OBS:
+				fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(15, 6))
+				ax[0].imshow(rgb_img)
+				ax[0].get_xaxis().set_visible(False)
+				ax[0].get_yaxis().set_visible(False)
+				ax[0].set_title("rgb")
+				ax[1].imshow(apply_color_to_map(sseg_img))
+				ax[1].get_xaxis().set_visible(False)
+				ax[1].get_yaxis().set_visible(False)
+				ax[1].set_title("sseg")
+				ax[2].imshow(depth_img)
+				ax[2].get_xaxis().set_visible(False)
+				ax[2].get_yaxis().set_visible(False)
+				ax[2].set_title("depth")
+				fig.tight_layout()
+				plt.show()
+				#fig.savefig(f'{saved_folder}/step_{step}_obs.jpg')
+				#plt.close()
+			#'''
+			if cfg.NAVI.HFOV == 90:
+				xyz_points, sseg_points = project_pixels_to_world_coords(sseg_img, depth_img, sem_map_pose, gap=2, FOV=90, cx=160, cy=320, resolution_x=320, resolution_y=640, theta_x=-0.785, ignored_classes=self.IGNORED_CLASS)
+			elif cfg.NAVI.HFOV == 360:
+				xyz_points, sseg_points = project_pixels_to_world_coords(sseg_img, depth_img, sem_map_pose, gap=2, FOV=120, cx=240, cy=320, resolution_x=480, resolution_y=640, theta_x=-0.785, ignored_classes=self.IGNORED_CLASS)
 
-		xyz_points, sseg_points = project_pixels_to_world_coords(sseg_img, depth_img, sem_map_pose, gap=2, FOV=90, cx=160, cy=320, resolution_x=320, resolution_y=640, theta_x=-0.785, ignored_classes=self.IGNORED_CLASS)
+			#print(f'xyz_points.shape = {xyz_points.shape}')
+			#print(f'sseg_points.shape = {sseg_points.shape}')
 
-		mask_X = np.logical_and(xyz_points[0, :] > self.min_X, xyz_points[0, :] < self.max_X) 
-		mask_Y = np.logical_and(xyz_points[1, :] > 0.0, xyz_points[1, :] < 100.0)
-		mask_Z = np.logical_and(xyz_points[2, :] > self.min_Z, xyz_points[2, :] < self.max_Z)  
-		mask_XYZ = np.logical_and.reduce((mask_X, mask_Y, mask_Z))
-		xyz_points = xyz_points[:, mask_XYZ]
-		sseg_points = sseg_points[mask_XYZ]
+			mask_X = np.logical_and(xyz_points[0, :] > self.min_X, xyz_points[0, :] < self.max_X) 
+			mask_Y = np.logical_and(xyz_points[1, :] > 0.0, xyz_points[1, :] < 100.0)
+			mask_Z = np.logical_and(xyz_points[2, :] > self.min_Z, xyz_points[2, :] < self.max_Z)  
+			mask_XYZ = np.logical_and.reduce((mask_X, mask_Y, mask_Z))
+			xyz_points = xyz_points[:, mask_XYZ]
+			sseg_points = sseg_points[mask_XYZ]
 
-		x_coord = np.floor((xyz_points[0, :] - self.min_X) / self.cell_size).astype(int)
-		y_coord = np.floor(xyz_points[1, :] / self.cell_size).astype(int)
-		z_coord = (self.H-1) - np.floor((xyz_points[2, :] - self.min_Z) / self.cell_size).astype(int)
-		mask_y_coord = y_coord < cfg.SEM_MAP.GRID_Y_SIZE
-		x_coord = x_coord[mask_y_coord]
-		y_coord = y_coord[mask_y_coord]
-		z_coord = z_coord[mask_y_coord]
-		sseg_points = sseg_points[mask_y_coord]
-		self.four_dim_grid[z_coord, y_coord, x_coord, sseg_points] += 1
+			x_coord = np.floor((xyz_points[0, :] - self.min_X) / self.cell_size).astype(int)
+			y_coord = np.floor(xyz_points[1, :] / self.cell_size).astype(int)
+			z_coord = (self.H-1) - np.floor((xyz_points[2, :] - self.min_Z) / self.cell_size).astype(int)
+			mask_y_coord = y_coord < cfg.SEM_MAP.GRID_Y_SIZE
+			x_coord = x_coord[mask_y_coord]
+			y_coord = y_coord[mask_y_coord]
+			z_coord = z_coord[mask_y_coord]
+			sseg_points = sseg_points[mask_y_coord]
+			self.four_dim_grid[z_coord, y_coord, x_coord, sseg_points] += 1
 		#assert 1==2
 
 	def get_semantic_map(self):

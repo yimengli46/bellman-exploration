@@ -23,6 +23,14 @@ def minus_theta_fn(previous_theta, current_theta):
     result -= 2*math.pi
   return result
 
+def plus_theta_fn (previous_theta, current_theta):
+  result = current_theta + previous_theta
+  if result < -math.pi:
+    result += 2 * math.pi
+  if result > math.pi:
+    result -= 2 * math.pi
+  return result
+
 def project_pixels_to_camera_coords (sseg_img, current_depth, current_pose, gap=2, FOV=90, cx=320, cy=240, resolution_x=640, resolution_y=480, ignored_classes=[]):
   ## camera intrinsic matrix
   FOV = 79

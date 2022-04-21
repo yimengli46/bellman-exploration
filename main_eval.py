@@ -26,10 +26,17 @@ config = habitat.get_config(config_paths=cfg.GENERAL.HABITAT_CONFIG_PATH)
 config.defrost()
 config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_EPISODE_DATA_PATH
 config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
+if cfg.NAVI.HFOV == 360:
+	config.SIMULATOR.RGB_SENSOR.WIDTH = 480
+	config.SIMULATOR.RGB_SENSOR.HFOV = 120
+	config.SIMULATOR.DEPTH_SENSOR.WIDTH = 480
+	config.SIMULATOR.DEPTH_SENSOR.HFOV = 120
+	config.SIMULATOR.SEMANTIC_SENSOR.WIDTH = 480
+	config.SIMULATOR.SEMANTIC_SENSOR.HFOV = 120
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-for episode_id in range(18):
+for episode_id in range(1):
 	env.reset()
 	print('episode_id = {}'.format(episode_id))
 	print('env.current_episode = {}'.format(env.current_episode))
@@ -66,10 +73,10 @@ for episode_id in range(18):
 				flag = False
 				steps = 0
 				covered_area_percent = 0
-				try:
-					flag, covered_area_percent, steps = nav(env, idx, scene_name, height, start_pose, saved_folder)
-				except:
-					print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
+				#try:
+				flag, covered_area_percent, steps = nav(env, idx, scene_name, height, start_pose, saved_folder)
+				#except:
+				#print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
 
 				result = {}
 				result['eps_id'] = idx

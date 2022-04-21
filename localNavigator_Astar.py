@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt 
-from baseline_utils import pose_to_coords, pxl_coords_to_pose, map_rot_to_planner_rot, planner_rot_to_map_rot
+from baseline_utils import pose_to_coords, pxl_coords_to_pose, map_rot_to_planner_rot, planner_rot_to_map_rot, minus_theta_fn, plus_theta_fn
 import math
 import heapq as hq
 from collections import deque
@@ -10,22 +10,6 @@ import networkx as nx
 upper_thresh_theta = math.pi / 6
 lower_thresh_theta = math.pi / 12
 
-## result is in the range [-pi, pi]
-def minus_theta_fn (previous_theta, current_theta):
-	result = current_theta - previous_theta
-	if result < -math.pi:
-		result += 2 * math.pi
-	if result > math.pi:
-		result -= 2 * math.pi
-	return result
-
-def plus_theta_fn (previous_theta, current_theta):
-	result = current_theta + previous_theta
-	if result < -math.pi:
-		result += 2 * math.pi
-	if result > math.pi:
-		result -= 2 * math.pi
-	return result
 
 class Node():
 	def __init__(self, loc, parent, cost):

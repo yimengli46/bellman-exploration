@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import math
 from math import cos, sin, acos, atan2, pi, floor, degrees
 import random
-from navigation_utils import change_brightness, SimpleRLEnv
-from baseline_utils import apply_color_to_map, pose_to_coords, gen_arrow_head_marker, read_map_npy, read_occ_map_npy
+from navigation_utils import change_brightness, SimpleRLEnv, get_obs_and_pose
+from baseline_utils import apply_color_to_map, pose_to_coords, gen_arrow_head_marker, read_map_npy, read_occ_map_npy, plus_theta_fn
 from map_utils import SemanticMap
 from localNavigator_Astar import localNav_Astar
 import habitat
@@ -31,6 +31,13 @@ config = habitat.get_config(config_paths=cfg.GENERAL.HABITAT_CONFIG_PATH)
 config.defrost()
 config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_EPISODE_DATA_PATH
 config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
+if cfg.NAVI.HFOV == 360:
+	config.SIMULATOR.RGB_SENSOR.WIDTH = 480
+	config.SIMULATOR.RGB_SENSOR.HFOV = 120
+	config.SIMULATOR.DEPTH_SENSOR.WIDTH = 480
+	config.SIMULATOR.DEPTH_SENSOR.HFOV = 120
+	config.SIMULATOR.SEMANTIC_SENSOR.WIDTH = 480
+	config.SIMULATOR.SEMANTIC_SENSOR.HFOV = 120
 config.freeze()
 env = SimpleRLEnv(config=config)
 
@@ -59,12 +66,26 @@ traverse_lst = []
 #===================================== setup the start location ===============================#
 
 agent_pos = np.array([start_pose[0], scene_height, start_pose[1]]) # (6.6, -6.9), (3.6, -4.5)
-agent_rot = habitat_sim.utils.common.quat_from_angle_axis(start_pose[2], habitat_sim.geo.GRAVITY)
 # check if the start point is navigable
 if not env.habitat_env.sim.is_navigable(agent_pos):
 	print(f'start pose is not navigable ...')
 	assert 1==2
-obs = env.habitat_env.sim.get_observations_at(agent_pos, agent_rot, keep_agent_at_new_pose=True)
+
+if cfg.NAVI.HFOV == 90:
+	obs_list, pose_list = [], []
+	heading_angle = start_pose[2]
+	obs, pose = get_obs_and_pose(env, agent_pos, heading_angle)
+	obs_list.append(obs)
+	pose_list.append(pose)
+elif cfg.NAVI.HFOV == 360:
+	obs_list, pose_list = [], []
+	for rot in [120, 240, 0]:
+		heading_angle = rot / 180 * np.pi
+		heading_angle = plus_theta_fn(heading_angle, start_pose[2])
+		obs, pose = get_obs_and_pose(env, agent_pos, heading_angle)
+		obs_list.append(obs)
+		pose_list.append(pose)
+
 
 step = 0
 subgoal_coords = None
@@ -79,19 +100,14 @@ while step < cfg.NAVI.NUM_STEPS:
 	print(f'step = {step}')
 
 	#=============================== get agent global pose on habitat env ========================#
-	agent_pos = env.habitat_env.sim.get_agent_state().position
-	agent_rot = env.habitat_env.sim.get_agent_state().rotation
-	heading_vector = quaternion_rotate_vector(agent_rot.inverse(), np.array([0, 0, -1]))
-	phi = cartesian_to_polar(-heading_vector[2], heading_vector[0])[1]
-	angle = phi
-	print(f'agent position = {agent_pos}, angle = {angle}')
-	pose = (agent_pos[0], agent_pos[2], angle)
+	pose = pose_list[-1]
+	print(f'agent position = {pose[:2]}, angle = {pose[2]}')
 	agent_map_pose = (pose[0], -pose[1], -pose[2])
 	traverse_lst.append(agent_map_pose)
 
 	# add the observed area
 	t0 = timer()
-	semMap_module.build_semantic_map(obs, pose, step=step, saved_folder=saved_folder)
+	semMap_module.build_semantic_map(obs_list, pose_list, step=step, saved_folder=saved_folder)
 	t1 = timer()
 	print(f'build map time = {t1 - t0}')
 
@@ -210,6 +226,18 @@ while step < cfg.NAVI.NUM_STEPS:
 		print(f'next_pose = {next_pose}')
 		agent_pos = np.array([next_pose[0], scene_height, next_pose[1]])
 		# output rot is negative of the input angle
-		agent_rot = habitat_sim.utils.common.quat_from_angle_axis(-next_pose[2], habitat_sim.geo.GRAVITY)
-		obs = env.habitat_env.sim.get_observations_at(agent_pos, agent_rot, keep_agent_at_new_pose=True)
+		if cfg.NAVI.HFOV == 90:
+			obs_list, pose_list = [], []
+			heading_angle = -next_pose[2]
+			obs, pose = get_obs_and_pose(env, agent_pos, heading_angle)
+			obs_list.append(obs)
+			pose_list.append(pose)
+		elif cfg.NAVI.HFOV == 360:
+			obs_list, pose_list = [], []
+			for rot in [120, 240, 0]:
+				heading_angle = rot / 180 * np.pi
+				heading_angle = plus_theta_fn(heading_angle, -next_pose[2])
+				obs, pose = get_obs_and_pose(env, agent_pos, heading_angle)
+				obs_list.append(obs)
+				pose_list.append(pose)
 
