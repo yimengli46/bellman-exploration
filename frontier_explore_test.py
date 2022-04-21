@@ -119,7 +119,7 @@ while step < cfg.NAVI.NUM_STEPS:
 		improved_observed_occupancy_map = fr_utils.remove_isolated_points(observed_occupancy_map)
 		t3 = timer()
 		print(f't3- t2 = {t3 - t2}')
-		frontiers = fr_utils.get_frontiers(improved_observed_occupancy_map)
+		frontiers = fr_utils.get_frontiers(improved_observed_occupancy_map, gt_occupancy_map, observed_area_flag)
 		t4 = timer()
 		print(f't4- t3 = {t4 - t3}')
 		frontiers = LN.filter_unreachable_frontiers(frontiers, agent_map_pose, observed_occupancy_map)

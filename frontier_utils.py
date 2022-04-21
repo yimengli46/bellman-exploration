@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from core import cfg
 import scipy.ndimage
 from baseline_utils import pose_to_coords
+from math import sqrt
 
 class Frontier(object):
 	def __init__(self, points):
@@ -36,6 +37,9 @@ class Frontier(object):
 
 		# Compute and cache the hash
 		self.hash = hash(self.points.tobytes())
+
+		self.R = 1
+		self.D = 1.
 
 	def set_props(self,
 				  prob_feasible,
@@ -121,7 +125,7 @@ def mask_grid_with_frontiers(occupancy_grid, frontiers, do_not_mask=None):
 
 	return masked_grid
 
-def get_frontiers(occupancy_grid):
+def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag):
 	filtered_grid = scipy.ndimage.maximum_filter(occupancy_grid == cfg.FE.UNOBSERVED_VAL, size=3)
 	frontier_point_mask = np.logical_and(filtered_grid, occupancy_grid == cfg.FE.FREE_VAL)
 
@@ -144,6 +148,43 @@ def get_frontiers(occupancy_grid):
 				np.concatenate((raw_frontier_indices[0][None, :],
 								raw_frontier_indices[1][None, :]),
 							   axis=0)))
+
+	# Compute potential
+	if cfg.NAVI.PERCEPTION == 'Potential':
+		free_but_unobserved_flag = np.logical_and(gt_occupancy_grid == cfg.FE.FREE_VAL, observed_area_flag == False)
+		free_but_unobserved_flag = scipy.ndimage.maximum_filter(free_but_unobserved_flag, size=3)
+
+		labels, nb = scipy.ndimage.label(free_but_unobserved_flag)
+
+		for ii in range(nb):
+			component = (labels == (ii+1))
+			for f in frontiers:
+				if component[int(f.centroid[0]), int(f.centroid[1])]:
+					f.R = np.sum(component)
+					f.D = round(sqrt(f.R), 2)
+
+					if cfg.NAVI.FLAG_VISUALIZE_FRONTIER_POTENTIAL:
+						fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 5))
+						ax[0].imshow(occupancy_grid)
+						ax[0].scatter(f.points[1], f.points[0], c='white', zorder=2)
+						ax[0].scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
+						ax[0].get_xaxis().set_visible(False)
+						ax[0].get_yaxis().set_visible(False)
+						ax[0].set_title('explored occupancy map')
+
+						ax[1].imshow(component)
+						ax[1].get_xaxis().set_visible(False)
+						ax[1].get_yaxis().set_visible(False)
+						ax[1].set_title('area potential')
+
+						ax[2].imshow(gt_occupancy_grid)
+						ax[2].get_xaxis().set_visible(False)
+						ax[2].get_yaxis().set_visible(False)
+						ax[2].set_title('gt occupancy map')
+
+						fig.tight_layout()
+						plt.title(f'component {ii}')
+						plt.show()
 
 	return frontiers
 
@@ -169,14 +210,23 @@ def nearest_value_og(occupancy_grid, i, j, threshold=4):
 	return occupancy_grid[i][j]
 
 def get_frontier_with_maximum_area(frontiers, visited_frontiers, gt_occupancy_grid):
-	count_free_space_at_frontiers(frontiers, gt_occupancy_grid)
-	max_area = 0
-	max_fron = None
-	for fron in frontiers:
-		if fron not in visited_frontiers:
-			if fron.area_neigh > max_area:
-				max_area = fron.area_neigh
-				max_fron = fron
+	if cfg.NAVI.PERCEPTION == 'Anticipation':
+		count_free_space_at_frontiers(frontiers, gt_occupancy_grid)
+		max_area = 0
+		max_fron = None
+		for fron in frontiers:
+			if fron not in visited_frontiers:
+				if fron.area_neigh > max_area:
+					max_area = fron.area_neigh
+					max_fron = fron
+	elif cfg.NAVI.PERCEPTION == 'Potential':
+		max_area = 0
+		max_fron = None
+		for fron in frontiers:
+			if fron not in visited_frontiers:
+				if fron.R > max_area:
+					max_area = fron.R
+					max_fron = fron
 
 	return max_fron
 

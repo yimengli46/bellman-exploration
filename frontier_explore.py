@@ -86,7 +86,7 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 
 			improved_observed_occupancy_map = fr_utils.remove_isolated_points(observed_occupancy_map)
 
-			frontiers = fr_utils.get_frontiers(improved_observed_occupancy_map)
+			frontiers = fr_utils.get_frontiers(improved_observed_occupancy_map, gt_occupancy_map, observed_area_flag)
 
 			frontiers = LN.filter_unreachable_frontiers(frontiers, agent_map_pose, observed_occupancy_map)
 

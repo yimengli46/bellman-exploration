@@ -14,7 +14,7 @@ _C.GENERAL.RANDOM_SEED = 5
 #================================= for save =======================================
 _C.SAVE = CN()
 _C.SAVE.OCCUPANCY_MAP_PATH = 'output/semantic_map' # built occupancy map
-_C.SAVE.TESTING_RESULTS_FOLDER = 'output/TESTING_RESULTS_360degree_Greedy_Frontier_Occupancy'
+_C.SAVE.TESTING_RESULTS_FOLDER = 'output/TESTING_RESULTS_360degree_Greedy_Potential'
 
 #================================== for main_nav.py =====================
 _C.MAIN = CN()
@@ -46,6 +46,8 @@ _C.NAVI.USE_ROOM_TYPES = True
 
 _C.NAVI.HFOV = 360 # 360 means panorama, 90 means single view
 
+_C.NAVI.PERCEPTION = 'Potential' # possible choices 'Anticipation'
+
 #========================== for short-range nav ====================================
 _C.LN = CN()
 _C.LN.LOCAL_MAP_MARGIN = 30 
@@ -71,3 +73,4 @@ _C.SEM_MAP.FLAG_VISUALIZE_EGO_OBS = False
 _C.LN.FLAG_VISUALIZE_LOCAL_MAP = False
 _C.NAVI.FLAG_VISUALIZE_FINAL_TRAJ = True
 _C.NAVI.FLAG_VISUALIZE_MIDDLE_TRAJ = True
+_C.NAVI.FLAG_VISUALIZE_FRONTIER_POTENTIAL = False
