@@ -36,7 +36,7 @@ if cfg.NAVI.HFOV == 360:
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-for episode_id in range(1):
+for episode_id in range(18):
 	env.reset()
 	print('episode_id = {}'.format(episode_id))
 	print('env.current_episode = {}'.format(env.current_episode))
@@ -73,10 +73,10 @@ for episode_id in range(1):
 				flag = False
 				steps = 0
 				covered_area_percent = 0
-				#try:
-				flag, covered_area_percent, steps = nav(env, idx, scene_name, height, start_pose, saved_folder)
-				#except:
-				#print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
+				try:
+					flag, covered_area_percent, steps = nav(env, idx, scene_name, height, start_pose, saved_folder)
+				except:
+					print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
 
 				result = {}
 				result['eps_id'] = idx

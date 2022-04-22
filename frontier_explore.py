@@ -66,7 +66,7 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 	subgoal_pose = None 
 	MODE_FIND_SUBGOAL = True
 	MODE_FIND_GOAL = False
-	visited_frontier = []
+	visited_frontier = set()
 	chosen_frontier = None
 
 	while step < cfg.NAVI.NUM_STEPS:
@@ -87,10 +87,11 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 			improved_observed_occupancy_map = fr_utils.remove_isolated_points(observed_occupancy_map)
 
 			frontiers = fr_utils.get_frontiers(improved_observed_occupancy_map, gt_occupancy_map, observed_area_flag)
+			frontiers = frontiers - visited_frontier
 
 			frontiers = LN.filter_unreachable_frontiers(frontiers, agent_map_pose, observed_occupancy_map)
 
-			chosen_frontier = fr_utils.get_frontier_with_maximum_area(frontiers, visited_frontier, gt_occupancy_map)
+			chosen_frontier = fr_utils.get_frontier_with_maximum_area(frontiers, gt_occupancy_map)
 
 			#============================================= visualize semantic map ===========================================#
 			if cfg.NAVI.FLAG_VISUALIZE_MIDDLE_TRAJ:
@@ -169,7 +170,7 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 		elif action == "": # finished navigating to the subgoal
 			print(f'reached the subgoal')
 			MODE_FIND_SUBGOAL = True
-			visited_frontier.append(chosen_frontier)
+			visited_frontier.add(chosen_frontier)
 		else:
 			step += 1
 			print(f'next_pose = {next_pose}')

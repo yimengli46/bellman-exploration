@@ -407,6 +407,24 @@ class localNav_Astar:
 				filtered_frontiers.add(fron)
 		return filtered_frontiers
 
+	def filter_unreachable_frontiers_temp(self, frontiers, agent_coords, occupancy_map):
+
+		#================================ find a reachable subgoal on the map ==============================
+		local_occupancy_map = occupancy_map.copy()
+		local_occupancy_map[local_occupancy_map == cfg.FE.UNOBSERVED_VAL] = cfg.FE.COLLISION_VAL
+
+		G = build_graph(local_occupancy_map)
+
+		reachable_locs = list(nx.node_connected_component(G, (agent_coords[1], agent_coords[0])))
+		reachable_locs = [t[::-1] for t in reachable_locs]
+		
+		filtered_frontiers = set()
+		for fron in frontiers:
+			fron_centroid_coords = (int(fron.centroid[1]), int(fron.centroid[0]))
+			if fron_centroid_coords in reachable_locs:
+				filtered_frontiers.add(fron)
+		return filtered_frontiers
+
 
 ''' test
 LN = localNav_Astar((-10.6, -17.5, 18.4, 10.6), (91, 159, 198, 258))

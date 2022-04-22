@@ -93,7 +93,7 @@ subgoal_pose = None
 MODE_FIND_SUBGOAL = True
 explore_steps = 0
 MODE_FIND_GOAL = False
-visited_frontier = []
+visited_frontier = set()
 chosen_frontier = None
 
 while step < cfg.NAVI.NUM_STEPS:
@@ -120,12 +120,13 @@ while step < cfg.NAVI.NUM_STEPS:
 		t3 = timer()
 		print(f't3- t2 = {t3 - t2}')
 		frontiers = fr_utils.get_frontiers(improved_observed_occupancy_map, gt_occupancy_map, observed_area_flag)
+		frontiers = frontiers - visited_frontier
 		t4 = timer()
 		print(f't4- t3 = {t4 - t3}')
 		frontiers = LN.filter_unreachable_frontiers(frontiers, agent_map_pose, observed_occupancy_map)
 		t5 = timer()
 		print(f't5- t4 = {t5 - t4}')
-		chosen_frontier = fr_utils.get_frontier_with_maximum_area(frontiers, visited_frontier, gt_occupancy_map)
+		chosen_frontier = fr_utils.get_frontier_with_maximum_area(frontiers, gt_occupancy_map)
 		t6 = timer()
 		print(f't6- t5 = {t6 - t5}')
 		#============================================= visualize semantic map ===========================================#
@@ -219,7 +220,7 @@ while step < cfg.NAVI.NUM_STEPS:
 	elif action == "": # finished navigating to the subgoal
 		print(f'reached the subgoal')
 		MODE_FIND_SUBGOAL = True
-		visited_frontier.append(chosen_frontier)
+		visited_frontier.add(chosen_frontier)
 	else:
 		step += 1
 		explore_steps += 1

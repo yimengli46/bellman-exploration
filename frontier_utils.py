@@ -209,24 +209,22 @@ def nearest_value_og(occupancy_grid, i, j, threshold=4):
 			return occupancy_value
 	return occupancy_grid[i][j]
 
-def get_frontier_with_maximum_area(frontiers, visited_frontiers, gt_occupancy_grid):
+def get_frontier_with_maximum_area(frontiers, gt_occupancy_grid):
 	if cfg.NAVI.PERCEPTION == 'Anticipation':
 		count_free_space_at_frontiers(frontiers, gt_occupancy_grid)
 		max_area = 0
 		max_fron = None
 		for fron in frontiers:
-			if fron not in visited_frontiers:
-				if fron.area_neigh > max_area:
-					max_area = fron.area_neigh
-					max_fron = fron
+			if fron.area_neigh > max_area:
+				max_area = fron.area_neigh
+				max_fron = fron
 	elif cfg.NAVI.PERCEPTION == 'Potential':
 		max_area = 0
 		max_fron = None
 		for fron in frontiers:
-			if fron not in visited_frontiers:
-				if fron.R > max_area:
-					max_area = fron.R
-					max_fron = fron
+			if fron.R > max_area:
+				max_area = fron.R
+				max_fron = fron
 
 	return max_fron
 
