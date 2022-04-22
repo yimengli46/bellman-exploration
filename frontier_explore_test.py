@@ -126,7 +126,11 @@ while step < cfg.NAVI.NUM_STEPS:
 		frontiers = LN.filter_unreachable_frontiers(frontiers, agent_map_pose, observed_occupancy_map)
 		t5 = timer()
 		print(f't5- t4 = {t5 - t4}')
-		chosen_frontier = fr_utils.get_frontier_with_maximum_area(frontiers, gt_occupancy_map)
+		if cfg.NAVI.STRATEGY == 'Greedy':
+			chosen_frontier = fr_utils.get_frontier_with_maximum_area(frontiers, gt_occupancy_map)
+		elif cfg.NAVI.STRATEGY == 'DP':
+			chosen_frontier = fr_utils.get_frontier_with_DP(frontiers, agent_map_pose, observed_occupancy_map, \
+				cfg.NAVI.NUM_STEPS-step, LN)
 		t6 = timer()
 		print(f't6- t5 = {t6 - t5}')
 		#============================================= visualize semantic map ===========================================#

@@ -244,4 +244,49 @@ def count_free_space_at_frontiers(frontiers, gt_occupancy_grid, area=10):
 		fron.area_neigh = np.sum(fron_neigh == cfg.FE.FREE_VAL)
 		#print(f'fron.area_neigh = {fron.area_neigh}')
 
+def get_frontier_with_DP(frontiers, agent_pose, observed_occupancy_map, steps, LN):
+	max_Q = 0
+	max_frontier = None
+	G = LN.get_G_from_map(observed_occupancy_map)
+	agent_coord = LN.get_agent_coords(agent_pose)
+	steps = steps / 3.
 
+	for fron in frontiers:
+		#print('-------------------------------------------------------------')
+		visited_frontiers = set()
+		Q = compute_Q(agent_coord, fron, frontiers, visited_frontiers, steps, G, LN)
+		if Q >= max_Q:
+			max_Q = Q
+			max_frontier = fron
+	return max_frontier
+
+def compute_Q(agent_coord, target_frontier, frontiers, visited_frontiers, steps, G, LN):
+	#print(f'agent_coord = {agent_coord}, target_frontier = {target_frontier.centroid}, steps = {steps}')
+	Q = 0
+	L = LN.compute_L(G, agent_coord, target_frontier)
+
+	# cond 1: agent has enough steps to reach target_frontier
+	if steps > L:
+		steps -= L
+
+		# cond 2: agent does not have enough steps to traverse target_frontier:
+		if steps <= target_frontier.D:
+			Q += 1. * steps / target_frontier.D * target_frontier.R
+		else:
+			steps -= target_frontier.D
+			Q += target_frontier.R
+			# cond 3: agent does have enough steps to reach target_frontier
+			if steps >= target_frontier.D:
+				steps -= target_frontier.D
+				visited_frontiers.add(target_frontier)
+				rest_frontiers = frontiers - visited_frontiers
+
+				max_next_Q = 0
+				for fron in rest_frontiers:
+					fron_centroid_coords = (int(target_frontier.centroid[1]), int(target_frontier.centroid[0]))
+					next_Q = compute_Q(fron_centroid_coords, fron, frontiers, visited_frontiers.copy(), steps, G, LN)
+					if next_Q > max_next_Q:
+						max_next_Q = next_Q
+				Q += max_next_Q
+	#print(f'Q = {Q}')
+	return Q

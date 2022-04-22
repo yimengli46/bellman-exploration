@@ -29,7 +29,8 @@ def compute_Q(agent_coord, target_frontier, frontiers, visited_frontiers, steps)
 
 				max_next_Q = 0
 				for fron in rest_frontiers:
-					next_Q = compute_Q(target_frontier.center, fron, frontiers, visited_frontiers, steps)
+
+					next_Q = compute_Q(target_frontier.center, fron, frontiers, visited_frontiers.copy(), steps)
 					if next_Q > max_next_Q:
 						max_next_Q = next_Q
 				Q += max_next_Q

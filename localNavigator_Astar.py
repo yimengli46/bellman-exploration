@@ -425,6 +425,32 @@ class localNav_Astar:
 				filtered_frontiers.add(fron)
 		return filtered_frontiers
 
+	def get_G_from_map(self, occupancy_map):
+		#================================ find a reachable subgoal on the map ==============================
+		local_occupancy_map = occupancy_map.copy()
+		local_occupancy_map[local_occupancy_map == cfg.FE.UNOBSERVED_VAL] = cfg.FE.COLLISION_VAL
+
+		G = build_graph(local_occupancy_map)
+		return G
+
+	def get_agent_coords(self, agent_pose):
+		agent_coords = pose_to_coords(agent_pose, self.pose_range, self.coords_range, self.WH)
+		return agent_coords
+
+	def compute_L (self, G, agent_coords, frontier):
+		fron_centroid_coords = (int(frontier.centroid[1]), int(frontier.centroid[0]))
+
+		#===================== find the subgoal (closest to peak and reachable from agent)
+		subgoal_coords = fron_centroid_coords
+
+		#============================== Using A* to navigate to the subgoal ==============================
+		#print(f'agent_coords = {agent_coords[::-1]}, subgoal_coords = {subgoal_coords[::-1]}')
+		path = nx.shortest_path(G, source=agent_coords[::-1], target=subgoal_coords[::-1])
+		path = [t[::-1] for t in path]
+
+		return len(path)
+
+
 
 ''' test
 LN = localNav_Astar((-10.6, -17.5, 18.4, 10.6), (91, 159, 198, 258))

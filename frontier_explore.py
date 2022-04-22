@@ -91,7 +91,11 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 
 			frontiers = LN.filter_unreachable_frontiers(frontiers, agent_map_pose, observed_occupancy_map)
 
-			chosen_frontier = fr_utils.get_frontier_with_maximum_area(frontiers, gt_occupancy_map)
+			if cfg.NAVI.STRATEGY == 'Greedy':
+				chosen_frontier = fr_utils.get_frontier_with_maximum_area(frontiers, gt_occupancy_map)
+			elif cfg.NAVI.STRATEGY == 'DP':
+				chosen_frontier = fr_utils.get_frontier_with_DP(frontiers, agent_map_pose, observed_occupancy_map, \
+					cfg.NAVI.NUM_STEPS-step, LN)
 
 			#============================================= visualize semantic map ===========================================#
 			if cfg.NAVI.FLAG_VISUALIZE_MIDDLE_TRAJ:
