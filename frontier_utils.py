@@ -8,6 +8,7 @@ from core import cfg
 import scipy.ndimage
 from baseline_utils import pose_to_coords
 from math import sqrt
+from operator import itemgetter
 
 class Frontier(object):
 	def __init__(self, points):
@@ -290,3 +291,19 @@ def compute_Q(agent_coord, target_frontier, frontiers, visited_frontiers, steps,
 				Q += max_next_Q
 	#print(f'Q = {Q}')
 	return Q
+
+def select_top_frontiers(frontiers, top_n=5):
+	if len(frontiers) <= top_n:
+		return frontiers
+
+	lst_frontiers = []
+	for fron in frontiers:
+		lst_frontiers.append((fron, fron.R))
+
+	res = sorted(lst_frontiers, key=itemgetter(1), reverse=True)[:top_n]
+
+	new_frontiers = set()
+	for fron, _ in res:
+		new_frontiers.add(fron)
+
+	return new_frontiers
