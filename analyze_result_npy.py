@@ -5,6 +5,7 @@ scene_list = cfg.MAIN.SCENE_LIST
 
 avg_percent_list = []
 avg_step_list = []
+thresh_percent = .2
 
 for scene_name in scene_list:
 	try:
@@ -22,9 +23,10 @@ for scene_name in scene_list:
 			flag_suc = result['flag']
 			if flag_suc:
 				percent = result['covered_area']
-				percent_list.append(percent)
-				step = result['steps']
-				step_list.append(step)
+				if percent > thresh_percent: # to deal with the bad start points
+					percent_list.append(percent)
+					step = result['steps']
+					step_list.append(step)
 
 		percent_list = np.array(percent_list)
 		print(f'percent_list = {percent_list}')

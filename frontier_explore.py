@@ -65,6 +65,7 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 	subgoal_coords = None
 	subgoal_pose = None 
 	MODE_FIND_SUBGOAL = True
+	explore_steps = 0
 	MODE_FIND_GOAL = False
 	visited_frontier = set()
 	chosen_frontier = None
@@ -84,9 +85,9 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 		if MODE_FIND_SUBGOAL:
 			observed_occupancy_map, gt_occupancy_map, observed_area_flag = semMap_module.get_observed_occupancy_map()
 
-			improved_observed_occupancy_map = fr_utils.remove_isolated_points(observed_occupancy_map)
+			#improved_observed_occupancy_map = fr_utils.remove_isolated_points(observed_occupancy_map)
 
-			frontiers = fr_utils.get_frontiers(improved_observed_occupancy_map, gt_occupancy_map, observed_area_flag)
+			frontiers = fr_utils.get_frontiers(observed_occupancy_map, gt_occupancy_map, observed_area_flag)
 			frontiers = frontiers - visited_frontier
 
 			frontiers = LN.filter_unreachable_frontiers(frontiers, agent_map_pose, observed_occupancy_map)
@@ -100,10 +101,10 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 			#============================================= visualize semantic map ===========================================#
 			if cfg.NAVI.FLAG_VISUALIZE_MIDDLE_TRAJ:
 				#==================================== visualize the path on the map ==============================
-				built_semantic_map, observed_area_flag, _ = semMap_module.get_semantic_map()
+				#built_semantic_map, observed_area_flag, _ = semMap_module.get_semantic_map()
 
-				color_built_semantic_map = apply_color_to_map(built_semantic_map)
-				color_built_semantic_map = change_brightness(color_built_semantic_map, observed_area_flag, value=60)
+				#color_built_semantic_map = apply_color_to_map(built_semantic_map)
+				#color_built_semantic_map = change_brightness(color_built_semantic_map, observed_area_flag, value=60)
 
 				#=================================== visualize the agent pose as red nodes =======================
 				x_coord_lst, z_coord_lst, theta_lst = [], [], []
@@ -114,25 +115,19 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 					theta_lst.append(cur_pose[2])
 
 				#'''
-				fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(25, 10))
-				ax[0].imshow(improved_observed_occupancy_map)
+				fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 10))
+				ax.imshow(observed_occupancy_map)
 				marker, scale = gen_arrow_head_marker(theta_lst[-1])
-				ax[0].scatter(x_coord_lst[-1], z_coord_lst[-1], marker=marker, s=(30*scale)**2, c='red', zorder=5)
-				ax[0].plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
+				ax.scatter(x_coord_lst[-1], z_coord_lst[-1], marker=marker, s=(30*scale)**2, c='red', zorder=5)
+				ax.plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
 				for f in frontiers:
-					ax[0].scatter(f.points[1], f.points[0], c='white', zorder=2)
-					ax[0].scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
+					ax.scatter(f.points[1], f.points[0], c='white', zorder=2)
+					ax.scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
 				if chosen_frontier is not None:
-					ax[0].scatter(chosen_frontier.points[1], chosen_frontier.points[0], c='green', zorder=4)
-					ax[0].scatter(chosen_frontier.centroid[1], chosen_frontier.centroid[0], c='red', zorder=4)
-				ax[0].get_xaxis().set_visible(False)
-				ax[0].get_yaxis().set_visible(False)
-				ax[0].set_title('improved observed_occ_map + frontiers')
-
-				ax[1].imshow(color_built_semantic_map)
-				ax[1].get_xaxis().set_visible(False)
-				ax[1].get_yaxis().set_visible(False)
-				ax[1].set_title('built semantic map')
+					ax.scatter(chosen_frontier.points[1], chosen_frontier.points[0], c='green', zorder=4)
+					ax.scatter(chosen_frontier.centroid[1], chosen_frontier.centroid[0], c='red', zorder=4)
+				ax.get_xaxis().set_visible(False)
+				ax.get_yaxis().set_visible(False)
 
 				fig.tight_layout()
 				plt.title('observed area')
@@ -150,6 +145,7 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 		#==================================== update particle filter =============================
 		if MODE_FIND_SUBGOAL:
 			MODE_FIND_SUBGOAL = False
+			explore_steps = 0
 			flag_plan, subgoal_coords, subgoal_pose = LN.plan_to_reach_frontier(chosen_frontier, agent_map_pose, observed_occupancy_map, step, saved_folder)
 
 			# sometimes the local planning is not successful
@@ -162,6 +158,7 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 		print(f'action = {action}')
 		if action == "collision":
 			step += 1
+			explore_steps += 1
 			#assert next_pose is None
 			# input next_pose is environment pose, not sem_map pose
 			semMap_module.add_occupied_cell_pose(next_pose)
@@ -177,6 +174,7 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 			visited_frontier.add(chosen_frontier)
 		else:
 			step += 1
+			explore_steps += 1
 			print(f'next_pose = {next_pose}')
 			agent_pos = np.array([next_pose[0], scene_height, next_pose[1]])
 			# output rot is negative of the input angle
@@ -194,6 +192,10 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 					obs, pose = get_obs_and_pose(env, agent_pos, heading_angle)
 					obs_list.append(obs)
 					pose_list.append(pose)
+
+		if explore_steps == cfg.NAVI.NUM_STEPS_EXPLORE:
+			explore_steps = 0
+			MODE_FIND_SUBGOAL = True
 
 	#============================================ Finish exploration =============================================
 	if cfg.NAVI.FLAG_VISUALIZE_FINAL_TRAJ:
@@ -213,7 +215,7 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 
 		#'''
 		fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(25, 10))
-		ax[0].imshow(improved_observed_occupancy_map)
+		ax[0].imshow(observed_occupancy_map)
 		marker, scale = gen_arrow_head_marker(theta_lst[-1])
 		ax[0].scatter(x_coord_lst[-1], z_coord_lst[-1], marker=marker, s=(30*scale)**2, c='red', zorder=5)
 		ax[0].scatter(x_coord_lst[0], z_coord_lst[0], marker='s', s=50, c='red', zorder=5)

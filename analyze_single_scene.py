@@ -8,7 +8,7 @@ avg_step_list = []
 
 for scene_name in scene_list:
 	try:
-		output_folder = 'output/TESTING_RESULTS_360degree_Greedy_Frontier_Occupancy'
+		output_folder = 'output/TESTING_RESULTS_360degree_Greedy_Potential_Test'
 
 		results_npy = np.load(f'{output_folder}/results_{scene_name}.npy', allow_pickle=True).item()
 		num_test = len(results_npy.keys())
