@@ -14,7 +14,7 @@ _C.GENERAL.RANDOM_SEED = 5
 #================================= for save =======================================
 _C.SAVE = CN()
 _C.SAVE.OCCUPANCY_MAP_PATH = 'output/semantic_map' # built occupancy map
-_C.SAVE.TESTING_RESULTS_FOLDER = 'output/TESTING_RESULTS_360degree_DP_Potential_10STEP'
+_C.SAVE.TESTING_RESULTS_FOLDER = 'output/TESTING_RESULTS_360degree_Greedy_Potential_10STEP_600STEPS'
 
 #================================== for main_nav.py =====================
 _C.MAIN = CN()
@@ -35,7 +35,7 @@ _C.SEM_MAP.GRID_CLASS_SIZE = 100
 
 #=============================== for navigator ====================================
 _C.NAVI = CN()
-_C.NAVI.NUM_STEPS = 1250
+_C.NAVI.NUM_STEPS = 600
 _C.NAVI.FLAG_GT_OCC_MAP = True
 _C.NAVI.NUM_STEPS_EXPLORE = 10
 

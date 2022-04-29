@@ -36,7 +36,7 @@ if cfg.NAVI.HFOV == 360:
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-for episode_id in range(17):
+for episode_id in range(18):
 	env.reset()
 	print('episode_id = {}'.format(episode_id))
 	print('env.current_episode = {}'.format(env.current_episode))
