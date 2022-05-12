@@ -48,7 +48,7 @@ _C.NAVI.HFOV = 360 # 360 means panorama, 90 means single view
 
 _C.NAVI.PERCEPTION = 'Potential' # possible choices 'Anticipation', 'Potential'
 
-_C.NAVI.STRATEGY = 'DP' # 'Greedy' vs 'DP'
+_C.NAVI.STRATEGY = 'Greedy' # 'Greedy' vs 'DP'
 
 
 #========================== for short-range nav ====================================

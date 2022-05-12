@@ -136,6 +136,7 @@ class SemanticMap:
 		occupancy_map = self.occupancy_map.copy()
 		occupancy_map = np.where(occupancy_map==1, cfg.FE.FREE_VAL, occupancy_map) # free cell
 		occupancy_map = np.where(occupancy_map==0, cfg.FE.COLLISION_VAL, occupancy_map) # occupied cell
+		
 
 		# add occupied cells
 		for pose in self.occupied_poses:

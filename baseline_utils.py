@@ -291,7 +291,7 @@ def pose_to_coords(cur_pose, pose_range, coords_range, WH, cell_size=0.1, flag_c
 
 def save_fig_through_plt(img, name):
   fig, ax = plt.subplots(nrows=1, ncols=1)
-  ax.imshow(img)
+  ax.imshow(img, cmap='gray')
   ax.get_xaxis().set_visible(False)
   ax.get_yaxis().set_visible(False)
   fig.tight_layout()
