@@ -7,7 +7,9 @@ from navigation_utils import SimpleRLEnv, get_scene_name
 from core import cfg
 
 split = 'test'
-scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
+scene_floor_dict = np.load(
+	f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy',
+	allow_pickle=True).item()
 
 #================================ load habitat env============================================
 config = habitat.get_config(config_paths=cfg.GENERAL.HABITAT_CONFIG_PATH)
@@ -43,7 +45,7 @@ for episode_id in range(18):
 			output_folder = cfg.SAVE.TESTING_RESULTS_FOLDER
 			scene_output_folder = f'{output_folder}/{scene_name}'
 			create_folder(scene_output_folder)
-			
+
 			testing_data = scene_dict[floor_id]['start_pose']
 			if not cfg.EVAL.USE_ALL_START_POINTS:
 				if len(testing_data) > 3:
@@ -52,9 +54,11 @@ for episode_id in range(18):
 			#'''
 			results = {}
 			for idx, data in enumerate(testing_data):
-			#for idx in range(1, 2):
+				#for idx in range(1, 2):
 				data = testing_data[idx]
-				print(f'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA EPS {idx} BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB')
+				print(
+					f'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA EPS {idx} BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+				)
 				start_pose = data
 				saved_folder = f'{scene_output_folder}/eps_{idx}'
 				create_folder(saved_folder, clean_up=True)
@@ -62,7 +66,8 @@ for episode_id in range(18):
 				steps = 0
 				covered_area_percent = 0
 				try:
-					flag, covered_area_percent, steps = nav(env, idx, scene_name, height, start_pose, saved_folder)
+					flag, covered_area_percent, steps = nav(
+						env, idx, scene_name, height, start_pose, saved_folder)
 				except:
 					print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
 
