@@ -1,4 +1,4 @@
-#Bellman-Equation-2022
+# Bellman-Equation-2022
 Detect frontiers between explored and unknown areas as subgoals.
 Select subgoals with maximum values computed from a Bellman Equation designed for exploration.
 
