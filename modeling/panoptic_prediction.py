@@ -20,14 +20,24 @@ from constants import coco_categories_mapping
 
 
 class PanopPred():
+    """ Running Detectron2 panoptic segmentation
+    """
 
     def __init__(self):
         self.segmentation_model = ImageSegmentation()
-        self.thing_list = MetadataCatalog.get("coco_2017_train_panoptic_separated").thing_classes
-        self.stuff_list = MetadataCatalog.get("coco_2017_train_panoptic_separated").stuff_classes
+        self.thing_list = MetadataCatalog.get(
+            "coco_2017_train_panoptic_separated").thing_classes
+        self.stuff_list = MetadataCatalog.get(
+            "coco_2017_train_panoptic_separated").stuff_classes
         whole_list = self.thing_list + self.stuff_list
-        self.whole2id_mapper = {whole_list[i] : i+1 for i in range(len(whole_list))}
-        self.id2whole_mapper = {i+1 : whole_list[i] for i in range(len(whole_list))}
+        self.whole2id_mapper = {
+            whole_list[i]: i + 1
+            for i in range(len(whole_list))
+        }
+        self.id2whole_mapper = {
+            i + 1: whole_list[i]
+            for i in range(len(whole_list))
+        }
 
     def get_prediction(self, img, flag_vis=False):
         image_list = []
@@ -54,7 +64,8 @@ class PanopPred():
             #print(f'i = {i}, name = {cat_name}')
 
             whole_list_id = self.whole2id_mapper[cat_name]
-            semseg = np.where(panoptic_seg == seg_dict['id'], whole_list_id, semseg)
+            semseg = np.where(panoptic_seg == seg_dict['id'], whole_list_id,
+                              semseg)
 
         return semseg, img
 
@@ -67,6 +78,7 @@ def compress_sem_map(sem_map):
 
 
 class ImageSegmentation():
+
     def __init__(self):
         string_args = """
             --config-file configs/COCO-PanopticSegmentation/panoptic_fpn_R_50_3x.yaml
@@ -110,19 +122,18 @@ def get_seg_parser():
         description="Detectron2 demo for builtin models")
     parser.add_argument(
         "--config-file",
-        default="configs/quick_schedules/mask_rcnn_R_50_FPN_inference_acc_test.yaml",
+        default=
+        "configs/quick_schedules/mask_rcnn_R_50_FPN_inference_acc_test.yaml",
         metavar="FILE",
         help="path to config file",
     )
-    parser.add_argument(
-        "--webcam",
-        action="store_true",
-        help="Take inputs from webcam.")
+    parser.add_argument("--webcam",
+                        action="store_true",
+                        help="Take inputs from webcam.")
     parser.add_argument("--video-input", help="Path to video file.")
-    parser.add_argument(
-        "--input",
-        nargs="+",
-        help="A list of space separated input images")
+    parser.add_argument("--input",
+                        nargs="+",
+                        help="A list of space separated input images")
     parser.add_argument(
         "--output",
         help="A file or directory to save output visualizations. "
@@ -145,6 +156,7 @@ def get_seg_parser():
 
 
 class VisualizationDemo(object):
+
     def __init__(self, cfg, instance_mode=ColorMode.IMAGE):
         """
         Args:
@@ -152,8 +164,7 @@ class VisualizationDemo(object):
             instance_mode (ColorMode):
         """
         self.metadata = MetadataCatalog.get(
-            cfg.DATASETS.TEST[0] if len(cfg.DATASETS.TEST) else "__unused"
-        )
+            cfg.DATASETS.TEST[0] if len(cfg.DATASETS.TEST) else "__unused")
         self.cpu_device = torch.device("cpu")
         self.instance_mode = instance_mode
 
@@ -176,19 +187,18 @@ class VisualizationDemo(object):
         if visualize:
             predictions = all_predictions[0]
             image = image_list[0]
-            visualizer = Visualizer(
-                image, self.metadata, instance_mode=self.instance_mode)
+            visualizer = Visualizer(image,
+                                    self.metadata,
+                                    instance_mode=self.instance_mode)
             if "panoptic_seg" in predictions:
                 panoptic_seg, segments_info = predictions["panoptic_seg"]
                 vis_output = visualizer.draw_panoptic_seg_predictions(
-                    panoptic_seg.to(self.cpu_device), segments_info
-                )
+                    panoptic_seg.to(self.cpu_device), segments_info)
             else:
                 if "sem_seg" in predictions:
                     vis_output = visualizer.draw_sem_seg(
-                        predictions["sem_seg"].argmax(
-                            dim=0).to(self.cpu_device)
-                    )
+                        predictions["sem_seg"].argmax(dim=0).to(
+                            self.cpu_device))
                 if "instances" in predictions:
                     instances = predictions["instances"].to(self.cpu_device)
                     vis_output = visualizer.draw_instance_predictions(
