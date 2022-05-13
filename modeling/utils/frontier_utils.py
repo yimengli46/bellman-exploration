@@ -1,8 +1,8 @@
-import numpy as np 
+import numpy as np
 import matplotlib.pyplot as plt
 from core import cfg
 import scipy.ndimage
-import numpy as np 
+import numpy as np
 import matplotlib.pyplot as plt
 from core import cfg
 import scipy.ndimage
@@ -10,7 +10,9 @@ from baseline_utils import pose_to_coords
 from math import sqrt
 from operator import itemgetter
 
+
 class Frontier(object):
+
 	def __init__(self, points):
 		"""Initialized with a 2xN numpy array of points (the grid cell
 		coordinates of all points on frontier boundary)."""
@@ -73,8 +75,8 @@ class Frontier(object):
 		"""Returns the point that is the centroid of the frontier"""
 		centroid = np.mean(self.points, axis=1)
 		return centroid
-	#'''
 
+	#'''
 	'''
 	def get_centroid(self):
 		#print(f'points.shape = {self.points.shape}')
@@ -103,6 +105,7 @@ class Frontier(object):
 	def __eq__(self, other):
 		return hash(self) == hash(other)
 
+
 def mask_grid_with_frontiers(occupancy_grid, frontiers, do_not_mask=None):
 	"""Mask grid cells in the provided occupancy_grid with the frontier points
 	contained with the set of 'frontiers'. If 'do_not_mask' is provided, and
@@ -121,20 +124,28 @@ def mask_grid_with_frontiers(occupancy_grid, frontiers, do_not_mask=None):
 
 	masked_grid = occupancy_grid.copy()
 	for frontier in masking_frontiers:
-		masked_grid[frontier.points[0, :],
-					frontier.points[1, :]] = 2
+		masked_grid[frontier.points[0, :], frontier.points[1, :]] = 2
 
 	return masked_grid
 
+
 def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag):
-	filtered_grid = scipy.ndimage.maximum_filter(occupancy_grid == cfg.FE.UNOBSERVED_VAL, size=3)
-	frontier_point_mask = np.logical_and(filtered_grid, occupancy_grid == cfg.FE.FREE_VAL)
+	""" detect frontiers from occupancy_grid. 
+
+	When the perception info is 'Potential', we use gt_occupancy_grid to compute the area of the component.
+	"""
+	filtered_grid = scipy.ndimage.maximum_filter(
+		occupancy_grid == cfg.FE.UNOBSERVED_VAL, size=3)
+	frontier_point_mask = np.logical_and(filtered_grid,
+										 occupancy_grid == cfg.FE.FREE_VAL)
 
 	if cfg.FE.GROUP_INFLATION_RADIUS < 1:
 		inflated_frontier_mask = frontier_point_mask
 	else:
-		inflated_frontier_mask = gridmap.utils.inflate_grid(frontier_point_mask,
-			inflation_radius=cfg.FE.GROUP_INFLATION_RADIUS, obstacle_threshold=0.5,
+		inflated_frontier_mask = gridmap.utils.inflate_grid(
+			frontier_point_mask,
+			inflation_radius=cfg.FE.GROUP_INFLATION_RADIUS,
+			obstacle_threshold=0.5,
 			collision_val=1.0) > 0.5
 
 	# Group the frontier points into connected components
@@ -143,7 +154,8 @@ def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag):
 	# Extract the frontiers
 	frontiers = set()
 	for ii in range(nb):
-		raw_frontier_indices = np.where(np.logical_and(labels == (ii + 1), frontier_point_mask))
+		raw_frontier_indices = np.where(
+			np.logical_and(labels == (ii + 1), frontier_point_mask))
 		frontiers.add(
 			Frontier(
 				np.concatenate((raw_frontier_indices[0][None, :],
@@ -152,23 +164,33 @@ def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag):
 
 	# Compute potential
 	if cfg.NAVI.PERCEPTION == 'Potential':
-		free_but_unobserved_flag = np.logical_and(gt_occupancy_grid == cfg.FE.FREE_VAL, observed_area_flag == False)
-		free_but_unobserved_flag = scipy.ndimage.maximum_filter(free_but_unobserved_flag, size=3)
+		free_but_unobserved_flag = np.logical_and(
+			gt_occupancy_grid == cfg.FE.FREE_VAL, observed_area_flag == False)
+		free_but_unobserved_flag = scipy.ndimage.maximum_filter(
+			free_but_unobserved_flag, size=3)
 
 		labels, nb = scipy.ndimage.label(free_but_unobserved_flag)
 
 		for ii in range(nb):
-			component = (labels == (ii+1))
+			component = (labels == (ii + 1))
 			for f in frontiers:
 				if component[int(f.centroid[0]), int(f.centroid[1])]:
 					f.R = np.sum(component)
 					f.D = round(sqrt(f.R), 2)
 
 					if cfg.NAVI.FLAG_VISUALIZE_FRONTIER_POTENTIAL:
-						fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 5))
+						fig, ax = plt.subplots(nrows=1,
+											   ncols=3,
+											   figsize=(12, 5))
 						ax[0].imshow(occupancy_grid)
-						ax[0].scatter(f.points[1], f.points[0], c='white', zorder=2)
-						ax[0].scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
+						ax[0].scatter(f.points[1],
+									  f.points[0],
+									  c='white',
+									  zorder=2)
+						ax[0].scatter(f.centroid[1],
+									  f.centroid[0],
+									  c='red',
+									  zorder=2)
 						ax[0].get_xaxis().set_visible(False)
 						ax[0].get_yaxis().set_visible(False)
 						ax[0].set_title('explored occupancy map')
@@ -189,28 +211,39 @@ def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag):
 
 	return frontiers
 
+
 def remove_isolated_points(occupancy_grid, threshold=2):
+	""" remove isolated points to clean up the occupancy_grid"""
 	H, W = occupancy_grid.shape
 	new_grid = occupancy_grid.copy()
-	for i in range(1, H-1):
-		for j in range(1, W-1):
+	for i in range(1, H - 1):
+		for j in range(1, W - 1):
 			if occupancy_grid[i][j] == cfg.FE.UNOBSERVED_VAL:
-				new_grid[i][j] = nearest_value_og(occupancy_grid, i, j, threshold=threshold)
+				new_grid[i][j] = nearest_value_og(occupancy_grid,
+												  i,
+												  j,
+												  threshold=threshold)
 	return new_grid
 
+
 def nearest_value_og(occupancy_grid, i, j, threshold=4):
-	d = {cfg.FE.COLLISION_VAL:0, cfg.FE.FREE_VAL:0, cfg.FE.UNOBSERVED_VAL:0}
-	d[occupancy_grid[i-1][j]] += 1
-	d[occupancy_grid[i+1][j]] += 1
-	d[occupancy_grid[i][j-1]] += 1
-	d[occupancy_grid[i][j+1]] += 1
-	  
+	d = {cfg.FE.COLLISION_VAL: 0, cfg.FE.FREE_VAL: 0, cfg.FE.UNOBSERVED_VAL: 0}
+	d[occupancy_grid[i - 1][j]] += 1
+	d[occupancy_grid[i + 1][j]] += 1
+	d[occupancy_grid[i][j - 1]] += 1
+	d[occupancy_grid[i][j + 1]] += 1
+
 	for occupancy_value, count in d.items():
 		if count >= threshold:
 			return occupancy_value
 	return occupancy_grid[i][j]
 
+
 def get_frontier_with_maximum_area(frontiers, gt_occupancy_grid):
+	""" select frontier with the maximum area from frontiers.
+
+	used for the 'Greedy' strategy.
+	"""
 	if cfg.NAVI.PERCEPTION == 'Anticipation':
 		count_free_space_at_frontiers(frontiers, gt_occupancy_grid)
 		max_area = 0
@@ -231,6 +264,8 @@ def get_frontier_with_maximum_area(frontiers, gt_occupancy_grid):
 
 
 def count_free_space_at_frontiers(frontiers, gt_occupancy_grid, area=10):
+	""" compute the free space in the neighborhoadd of the frontier center.
+	"""
 	H, W = gt_occupancy_grid.shape
 	for fron in frontiers:
 		centroid = (int(fron.centroid[1]), int(fron.centroid[0]))
@@ -245,7 +280,13 @@ def count_free_space_at_frontiers(frontiers, gt_occupancy_grid, area=10):
 		fron.area_neigh = np.sum(fron_neigh == cfg.FE.FREE_VAL)
 		#print(f'fron.area_neigh = {fron.area_neigh}')
 
-def get_frontier_with_DP(frontiers, agent_pose, observed_occupancy_map, steps, LN):
+
+def get_frontier_with_DP(frontiers, agent_pose, observed_occupancy_map, steps,
+						 LN):
+	""" select the frontier from frontiers with the Bellman Equation.
+
+	from agent_pose and the observed_occupancy_map, compute D and L.
+	"""
 	max_Q = 0
 	max_frontier = None
 	G = LN.get_G_from_map(observed_occupancy_map)
@@ -255,13 +296,17 @@ def get_frontier_with_DP(frontiers, agent_pose, observed_occupancy_map, steps, L
 	for fron in frontiers:
 		#print('-------------------------------------------------------------')
 		visited_frontiers = set()
-		Q = compute_Q(agent_coord, fron, frontiers, visited_frontiers, steps, G, LN)
+		Q = compute_Q(agent_coord, fron, frontiers, visited_frontiers, steps,
+					  G, LN)
 		if Q >= max_Q:
 			max_Q = Q
 			max_frontier = fron
 	return max_frontier
 
-def compute_Q(agent_coord, target_frontier, frontiers, visited_frontiers, steps, G, LN):
+
+def compute_Q(agent_coord, target_frontier, frontiers, visited_frontiers,
+			  steps, G, LN):
+	""" compute the Q values of the frontier 'target_frontier'"""
 	#print(f'agent_coord = {agent_coord}, target_frontier = {target_frontier.centroid}, steps = {steps}')
 	Q = 0
 	L = LN.compute_L(G, agent_coord, target_frontier)
@@ -284,15 +329,23 @@ def compute_Q(agent_coord, target_frontier, frontiers, visited_frontiers, steps,
 
 				max_next_Q = 0
 				for fron in rest_frontiers:
-					fron_centroid_coords = (int(target_frontier.centroid[1]), int(target_frontier.centroid[0]))
-					next_Q = compute_Q(fron_centroid_coords, fron, frontiers, visited_frontiers.copy(), steps, G, LN)
+					fron_centroid_coords = (int(target_frontier.centroid[1]),
+											int(target_frontier.centroid[0]))
+					next_Q = compute_Q(fron_centroid_coords, fron, frontiers,
+									   visited_frontiers.copy(), steps, G, LN)
 					if next_Q > max_next_Q:
 						max_next_Q = next_Q
 				Q += max_next_Q
 	#print(f'Q = {Q}')
 	return Q
 
+
 def select_top_frontiers(frontiers, top_n=5):
+	""" select a few frontiers with the largest value.
+
+	The objective is to reduce the number of frontiers when using the 'DP' strategy.
+	top_n decides the number of frontiers to keep.
+	"""
 	if len(frontiers) <= top_n:
 		return frontiers
 

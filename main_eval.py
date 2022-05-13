@@ -6,18 +6,6 @@ import habitat_sim
 from navigation_utils import SimpleRLEnv, get_scene_name
 from core import cfg
 
-'''
-scene_list = cfg.MAIN.SCENE_LIST
-scene_dict = {}
-for scene in scene_list:
-	scene_name = scene[:-2]
-	floor = int(scene[-1])
-	temp = {}
-	temp['name'] = scene
-	temp['floor'] = floor 
-	scene_dict[scene_name] = temp
-'''
-
 split = 'test'
 scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
 
