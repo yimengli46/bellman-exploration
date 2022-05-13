@@ -16,7 +16,7 @@ mkdir data
 ln -s data/habitat_data directory_to_MP3D_data
 ```
 
-###How to Run?
+### How to Run?
 The code can do (a) exploring scenes (b) building top-down view semantic maps of MP3D scenes (c) building occupancy maps of MP3D scenes.
 All the parameters are controlled by the configuration file `core/config.py`.
 ##### Exploring the environment
