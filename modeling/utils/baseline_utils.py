@@ -11,7 +11,7 @@ import math
 from math import cos, sin, acos, atan2, pi, floor, tan
 from io import StringIO
 import matplotlib.pyplot as plt
-from constants import coco_categories_mapping, panopticSeg_mapping, d3_41_colors_rgb, COCO_74_COLORS
+from .constants import coco_categories_mapping, panopticSeg_mapping, d3_41_colors_rgb, COCO_74_COLORS
 import matplotlib as mpl
 from core import cfg
 

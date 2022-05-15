@@ -7,6 +7,7 @@ _C.GENERAL = CN()
 _C.GENERAL.SCENE_HEIGHTS_DICT_PATH = 'output/scene_height_distribution'
 _C.GENERAL.HABITAT_CONFIG_PATH = 'configs/exploration_see_the_floor.yaml'
 _C.GENERAL.BUILD_MAP_CONFIG_PATH = 'configs/build_map_mp3d.yaml'
+_C.GENERAL.LEARNED_MAP_GG_CONFIG_PATH = 'configs/point_nav_mp3d_for_GG.yaml'
 _C.GENERAL.HABITAT_EPISODE_DATA_PATH = '/home/yimeng/Datasets/habitat-lab/data/datasets/pointnav/mp3d/temp/all.json.gz'
 _C.GENERAL.HABITAT_SCENE_DATA_PATH = '/home/yimeng/Datasets/habitat-lab/data/scene_datasets/'
 _C.GENERAL.RANDOM_SEED = 5
@@ -14,7 +15,7 @@ _C.GENERAL.RANDOM_SEED = 5
 #================================= for save =======================================
 _C.SAVE = CN()
 _C.SAVE.OCCUPANCY_MAP_PATH = 'output/semantic_map' # built occupancy map
-_C.SAVE.TESTING_RESULTS_FOLDER = 'output/TESTING_RESULTS_360degree_Greedy_Potential_10STEP_600STEPS'
+_C.SAVE.TESTING_RESULTS_FOLDER = 'output/TESTING_RESULTS_LEARNED_MAP_GG'
 
 #================================== for main_nav.py =====================
 _C.MAIN = CN()
@@ -44,7 +45,7 @@ _C.NAVI.THRESH_REACH = 0.8
 
 _C.NAVI.USE_ROOM_TYPES = True
 
-_C.NAVI.HFOV = 360 # 360 means panorama, 90 means single view
+_C.NAVI.HFOV = 90 # 360 means panorama, 90 means single view
 
 _C.NAVI.PERCEPTION = 'Potential' # possible choices 'Anticipation', 'Potential'
 
@@ -77,3 +78,16 @@ _C.LN.FLAG_VISUALIZE_LOCAL_MAP = False
 _C.NAVI.FLAG_VISUALIZE_FINAL_TRAJ = True
 _C.NAVI.FLAG_VISUALIZE_MIDDLE_TRAJ = True
 _C.NAVI.FLAG_VISUALIZE_FRONTIER_POTENTIAL = False
+
+
+
+
+#=============================== for learned occupancy map =============================
+_C.MAP = CN()
+_C.MAP.N_SPATIAL_CLASSES = 3 # number of categories for spatial prediction, free, unknown, occupied
+_C.MAP.MAP_LOSS_SCALE = 1.0
+_C.MAP.GRID_DIM = 768 # semantic grid size (grid_dim, grid_dim)
+_C.MAP.CROP_SIZE = 160 # size of crop around the agent
+_C.MAP.CELL_SIZE = 0.05 # Physical dimensions (meters) of each cell in the grid'
+_C.MAP.IMG_SIZE = 256 
+_C.MAP.OCCUPANCY_HEIGHT_THRESH = -1.0 # used when estimating occupancy from depth
