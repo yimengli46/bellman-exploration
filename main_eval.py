@@ -1,20 +1,19 @@
 import numpy as np
-from frontier_explore import nav
-from baseline_utils import create_folder
+from modeling.frontier_explore import nav
+from modeling.utils.baseline_utils import create_folder
 import habitat
 import habitat_sim
-from navigation_utils import SimpleRLEnv, get_scene_name
+from modeling.utils.navigation_utils import SimpleRLEnv, get_scene_name
 from core import cfg
 
-split = 'test'
 scene_floor_dict = np.load(
-	f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy',
+	f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{cfg.MAIN.SPLIT}_scene_floor_dict.npy',
 	allow_pickle=True).item()
 
 #================================ load habitat env============================================
 config = habitat.get_config(config_paths=cfg.GENERAL.HABITAT_CONFIG_PATH)
 config.defrost()
-config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_EPISODE_DATA_PATH
+config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_TEST_EPISODE_DATA_PATH
 config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
 if cfg.NAVI.HFOV == 360:
 	config.SIMULATOR.RGB_SENSOR.WIDTH = 480
@@ -39,7 +38,7 @@ for episode_id in range(18):
 		height = scene_dict[floor_id]['y']
 		scene_name = f'{env_scene}_{floor_id}'
 
-		if scene_name in cfg.MAIN.SCENE_LIST:
+		if scene_name in cfg.MAIN.TEST_SCENE_LIST:
 			print(f'**********scene_name = {scene_name}***********')
 
 			output_folder = cfg.SAVE.TESTING_RESULTS_FOLDER

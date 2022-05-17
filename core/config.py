@@ -8,18 +8,22 @@ _C.GENERAL.SCENE_HEIGHTS_DICT_PATH = 'output/scene_height_distribution'
 _C.GENERAL.HABITAT_CONFIG_PATH = 'configs/exploration_see_the_floor.yaml'
 _C.GENERAL.BUILD_MAP_CONFIG_PATH = 'configs/build_map_mp3d.yaml'
 _C.GENERAL.LEARNED_MAP_GG_CONFIG_PATH = 'configs/point_nav_mp3d_for_GG.yaml'
-_C.GENERAL.HABITAT_EPISODE_DATA_PATH = '/home/yimeng/Datasets/habitat-lab/data/datasets/pointnav/mp3d/temp/all.json.gz'
-_C.GENERAL.HABITAT_SCENE_DATA_PATH = '/home/yimeng/Datasets/habitat-lab/data/scene_datasets/'
+_C.GENERAL.HABITAT_TRAIN_EPISODE_DATA_PATH = 'data/habitat_data/datasets/pointnav/mp3d/temp_train/all.json.gz'
+_C.GENERAL.HABITAT_VAL_EPISODE_DATA_PATH = 'data/habitat_data/datasets/pointnav/mp3d/temp_val/all.json.gz'
+_C.GENERAL.HABITAT_TEST_EPISODE_DATA_PATH = 'data/habitat_data/datasets/pointnav/mp3d/temp_test/all.json.gz'
+_C.GENERAL.HABITAT_SCENE_DATA_PATH = 'data/habitat_data/scene_datasets/'
 _C.GENERAL.RANDOM_SEED = 5
 
 #================================= for save =======================================
 _C.SAVE = CN()
 _C.SAVE.OCCUPANCY_MAP_PATH = 'output/semantic_map' # built occupancy map
-_C.SAVE.TESTING_RESULTS_FOLDER = 'output/TESTING_RESULTS_LEARNED_MAP_GG'
+_C.SAVE.TESTING_RESULTS_FOLDER = 'output/TESTING_RESULTS_PROJECT_RESTRUCTURE'
 
 #================================== for main_nav.py =====================
 _C.MAIN = CN()
-_C.MAIN.SCENE_LIST = ['2t7WUuJeko7_0', '5ZKStnWn8Zo_0', 'ARNzJeq3xxb_0', 'RPmz2sHmrrY_0', 'UwV83HsGsw3_0', 'Vt2qJdWjCF2_0', 'WYY7iVyf5p8_0', 'YFuZgdQ5vWj_0', 'YVUC4YcDtcY_0', 'fzynW3qQPVF_0', 'gYvKGZ5eRqb_0', 'gxdoqLR6rwA_0', 'jtcxE69GiFV_0', 'pa4otMbVnkk_0', 'q9vSo1VnCiC_0', 'rqfALeAoiTq_0', 'wc2JMjhGNzB_0', 'yqstnuAEVhm_0']
+_C.MAIN.SPLIT = 'test' # select from 'train', 'val', 'test'
+_C.MAIN.NUM_SCENES = 18 # for ('train', 'val', 'test'), num_scenes = (61, 11, 18), 90 in total.
+_C.MAIN.TEST_SCENE_LIST = ['2t7WUuJeko7_0', '5ZKStnWn8Zo_0', 'ARNzJeq3xxb_0', 'RPmz2sHmrrY_0', 'UwV83HsGsw3_0', 'Vt2qJdWjCF2_0', 'WYY7iVyf5p8_0', 'YFuZgdQ5vWj_0', 'YVUC4YcDtcY_0', 'fzynW3qQPVF_0', 'gYvKGZ5eRqb_0', 'gxdoqLR6rwA_0', 'jtcxE69GiFV_0', 'pa4otMbVnkk_0', 'q9vSo1VnCiC_0', 'rqfALeAoiTq_0', 'wc2JMjhGNzB_0', 'yqstnuAEVhm_0']
 
 #================================ for semantic map ===============================
 _C.SEM_MAP = CN()
@@ -45,7 +49,7 @@ _C.NAVI.THRESH_REACH = 0.8
 
 _C.NAVI.USE_ROOM_TYPES = True
 
-_C.NAVI.HFOV = 90 # 360 means panorama, 90 means single view
+_C.NAVI.HFOV = 360 # 360 means panorama, 90 means single view
 
 _C.NAVI.PERCEPTION = 'Potential' # possible choices 'Anticipation', 'Potential'
 

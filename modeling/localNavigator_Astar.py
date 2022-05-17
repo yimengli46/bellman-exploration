@@ -47,7 +47,7 @@ class localNav_Astar:
 		self.path_pose_action = []
 		self.path_idx = -1  # record the index of the agent in the path
 
-		occ_map_path = f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{scene_name}'
+		occ_map_path = f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{cfg.MAIN.SPLIT}/{scene_name}'
 		occupancy_map = np.load(f'{occ_map_path}/BEV_occupancy_map.npy',
 								allow_pickle=True).item()['occupancy']
 		occupancy_map = np.where(occupancy_map == 1, 3,

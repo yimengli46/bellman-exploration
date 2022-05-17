@@ -4,8 +4,8 @@ import cv2
 import matplotlib.pyplot as plt
 import math
 from math import cos, sin, acos, atan2, pi, floor
-from baseline_utils import project_pixels_to_world_coords, convertPanopSegToSSeg, apply_color_to_map, pose_to_coords, convertInsSegToSSeg
-from baseline_utils import pxl_coords_to_pose
+from .baseline_utils import project_pixels_to_world_coords, convertPanopSegToSSeg, apply_color_to_map, pose_to_coords, convertInsSegToSSeg
+from .baseline_utils import pxl_coords_to_pose
 from core import cfg
 """ class used to build semantic maps of the scenes
 
@@ -31,7 +31,7 @@ class SemanticMap:
 		self.ins2cat_dict = ins2cat_dict
 
 		# load occupancy map
-		occ_map_path = f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{self.scene_name}'
+		occ_map_path = f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{cfg.MAIN.SPLIT}/{self.scene_name}'
 		self.occupancy_map = np.load(f'{occ_map_path}/BEV_occupancy_map.npy',
 									 allow_pickle=True).item()['occupancy']
 		#kernel = np.ones((5,5), np.uint8)

@@ -4,7 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 import math
 from math import cos, sin, acos, atan2, pi, floor
-from baseline_utils import project_pixels_to_world_coords, apply_color_to_map, save_fig_through_plt
+from .baseline_utils import project_pixels_to_world_coords, apply_color_to_map, save_fig_through_plt
 
 
 def find_first_nonzero_elem_per_row(mat):

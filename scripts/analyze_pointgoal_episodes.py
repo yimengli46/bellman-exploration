@@ -18,13 +18,13 @@ def get_scene_name(episode):
     idx_right_most_slash = episode.scene_id.rfind('/')
     return episode.scene_id[idx_right_most_slash+1:-4]
 
-split = 'test'
-saved_folder = '../output/scene_height_distribution'
+split = 'train'
+saved_folder = 'output/scene_height_distribution'
 
 scene_start_y_dict = {}
 scene_height_dict = {}
 
-filename = f'../data/habitat_data/datasets/pointnav/mp3d/v1/{split}/{split}.json.gz'
+filename = f'data/habitat_data/datasets/pointnav/mp3d/v1/{split}/{split}.json.gz'
 with gzip.open(filename , 'rb') as f:
     data = json.loads(f.read())
 episodes = data['episodes']

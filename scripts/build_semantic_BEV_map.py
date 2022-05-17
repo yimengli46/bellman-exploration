@@ -4,10 +4,10 @@ import cv2
 import matplotlib.pyplot as plt
 import math
 from math import cos, sin, acos, atan2, pi, floor
-from baseline_utils import project_pixels_to_world_coords, convertInsSegToSSeg, apply_color_to_map, create_folder
+from modeling.utils.baseline_utils import project_pixels_to_world_coords, convertInsSegToSSeg, apply_color_to_map, create_folder
 import habitat
 import habitat_sim
-from build_map_utils import SemanticMap
+from modeling.utils.build_map_utils import SemanticMap
 from habitat.tasks.utils import cartesian_to_polar, quaternion_rotate_vector
 import random
 from core import cfg
@@ -17,15 +17,14 @@ SEED = 5
 random.seed(SEED)
 np.random.seed(SEED)
 
-output_folder = 'output/semantic_map'
+output_folder = f'output/semantic_map/{cfg.MAIN.SPLIT}'
 # after testing, using 8 angles is most efficient
 theta_lst = [0, pi/4, pi/2, pi*3./4, pi, pi*5./4, pi*3./2, pi*7./4]
 #theta_lst = [0]
 str_theta_lst = ['000', '090', '180', '270']
 
 #============================ load scene heights ===================================
-split = 'test'
-scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
+scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{cfg.MAIN.SPLIT}_scene_floor_dict.npy', allow_pickle=True).item()
 
 #============================= build a grid =========================================
 x = np.arange(-cfg.SEM_MAP.WORLD_SIZE, cfg.SEM_MAP.WORLD_SIZE, 0.3)
@@ -65,13 +64,17 @@ def convert_depth_to_uint16(depth_img):
 
 config = habitat.get_config(config_paths=cfg.GENERAL.BUILD_MAP_CONFIG_PATH)
 config.defrost()
-#assert 1==2
-config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_EPISODE_DATA_PATH 
+if cfg.MAIN.SPLIT == 'train':
+	config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_TRAIN_EPISODE_DATA_PATH 
+elif cfg.MAIN.SPLIT == 'val':
+	config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_VAL_EPISODE_DATA_PATH
+elif cfg.MAIN.SPLIT == 'test':
+	config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_TEST_EPISODE_DATA_PATH
 config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-for episode_id in range(18):
+for episode_id in range(cfg.MAIN.NUM_SCENES):
 	env.reset()
 	print('episode_id = {}'.format(episode_id))
 	print('env.current_episode = {}'.format(env.current_episode))

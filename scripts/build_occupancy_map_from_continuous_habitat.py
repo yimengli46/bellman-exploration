@@ -4,12 +4,12 @@ import cv2
 import matplotlib.pyplot as plt
 import math
 from math import cos, sin, acos, atan2, pi, floor
-from baseline_utils import project_pixels_to_world_coords, convertPanopSegToSSeg, apply_color_to_map, create_folder
+from modeling.utils.baseline_utils import project_pixels_to_world_coords, convertPanopSegToSSeg, apply_color_to_map, create_folder
 import habitat
 import habitat_sim
 import random
-from baseline_utils import read_map_npy, pose_to_coords, save_fig_through_plt
-from navigation_utils import SimpleRLEnv, get_scene_name
+from modeling.utils.baseline_utils import read_map_npy, pose_to_coords, save_fig_through_plt
+from modeling.utils.navigation_utils import SimpleRLEnv, get_scene_name
 from core import cfg
 
 #=========================================== fix the habitat scene shuffle ===============================
@@ -17,8 +17,8 @@ SEED = 5
 random.seed(SEED)
 np.random.seed(SEED)
 
-output_folder = 'output/semantic_map'
-semantic_map_folder = 'output/semantic_map'
+output_folder = f'output/semantic_map/{cfg.MAIN.SPLIT}'
+semantic_map_folder = f'output/semantic_map/{cfg.MAIN.SPLIT}'
 
 
 # after testing, using 8 angles is most efficient
@@ -27,8 +27,7 @@ theta_lst = [0]
 built_scenes = [] 
 cell_size = 0.1
 
-split = 'test'
-scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
+scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{cfg.MAIN.SPLIT}_scene_floor_dict.npy', allow_pickle=True).item()
 
 #============================= build a grid =========================================
 x = np.arange(-cfg.SEM_MAP.WORLD_SIZE, cfg.SEM_MAP.WORLD_SIZE, cell_size)
@@ -41,12 +40,17 @@ grid_H, grid_W = zv.shape
 
 config = habitat.get_config(config_paths=cfg.GENERAL.BUILD_MAP_CONFIG_PATH)
 config.defrost()
-config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_EPISODE_DATA_PATH 
+if cfg.MAIN.SPLIT == 'train':
+	config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_TRAIN_EPISODE_DATA_PATH 
+elif cfg.MAIN.SPLIT == 'val':
+	config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_VAL_EPISODE_DATA_PATH
+elif cfg.MAIN.SPLIT == 'test':
+	config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_TEST_EPISODE_DATA_PATH
 config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-for episode_id in range(18):
+for episode_id in range(cfg.MAIN.NUM_SCENES):
 	env.reset()
 	print('episode_id = {}'.format(episode_id))
 	print('env.current_episode = {}'.format(env.current_episode))

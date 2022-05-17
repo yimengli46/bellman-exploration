@@ -7,16 +7,16 @@ import matplotlib.pyplot as plt
 import math
 from math import cos, sin, acos, atan2, pi, floor, degrees
 import random
-from navigation_utils import change_brightness, SimpleRLEnv, get_obs_and_pose
-from baseline_utils import apply_color_to_map, pose_to_coords, gen_arrow_head_marker, read_map_npy, read_occ_map_npy, plus_theta_fn
-from map_utils import SemanticMap
-from localNavigator_Astar import localNav_Astar
+from .utils.navigation_utils import change_brightness, SimpleRLEnv, get_obs_and_pose
+from .utils.baseline_utils import apply_color_to_map, pose_to_coords, gen_arrow_head_marker, read_map_npy, read_occ_map_npy, plus_theta_fn
+from .utils.map_utils import SemanticMap
+from .localNavigator_Astar import localNav_Astar
 import habitat
 import habitat_sim
 from habitat.tasks.utils import cartesian_to_polar, quaternion_rotate_vector
 import random
 from core import cfg
-import frontier_utils as fr_utils
+from .utils import frontier_utils as fr_utils
 
 
 def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
@@ -42,7 +42,7 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 
 	if cfg.NAVI.FLAG_GT_OCC_MAP:
 		occ_map_npy = np.load(
-			f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{scene_name}/BEV_occupancy_map.npy',
+			f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{cfg.MAIN.SPLIT}/{scene_name}/BEV_occupancy_map.npy',
 			allow_pickle=True).item()
 	gt_occ_map, pose_range, coords_range, WH = read_occ_map_npy(occ_map_npy)
 	H, W = gt_occ_map.shape[:2]

@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from core import cfg
 import scipy.ndimage
-from baseline_utils import pose_to_coords
+from .baseline_utils import pose_to_coords
 from math import sqrt
 from operator import itemgetter
 
