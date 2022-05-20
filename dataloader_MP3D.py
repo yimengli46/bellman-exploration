@@ -32,23 +32,23 @@ class MP3DIterator:
 	"""Class to implement an iterator
 	of powers of two"""
 
-	def __init__(self, scene_names, num_elems=0, seed=0):
+	def __init__(self, split, scene_names, num_elems=0, seed=0):
 		self.num_elems = num_elems
 		self.random = Random(seed)
 
+		self.split = split
 		self.scene_names = scene_names
 		
 		self.init_scene()
 		
-
 	def init_scene(self):
 		scene_name = self.random.choice(self.scene_names)
 		print(f'init new scene: {scene_name}')
 
 		#======================================== generate gt map M_c ============================================
-		sem_map_npy = np.load(f'{cfg.SAVE.SEMANTIC_MAP_PATH}/{cfg.MAIN.SPLIT}/{scene_name}/BEV_semantic_map.npy', allow_pickle=True).item()
+		sem_map_npy = np.load(f'{cfg.SAVE.SEMANTIC_MAP_PATH}/{self.split}/{scene_name}/BEV_semantic_map.npy', allow_pickle=True).item()
 		self.gt_sem_map, self.pose_range, self.coords_range, self.WH = read_map_npy(sem_map_npy)
-		occ_map_npy = np.load(f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{cfg.MAIN.SPLIT}/{scene_name}/BEV_occupancy_map.npy', allow_pickle=True).item()
+		occ_map_npy = np.load(f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{self.split}/{scene_name}/BEV_occupancy_map.npy', allow_pickle=True).item()
 		gt_occ_map, _, _, _ = read_occ_map_npy(occ_map_npy)
 
 		gt_occupancy_map = gt_occ_map.copy()
@@ -164,11 +164,12 @@ class MP3DIterator:
 			raise StopIteration
 
 class MP3DDataset(data.IterableDataset):
-	def __init__(self, scene_names=[], worker_size=0, seed=0, num_elems=10000):
+	def __init__(self, split='train', scene_names=[], worker_size=0, seed=0, num_elems=10000):
 		super(MP3DDataset).__init__()
 		self.worker_size = worker_size
 		random = Random(seed)
 		self.seeds = random.sample(range(0, 100), max(self.worker_size, 1))
+		self.split = split
 		self.scene_names = scene_names
 		self.num_elems = num_elems
 
@@ -176,7 +177,7 @@ class MP3DDataset(data.IterableDataset):
 		
 	def get_stream(self, seed=0):
 		#scene_name = self.scene_names[0]
-		randIter = MP3DIterator(scene_names=self.scene_names, num_elems=self.num_elems, seed=seed)
+		randIter = MP3DIterator(split=self.split, scene_names=self.scene_names, num_elems=self.num_elems, seed=seed)
 		return iter(randIter) #map(self.process_data, iter(randIter))
 
 	def get_streams(self):
