@@ -47,15 +47,6 @@ class localNav_Astar:
 		self.path_pose_action = []
 		self.path_idx = -1  # record the index of the agent in the path
 
-		occ_map_path = f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{cfg.MAIN.SPLIT}/{scene_name}'
-		occupancy_map = np.load(f'{occ_map_path}/BEV_occupancy_map.npy',
-								allow_pickle=True).item()['occupancy']
-		occupancy_map = np.where(occupancy_map == 1, 3,
-								 occupancy_map)  # free cell
-		occupancy_map = np.where(occupancy_map == 0, 1,
-								 occupancy_map)  # occupied cell
-		self.occupancy_map = occupancy_map
-
 	def plan_to_reach_frontier(self, chosen_frontier, agent_pose,
 							   occupancy_map, step, saved_folder):
 		"""Plan a path from agent_pose to the chosen_frontier on the occupancy_map.

@@ -18,7 +18,7 @@ def get_scene_name(episode):
     idx_right_most_slash = episode.scene_id.rfind('/')
     return episode.scene_id[idx_right_most_slash+1:-4]
 
-split = 'train'
+split = 'val'
 saved_folder = 'output/scene_height_distribution'
 
 scene_start_y_dict = {}

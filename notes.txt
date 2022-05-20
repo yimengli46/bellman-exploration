@@ -6,6 +6,9 @@ $ ln -s /home/yimeng/Datasets/habitat-lab/data habitat_data
 3. save scene_floor_dict.npy as
 npy[scene][floor], each floor has two keys y and a list of nodes.
 
+train episode data is different from val and test.
+In train data, each scene has 80K episodes.
+
 
 4. First build semantic maps
 then build occupancy maps

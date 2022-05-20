@@ -13,7 +13,7 @@ from modeling.utils.navigation_utils import SimpleRLEnv, get_scene_name
 from core import cfg
 
 #=========================================== fix the habitat scene shuffle ===============================
-SEED = 5
+SEED = cfg.GENERAL.RANDOM_SEED
 random.seed(SEED)
 np.random.seed(SEED)
 
