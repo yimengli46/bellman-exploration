@@ -42,7 +42,7 @@ dataloader_val = data.DataLoader(dataset_val, batch_size=cfg.PRED.BATCH_SIZE//2,
 
 #================================================================================================================================
 # Define network
-model = UNet(n_channel_in=2, n_class_out=1).cuda()
+model = UNet(n_channel_in=cfg.PRED.INPUT_CHANNEL, n_class_out=cfg.PRED.OUTPUT_CHANNEL).cuda()
 
 #=========================================================== Define Optimizer ================================================
 import torch.optim as optim

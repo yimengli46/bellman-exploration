@@ -100,7 +100,7 @@ _C.PRED.INPUT_WH = (128, 128)
 
 _C.PRED.CHECKNAME = 'unet'
 _C.PRED.LOSS_TYPE = 'CE'
-_C.PRED.EPOCHS = 200
+_C.PRED.EPOCHS = 5
 _C.PRED.LR = 0.1
 _C.PRED.LR_SCHEDULER = 'poly'
 _C.PRED.RESUME = ''
@@ -114,6 +114,10 @@ _C.PRED.NUM_ITER_EVAL = 100
 _C.PRED.RENEW_SCENE_THRESH = 0.95
 
 _C.PRED.SAVED_FOLDER = 'output/VIS_PREDICT'
+
+_C.PRED.INPUT = 'occ_only' # input to the UNet.
+_C.PRED.INPUT_CHANNEL = 1 # number of input channels of UNet
+_C.PRED.OUTPUT_CHANNEL = 1 # number of output channels of UNet
 
 #================================ for visualization ============================
 _C.SEM_MAP.FLAG_VISUALIZE_EGO_OBS = False

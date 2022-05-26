@@ -149,6 +149,10 @@ class MP3DIterator:
 		#================= convert to tensor=================
 		tensor_Mp = torch.tensor(resized_Mp)
 		tensor_Ua = torch.tensor(resized_Ua).unsqueeze(0)
+
+		if cfg.PRED.INPUT == 'occ_only':
+			tensor_Mp = tensor_Mp[0].unsqueeze(0)
+
 		return {'input': tensor_Mp, 'output': tensor_Ua, 'shape': (self.H, self.W), 'frontiers': frontiers, \
 			'original_target': U_a}
 
