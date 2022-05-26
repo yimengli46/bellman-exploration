@@ -7,7 +7,7 @@ from sseg_utils.summaries import TensorboardSummary
 from sseg_utils.metrics import Evaluator
 from sseg_utils.lr_scheduler import PolyLR
 import matplotlib.pyplot as plt
-from dataloader_MP3D import MP3DDataset
+from dataloader_MP3D import MP3DDataset, my_collate
 import torch.utils.data as data
 import torch
 from core import cfg
@@ -18,7 +18,7 @@ loss = torch.nn.MSELoss()
 def MSELoss(logit, target):
 	mask_zero = (target > 0)
 	logit = logit * mask_zero
-	num_nonzero = torch.sum(mask_zero)
+	num_nonzero = torch.sum(mask_zero) + 1.
 	#print(f'num_nonzero = {num_nonzero}')
 
 	#result = loss(logit, target)
@@ -35,10 +35,10 @@ writer = summary.create_summary()
 #=========================================================== Define Dataloader ==================================================
 #scene_name = '17DRP5sb8fy_0'
 dataset_train = MP3DDataset(split='train', scene_names=cfg.MAIN.TRAIN_SCENE_LIST, worker_size=cfg.PRED.NUM_WORKERS, seed=cfg.GENERAL.RANDOM_SEED)
-dataloader_train = data.DataLoader(dataset_train, batch_size=cfg.PRED.BATCH_SIZE, num_workers=cfg.PRED.NUM_WORKERS)
+dataloader_train = data.DataLoader(dataset_train, batch_size=cfg.PRED.BATCH_SIZE, num_workers=cfg.PRED.NUM_WORKERS, collate_fn=my_collate)
 
 dataset_val = MP3DDataset(split='val', scene_names=cfg.MAIN.VAL_SCENE_LIST, worker_size=cfg.PRED.NUM_WORKERS//2, seed=cfg.GENERAL.RANDOM_SEED, num_elems=10000)
-dataloader_val = data.DataLoader(dataset_val, batch_size=cfg.PRED.BATCH_SIZE//2, num_workers=cfg.PRED.NUM_WORKERS//2)
+dataloader_val = data.DataLoader(dataset_val, batch_size=cfg.PRED.BATCH_SIZE//2, num_workers=cfg.PRED.NUM_WORKERS//2, collate_fn=my_collate)
 
 #================================================================================================================================
 # Define network
@@ -78,7 +78,7 @@ for epoch in range(cfg.PRED.EPOCHS):
 	
 	for batch in islice(dataloader_train, num_img_tr):
 		print('epoch = {}, iter_num = {}'.format(epoch, iter_num))
-		images, targets = batch[0], batch[1]
+		images, targets = batch['input'], batch['output']
 		#print('images = {}'.format(images.shape))
 		#print('targets = {}'.format(targets.shape))
 		#assert 1==2
@@ -114,7 +114,7 @@ for epoch in range(cfg.PRED.EPOCHS):
 
 		for batch in islice(dataloader_val, num_img_ts):
 			print('epoch = {}, iter_num = {}'.format(epoch, iter_num))
-			images, targets = batch[0], batch[1]
+			images, targets = batch['input'], batch['output']
 			#print('images = {}'.format(images))
 			#print('targets = {}'.format(targets))
 			images, targets = images.cuda(), targets.cuda()

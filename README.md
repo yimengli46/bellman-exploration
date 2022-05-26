@@ -45,7 +45,7 @@ habitat-lab/data
 The code can do (a) exploring scenes (b) building top-down view semantic maps of MP3D scenes (c) building occupancy maps of MP3D scenes.
 All the parameters are controlled by the configuration file `core/config.py`.
 ##### Exploring the environment
-To run the large-scale evaluation with Bellman Equation, you need to download pre-generated 'scene maps' and 'scene floor heights files' from [here](https://drive.google.com/file/d/10vWwDsOgBavhe6Udd7OyzD0hbeuJcAL_/view?usp=sharing "here").
+To run the large-scale evaluation with Bellman Equation, you need to download pre-generated 'scene maps' and 'scene floor heights files' from [here](https://drive.google.com/drive/folders/10ApKQzaIPDvEAvbcVXQkaGBjxnvUIpND?usp=sharing "here").
 Download it and put it under ` bellman-exploration-2022/output`.
 Then you can start the evaluation of the exploration model.
 ```

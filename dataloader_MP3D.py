@@ -149,7 +149,8 @@ class MP3DIterator:
 		#================= convert to tensor=================
 		tensor_Mp = torch.tensor(resized_Mp)
 		tensor_Ua = torch.tensor(resized_Ua).unsqueeze(0)
-		return (tensor_Mp, tensor_Ua)
+		return {'input': tensor_Mp, 'output': tensor_Ua, 'shape': (self.H, self.W), 'frontiers': frontiers, \
+			'original_target': U_a}
 
 	def __iter__(self):
 		self.n = 0
@@ -195,6 +196,29 @@ class MP3DDataset(data.IterableDataset):
 			worker_id = worker_info.id 
 			print(f'worker_id = {worker_id}')
 			return iter(self.streams[worker_id])
+
+def my_collate(batch):
+	output_dict = {}
+	#==================================== for input ==================================
+	out = None
+	batch_input = [dict['input'] for dict in batch]
+	output_dict['input'] = torch.stack(batch_input, 0)
+
+	#==================================== for output ==================================
+	out = None
+	batch_output = [dict['output'] for dict in batch]
+	output_dict['output'] = torch.stack(batch_output, 0)
+
+	batch_shape = [dict['shape'] for dict in batch]
+	output_dict['shape'] = batch_shape
+
+	batch_frontiers = [dict['frontiers'] for dict in batch]
+	output_dict['frontiers'] = batch_frontiers
+
+	batch_target = [dict['original_target'] for dict in batch]
+	output_dict['original_target'] = batch_target
+
+	return output_dict
 
 
 '''
