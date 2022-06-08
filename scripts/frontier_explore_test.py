@@ -23,7 +23,7 @@ env_scene = 'yqstnuAEVhm'
 floor_id = 0
 scene_name = 'yqstnuAEVhm_0'
 
-scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{cfg.MAIN.SPLIT}_scene_floor_dict.npy', allow_pickle=True).item()
+scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/test_scene_floor_dict.npy', allow_pickle=True).item()
 
 #================================ load habitat env============================================
 config = habitat.get_config(config_paths=cfg.GENERAL.HABITAT_CONFIG_PATH)
@@ -112,13 +112,13 @@ while step < cfg.NAVI.NUM_STEPS:
 
 	if MODE_FIND_SUBGOAL:
 		t1 = timer()
-		observed_occupancy_map, gt_occupancy_map, observed_area_flag = semMap_module.get_observed_occupancy_map()
+		observed_occupancy_map, gt_occupancy_map, observed_area_flag, built_semantic_map = semMap_module.get_observed_occupancy_map()
 		t2 = timer()
 		print(f't2- t1 = {t2 - t1}')
 		#improved_observed_occupancy_map = fr_utils.remove_isolated_points(observed_occupancy_map)
 		t3 = timer()
 		print(f't3- t2 = {t3 - t2}')
-		frontiers = fr_utils.get_frontiers(observed_occupancy_map, gt_occupancy_map, observed_area_flag)
+		frontiers = fr_utils.get_frontiers(observed_occupancy_map, gt_occupancy_map, observed_area_flag, built_semantic_map)
 		frontiers = frontiers - visited_frontier
 		t4 = timer()
 		print(f't4- t3 = {t4 - t3}')
@@ -151,12 +151,12 @@ while step < cfg.NAVI.NUM_STEPS:
 
 			#'''
 			fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 10))
-			ax.imshow(observed_occupancy_map)
+			ax.imshow(observed_occupancy_map, cmap='gray')
 			marker, scale = gen_arrow_head_marker(theta_lst[-1])
 			ax.scatter(x_coord_lst[-1], z_coord_lst[-1], marker=marker, s=(30*scale)**2, c='red', zorder=5)
 			ax.plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
 			for f in frontiers:
-				ax.scatter(f.points[1], f.points[0], c='white', zorder=2)
+				ax.scatter(f.points[1], f.points[0], c='yellow', zorder=2)
 				ax.scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
 			if chosen_frontier is not None:
 				ax.scatter(chosen_frontier.points[1], chosen_frontier.points[0], c='green', zorder=4)
@@ -202,7 +202,7 @@ while step < cfg.NAVI.NUM_STEPS:
 		semMap_module.add_occupied_cell_pose(next_pose)
 		# redo the planning
 		print(f'redo planning')
-		observed_occupancy_map, gt_occupancy_map, observed_area_flag = semMap_module.get_observed_occupancy_map()
+		observed_occupancy_map, gt_occupancy_map, observed_area_flag, _ = semMap_module.get_observed_occupancy_map()
 		'''
 		fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(100, 100))
 		ax.imshow(occupancy_map, vmax=5)

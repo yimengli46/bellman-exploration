@@ -92,7 +92,7 @@ class MP3DIterator:
 		#================================= compute area at frontier points ========================
 		U_a = np.zeros((self.H, self.W), dtype=np.float32)
 		observed_occupancy_map = self.M_p[0]
-		frontiers = fr_utils.get_frontiers(observed_occupancy_map, self.gt_occupancy_map, self.observed_area_flag)
+		frontiers = fr_utils.get_frontiers(observed_occupancy_map, self.gt_occupancy_map, self.observed_area_flag, None)
 		agent_map_pose = (robot_loc[1], robot_loc[0])
 		frontiers = self.LN.filter_unreachable_frontiers_temp(frontiers, agent_map_pose, observed_occupancy_map)
 

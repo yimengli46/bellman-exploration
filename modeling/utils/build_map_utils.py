@@ -15,6 +15,12 @@ def find_first_nonzero_elem_per_row(mat):
 
 	xv[mat == 0] = W - 1
 	min_idx_nonzero_per_row = np.min(xv, axis=1).astype(int)
+	'''
+	print(f'min_idx_nonzero_per_row.shape = {min_idx_nonzero_per_row.shape}')
+	plt.hist(min_idx_nonzero_per_row, bins = [0,20,40,60,80,100]) 
+	plt.title("histogram") 
+	plt.show()
+	'''
 	yv = yv[:, 0].astype(int)
 
 	result = mat[yv, min_idx_nonzero_per_row]

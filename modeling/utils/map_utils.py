@@ -7,6 +7,9 @@ from math import cos, sin, acos, atan2, pi, floor
 from .baseline_utils import project_pixels_to_world_coords, convertPanopSegToSSeg, apply_color_to_map, pose_to_coords, convertInsSegToSSeg
 from .baseline_utils import pxl_coords_to_pose
 from core import cfg
+from .build_map_utils import find_first_nonzero_elem_per_row
+from timeit import default_timer as timer
+
 """ class used to build semantic maps of the scenes
 
 The robot takes actions in the environment and use the observations to build the semantic map online.
@@ -144,22 +147,21 @@ class SemanticMap:
 
 	def get_semantic_map(self):
 		""" get the built semantic map. """
-		# sum over the height axis
-		grid_sum_height = np.sum(self.four_dim_grid, axis=1)
-		grid_sum_height = (
-			grid_sum_height[self.coords_range[1]:self.coords_range[3] + 1,
-							self.coords_range[0]:self.coords_range[2] + 1, :])
+		# reduce size of the four_dim_grid
+		smaller_four_dim_grid = self.four_dim_grid[self.coords_range[1]:self.coords_range[3] + 1, 
+													:, self.coords_range[0]:self.coords_range[2] + 1, :] 
+		# argmax over the category axis
+		zyx_grid = np.argmax(smaller_four_dim_grid, axis=3)
+		# swap y dim to the last axis
+		zxy_grid = np.swapaxes(zyx_grid, 1, 2)
+		L, M, N = zxy_grid.shape
+		zxy_grid = zxy_grid.reshape(L * M, N)
 
-		grid_undetected_class = grid_sum_height[:, :,
-												self.UNDETECTED_PIXELS_CLASS]
-		grid_detected_class = grid_sum_height[:, :, :self.
-											  UNDETECTED_PIXELS_CLASS]
-		# argmax over the detected category axis
-		semantic_map = np.argmax(grid_detected_class, axis=2)
-		mask_explored_undetected_area = np.logical_and(
-			semantic_map == 0, grid_undetected_class > 0)
-		semantic_map[
-			mask_explored_undetected_area] = self.UNDETECTED_PIXELS_CLASS
+		semantic_map = find_first_nonzero_elem_per_row(zxy_grid)
+		semantic_map = semantic_map.reshape(L, M)
+
+		# sum over the height axis
+		grid_sum_height = np.sum(smaller_four_dim_grid, axis=1)
 
 		grid_sum_cat = np.sum(grid_sum_height, axis=2)
 		observed_area_flag = (grid_sum_cat > 0)
@@ -212,29 +214,21 @@ class SemanticMap:
 
 	def get_observed_occupancy_map(self):
 		""" get currently maintained occupancy map """
+		# reduce size of the four_dim_grid
+		smaller_four_dim_grid = self.four_dim_grid[self.coords_range[1]:self.coords_range[3] + 1, 
+													:, self.coords_range[0]:self.coords_range[2] + 1, :] 
+		# argmax over the category axis
+		zyx_grid = np.argmax(smaller_four_dim_grid, axis=3)
+		# swap y dim to the last axis
+		zxy_grid = np.swapaxes(zyx_grid, 1, 2)
+		L, M, N = zxy_grid.shape
+		zxy_grid = zxy_grid.reshape(L * M, N)
+
+		semantic_map = find_first_nonzero_elem_per_row(zxy_grid)
+		semantic_map = semantic_map.reshape(L, M)
+
 		# sum over the height axis
-		grid_sum_height = np.sum(self.four_dim_grid, axis=1)
-		grid_sum_height = (
-			grid_sum_height[self.coords_range[1]:self.coords_range[3] + 1,
-							self.coords_range[0]:self.coords_range[2] + 1, :])
-
-		grid_undetected_class = grid_sum_height[:, :,
-												self.UNDETECTED_PIXELS_CLASS]
-		grid_detected_class = grid_sum_height[:, :, :self.
-											  UNDETECTED_PIXELS_CLASS]
-		# argmax over the detected category axis
-		semantic_map = np.argmax(grid_detected_class, axis=2)
-		mask_explored_undetected_area = np.logical_and(
-			semantic_map == 0, grid_undetected_class > 0)
-		semantic_map[
-			mask_explored_undetected_area] = self.UNDETECTED_PIXELS_CLASS
-
-		#plt.imshow(semantic_map)
-		#plt.show()
-
-		#semantic_map = (semantic_map[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1])
-		#plt.imshow(semantic_map)
-		#plt.show()
+		grid_sum_height = np.sum(smaller_four_dim_grid, axis=1)
 
 		grid_sum_cat = np.sum(grid_sum_height, axis=2)
 		observed_area_flag = (grid_sum_cat > 0)
@@ -261,7 +255,8 @@ class SemanticMap:
 		# add unobserved/unexplored area
 		occupancy_map[np.logical_not(
 			observed_area_flag)] = cfg.FE.UNOBSERVED_VAL
-		return occupancy_map, gt_occupancy_map, observed_area_flag
+
+		return occupancy_map, gt_occupancy_map, observed_area_flag, semantic_map
 
 	def add_occupied_cell_pose(self, pose):
 		""" get which cells are marked as occupied by the robot during navigation."""

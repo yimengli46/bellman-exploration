@@ -102,14 +102,15 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 										 saved_folder=saved_folder)
 
 		if MODE_FIND_SUBGOAL:
-			observed_occupancy_map, gt_occupancy_map, observed_area_flag = semMap_module.get_observed_occupancy_map(
+			observed_occupancy_map, gt_occupancy_map, observed_area_flag, built_semantic_map = semMap_module.get_observed_occupancy_map(
 			)
 
 			#improved_observed_occupancy_map = fr_utils.remove_isolated_points(observed_occupancy_map)
 
 			frontiers = fr_utils.get_frontiers(observed_occupancy_map,
 											   gt_occupancy_map,
-											   observed_area_flag)
+											   observed_area_flag,
+											   built_semantic_map)
 			frontiers = frontiers - visited_frontier
 
 			frontiers = LN.filter_unreachable_frontiers(
@@ -144,7 +145,7 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 
 				#'''
 				fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 10))
-				ax.imshow(observed_occupancy_map)
+				ax.imshow(observed_occupancy_map, cmap='gray')
 				marker, scale = gen_arrow_head_marker(theta_lst[-1])
 				ax.scatter(x_coord_lst[-1],
 						   z_coord_lst[-1],
@@ -152,9 +153,15 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 						   s=(30 * scale)**2,
 						   c='red',
 						   zorder=5)
-				ax.plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
+				#ax.plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
+				ax.scatter(x_coord_lst, 
+						   z_coord_lst, 
+						   c=range(len(x_coord_lst)), 
+						   cmap='viridis', 
+						   s=np.linspace(5, 2, num=len(x_coord_lst))**2, 
+						   zorder=3)
 				for f in frontiers:
-					ax.scatter(f.points[1], f.points[0], c='white', zorder=2)
+					ax.scatter(f.points[1], f.points[0], c='yellow', zorder=2)
 					ax.scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
 				if chosen_frontier is not None:
 					ax.scatter(chosen_frontier.points[1],
@@ -205,7 +212,7 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 			semMap_module.add_occupied_cell_pose(next_pose)
 			# redo the planning
 			print(f'redo planning')
-			observed_occupancy_map, gt_occupancy_map, observed_area_flag = semMap_module.get_observed_occupancy_map(
+			observed_occupancy_map, gt_occupancy_map, observed_area_flag, _ = semMap_module.get_observed_occupancy_map(
 			)
 			flag_plan, subgoal_coords, subgoal_pose = LN.plan_to_reach_frontier(
 				chosen_frontier, agent_map_pose, observed_occupancy_map, step,
@@ -263,7 +270,7 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 
 		#'''
 		fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(25, 10))
-		ax[0].imshow(observed_occupancy_map)
+		ax[0].imshow(observed_occupancy_map, cmap='gray')
 		marker, scale = gen_arrow_head_marker(theta_lst[-1])
 		ax[0].scatter(x_coord_lst[-1],
 					  z_coord_lst[-1],
@@ -277,7 +284,13 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 					  s=50,
 					  c='red',
 					  zorder=5)
-		ax[0].plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
+		#ax.plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
+		ax[0].scatter(x_coord_lst, 
+				   z_coord_lst, 
+				   c=range(len(x_coord_lst)), 
+				   cmap='viridis', 
+				   s=np.linspace(5, 2, num=len(x_coord_lst))**2, 
+				   zorder=3)
 		ax[0].get_xaxis().set_visible(False)
 		ax[0].get_yaxis().set_visible(False)
 		ax[0].set_title('improved observed_occ_map + frontiers')

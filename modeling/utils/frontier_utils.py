@@ -6,10 +6,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 from core import cfg
 import scipy.ndimage
-from .baseline_utils import pose_to_coords
+from .baseline_utils import pose_to_coords, apply_color_to_map
 from math import sqrt
 from operator import itemgetter
+from .UNet import UNet
+import torch
+import cv2
 
+#'''
+if cfg.NAVI.PERCEPTION == 'UNet_Potential':
+	model = UNet(n_channel_in=cfg.PRED.INPUT_CHANNEL, n_class_out=cfg.PRED.OUTPUT_CHANNEL).to(cfg.PRED.DEVICE)
+	if cfg.PRED.INPUT == 'occ_and_sem':
+		checkpoint = torch.load(f'run/MP3D/unet/experiment_3/checkpoint.pth.tar')
+	elif cfg.PRED.INPUT == 'occ_only':
+		checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar')
+	model.load_state_dict(checkpoint['state_dict'])
+#'''
 
 class Frontier(object):
 
@@ -129,7 +141,7 @@ def mask_grid_with_frontiers(occupancy_grid, frontiers, do_not_mask=None):
 	return masked_grid
 
 
-def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag):
+def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map):
 	""" detect frontiers from occupancy_grid. 
 
 	When the perception info is 'Potential', we use gt_occupancy_grid to compute the area of the component.
@@ -209,6 +221,56 @@ def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag):
 						plt.title(f'component {ii}')
 						plt.show()
 
+	elif cfg.NAVI.PERCEPTION == 'UNet_Potential':
+		resized_Mp = np.zeros((2, cfg.PRED.INPUT_WH[1], cfg.PRED.INPUT_WH[0]), dtype=np.float32)
+		resized_Mp[0] = cv2.resize(occupancy_grid, cfg.PRED.INPUT_WH, interpolation=cv2.INTER_NEAREST)
+		resized_Mp[1] = cv2.resize(sem_map, cfg.PRED.INPUT_WH, interpolation=cv2.INTER_NEAREST)
+
+		tensor_Mp = torch.tensor(resized_Mp)
+
+		if cfg.PRED.INPUT == 'occ_only':
+			tensor_Mp = tensor_Mp[0].unsqueeze(0)
+
+		tensor_Mp = tensor_Mp.unsqueeze(0).to(cfg.PRED.DEVICE) # for batch
+		with torch.no_grad():
+			outputs = model(tensor_Mp)
+			output = outputs.cpu().numpy()[0, 0]
+
+		#=========================== reshape output and mask out non zero points =============================== 
+		H, W = occupancy_grid.shape
+		output = cv2.resize(output, (W, H), interpolation=cv2.INTER_NEAREST)
+
+		for f in frontiers:
+			points = f.points.transpose()
+			points_vals = output[points[:, 0], points[:, 1]]
+			mask_points = (points_vals > 0)
+			if mask_points.shape[0] > 0:
+				U_a = np.mean(points_vals[mask_points])
+			else:
+				U_a = 0.0
+
+			f.R = U_a * cfg.PRED.MAX_AREA
+			f.D = round(sqrt(f.R), 2)
+
+		if cfg.NAVI.FLAG_VISUALIZE_FRONTIER_POTENTIAL:
+			fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(30, 20))
+			ax[0].imshow(occupancy_grid, cmap='gray')
+			ax[0].get_xaxis().set_visible(False)
+			ax[0].get_yaxis().set_visible(False)
+			ax[0].set_title('input: occupancy_map_Mp')
+			color_sem_map = apply_color_to_map(sem_map)
+			ax[1].imshow(color_sem_map)
+			ax[1].get_xaxis().set_visible(False)
+			ax[1].get_yaxis().set_visible(False)
+			ax[1].set_title('input: semantic_map_Mp')
+			ax[2].imshow(output, vmin=0.0, vmax=1.0)
+			ax[2].get_xaxis().set_visible(False)
+			ax[2].get_yaxis().set_visible(False)
+			ax[2].set_title('output: U_a')
+		
+			fig.tight_layout()
+			plt.show()
+
 	return frontiers
 
 
@@ -252,11 +314,14 @@ def get_frontier_with_maximum_area(frontiers, gt_occupancy_grid):
 			if fron.area_neigh > max_area:
 				max_area = fron.area_neigh
 				max_fron = fron
-	elif cfg.NAVI.PERCEPTION == 'Potential':
+	elif cfg.NAVI.PERCEPTION == 'Potential' or cfg.NAVI.PERCEPTION == 'UNet_Potential':
 		max_area = 0
 		max_fron = None
 		for fron in frontiers:
-			if fron.R > max_area:
+			if max_fron is None:
+				max_area = fron.R
+				max_fron = fron
+			elif fron.R > max_area:
 				max_area = fron.R
 				max_fron = fron
 

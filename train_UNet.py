@@ -160,7 +160,7 @@ for epoch in range(cfg.PRED.EPOCHS):
 				'loss': test_loss,
 			}, is_best)
 
-trainer.writer.close()
+#trainer.writer.close()
 
 
 

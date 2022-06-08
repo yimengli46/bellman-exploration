@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
-from UNet import UNet
+from modeling.utils.UNet import UNet
 from dataloader_MP3D import MP3DDataset, my_collate
 import torch.nn.functional as F
 from modeling.utils.baseline_utils import apply_color_to_map
@@ -20,8 +20,8 @@ dataloader_val = data.DataLoader(dataset_val, batch_size=BATCH_SIZE, num_workers
 
 device = torch.device('cuda')
 
-model = UNet(n_channel_in=2, n_class_out=1).to(device)
-checkpoint = torch.load(f'run/MP3D/unet/experiment_3/checkpoint.pth.tar')
+model = UNet(n_channel_in=cfg.PRED.INPUT_CHANNEL, n_class_out=cfg.PRED.OUTPUT_CHANNEL).to(device)
+checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar')
 model.load_state_dict(checkpoint['state_dict'])
 
 with torch.no_grad():
@@ -42,7 +42,7 @@ with torch.no_grad():
 		for idx in range(BATCH_SIZE):
 			print(f'count = {count}')
 			occ_map_Mp = images[idx, 0]
-			sem_map_Mp = images[idx, 1]
+			#sem_map_Mp = images[idx, 1]
 
 			target = original_targets[idx]
 			output = outputs[idx, 0]
@@ -51,11 +51,11 @@ with torch.no_grad():
 			frons = frontiers[idx]
 
 			occ_map_Mp = cv2.resize(occ_map_Mp, (W, H), interpolation=cv2.INTER_NEAREST)
-			sem_map_Mp = cv2.resize(sem_map_Mp, (W, H), interpolation=cv2.INTER_NEAREST)
-			#target = cv2.resize(target, (W, H), interpolation=cv2.INTER_NEAREST)
+			#sem_map_Mp = cv2.resize(sem_map_Mp, (W, H), interpolation=cv2.INTER_NEAREST)
+
 			output = cv2.resize(output, (W, H), interpolation=cv2.INTER_NEAREST)
 
-			color_sem_map_Mp = apply_color_to_map(sem_map_Mp)
+			#color_sem_map_Mp = apply_color_to_map(sem_map_Mp)
 			
 			'''
 			fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(20, 20))
@@ -90,10 +90,12 @@ with torch.no_grad():
 			ax[0][0].get_xaxis().set_visible(False)
 			ax[0][0].get_yaxis().set_visible(False)
 			ax[0][0].set_title('input: occupancy_map_Mp')
+			'''
 			ax[0][1].imshow(color_sem_map_Mp)
 			ax[0][1].get_xaxis().set_visible(False)
 			ax[0][1].get_yaxis().set_visible(False)
 			ax[0][1].set_title('input: semantic_map_Mp')
+			'''
 			ax[1][0].imshow(target, vmin=0.0, vmax=1.0)
 			ax[1][0].get_xaxis().set_visible(False)
 			ax[1][0].get_yaxis().set_visible(False)
@@ -121,7 +123,7 @@ with torch.no_grad():
 
 			fig.tight_layout()
 			#plt.show()
-			fig.savefig(f'{cfg.PRED.SAVED_FOLDER}/img_{count}_zeroout.jpg')
+			fig.savefig(f'{cfg.PRED.SAVED_FOLDER}/img_{count}_zeroout_occmap_only.jpg')
 			plt.close()
 
 			count += 1

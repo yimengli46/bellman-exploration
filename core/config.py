@@ -18,11 +18,11 @@ _C.GENERAL.RANDOM_SEED = 5
 _C.SAVE = CN()
 _C.SAVE.SEMANTIC_MAP_PATH = 'output/semantic_map' 
 _C.SAVE.OCCUPANCY_MAP_PATH = 'output/semantic_map' # built occupancy map
-_C.SAVE.TESTING_RESULTS_FOLDER = 'output/TESTING_RESULTS_PROJECT_RESTRUCTURE'
+_C.SAVE.TESTING_RESULTS_FOLDER = 'output/TESTING_RESULTS_360degree_DP_UNet_occ_only_Predicted_Potential_10STEP_600STEPS'
 
 #================================== for main_nav.py =====================
 _C.MAIN = CN()
-_C.MAIN.SPLIT = 'train' # select from 'train', 'val', 'test'
+_C.MAIN.SPLIT = 'test' # select from 'train', 'val', 'test'
 _C.MAIN.NUM_SCENES = 61 # for ('train', 'val', 'test'), num_scenes = (61, 11, 18), 90 in total.
 _C.MAIN.TEST_SCENE_LIST = ['2t7WUuJeko7_0', '5ZKStnWn8Zo_0', 'ARNzJeq3xxb_0', 'RPmz2sHmrrY_0', 'UwV83HsGsw3_0', 'Vt2qJdWjCF2_0', 'WYY7iVyf5p8_0', 'YFuZgdQ5vWj_0', 'YVUC4YcDtcY_0', 'fzynW3qQPVF_0', 'gYvKGZ5eRqb_0', 'gxdoqLR6rwA_0', 'jtcxE69GiFV_0', 'pa4otMbVnkk_0', 'q9vSo1VnCiC_0', 'rqfALeAoiTq_0', 'wc2JMjhGNzB_0', 'yqstnuAEVhm_0']
 
@@ -39,8 +39,8 @@ _C.SEM_MAP.OBJECT_MASK_PIXEL_THRESH = 100
 _C.SEM_MAP.UNDETECTED_PIXELS_CLASS = 59 # explored but semantic-unrecognized pixel
 _C.SEM_MAP.CELL_SIZE = 0.1
 _C.SEM_MAP.WORLD_SIZE = 50.0 # world model size in each dimension (left, right, top , bottom)
-_C.SEM_MAP.GRID_Y_SIZE = 100
-_C.SEM_MAP.GRID_CLASS_SIZE = 100
+_C.SEM_MAP.GRID_Y_SIZE = 60
+_C.SEM_MAP.GRID_CLASS_SIZE = 60
 
 #=============================== for navigator ====================================
 _C.NAVI = CN()
@@ -55,9 +55,9 @@ _C.NAVI.USE_ROOM_TYPES = True
 
 _C.NAVI.HFOV = 360 # 360 means panorama, 90 means single view
 
-_C.NAVI.PERCEPTION = 'Potential' # possible choices 'Anticipation', 'Potential'
+_C.NAVI.PERCEPTION = 'UNet_Potential' # possible choices 'Anticipation', 'Potential', 'UNet_Potential'
 
-_C.NAVI.STRATEGY = 'Greedy' # 'Greedy' vs 'DP'
+_C.NAVI.STRATEGY = 'DP' # 'Greedy' vs 'DP'
 
 
 #========================== for short-range nav ====================================
@@ -113,11 +113,13 @@ _C.PRED.NUM_ITER_EVAL = 100
 
 _C.PRED.RENEW_SCENE_THRESH = 0.95
 
-_C.PRED.SAVED_FOLDER = 'output/VIS_PREDICT'
+_C.PRED.SAVED_FOLDER = 'output/VIS_PREDICT_occ_map'
 
-_C.PRED.INPUT = 'occ_only' # input to the UNet.
+_C.PRED.INPUT = 'occ_only' # input to the UNet. select from ['occ_and_sem', 'occ_only']
 _C.PRED.INPUT_CHANNEL = 1 # number of input channels of UNet
 _C.PRED.OUTPUT_CHANNEL = 1 # number of output channels of UNet
+
+_C.PRED.DEVICE = 'cuda'
 
 #================================ for visualization ============================
 _C.SEM_MAP.FLAG_VISUALIZE_EGO_OBS = False
