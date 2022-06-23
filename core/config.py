@@ -5,10 +5,10 @@ _C = CN()
 #=============================== dataset and files =============================
 _C.GENERAL = CN()
 _C.GENERAL.SCENE_HEIGHTS_DICT_PATH = 'output/scene_height_distribution'
-_C.GENERAL.HABITAT_CONFIG_PATH = 'configs/exploration_see_the_floor.yaml'
-_C.GENERAL.BUILD_MAP_CONFIG_PATH = 'configs/build_map_mp3d.yaml'
-_C.GENERAL.LEARNED_MAP_GG_CONFIG_PATH = 'configs/point_nav_mp3d_for_GG.yaml'
-_C.GENERAL.DATALOADER_CONFIG_PATH = 'configs/dataloader.yaml'
+_C.GENERAL.HABITAT_CONFIG_PATH = 'configs/habitat_env/exploration_see_the_floor.yaml'
+_C.GENERAL.BUILD_MAP_CONFIG_PATH = 'configs/habitat_env/build_map_mp3d.yaml'
+_C.GENERAL.LEARNED_MAP_GG_CONFIG_PATH = 'configs/habitat_env/point_nav_mp3d_for_GG.yaml'
+_C.GENERAL.DATALOADER_CONFIG_PATH = 'configs/habitat_env/dataloader.yaml'
 _C.GENERAL.HABITAT_TRAIN_EPISODE_DATA_PATH = 'data/habitat_data/datasets/pointnav/mp3d/temp_train/all.json.gz'
 _C.GENERAL.HABITAT_VAL_EPISODE_DATA_PATH = 'data/habitat_data/datasets/pointnav/mp3d/temp_val/all.json.gz'
 _C.GENERAL.HABITAT_TEST_EPISODE_DATA_PATH = 'data/habitat_data/datasets/pointnav/mp3d/temp_test/all.json.gz'
