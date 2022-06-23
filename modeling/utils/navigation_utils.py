@@ -8,6 +8,8 @@ import random
 import habitat
 import habitat_sim
 from habitat.tasks.utils import cartesian_to_polar, quaternion_rotate_vector
+from .baseline_utils import convertInsSegToSSeg
+import matplotlib.pyplot as plt
 
 
 def change_brightness(img, flag, value=30):
@@ -60,14 +62,43 @@ def get_obs_and_pose(env, agent_pos, heading_angle):
 	""" get observation 'obs' at agent pose 'agent_pos' and orientation 'heading_angle' at current scene 'env'."""
 	agent_rot = habitat_sim.utils.common.quat_from_angle_axis(
 		heading_angle, habitat_sim.geo.GRAVITY)
+	#print(f'agent_pos = {agent_pos}, agent_rot = {agent_rot}')
 	obs = env.habitat_env.sim.get_observations_at(agent_pos,
 												  agent_rot,
 												  keep_agent_at_new_pose=True)
 	agent_pos = env.habitat_env.sim.get_agent_state().position
 	agent_rot = env.habitat_env.sim.get_agent_state().rotation
+	#print(f'agent_pos = {agent_pos}, agent_rot = {agent_rot}')
 	heading_vector = quaternion_rotate_vector(agent_rot.inverse(),
 											  np.array([0, 0, -1]))
 	phi = cartesian_to_polar(-heading_vector[2], heading_vector[0])[1]
 	angle = phi
 	pose = (agent_pos[0], agent_pos[2], angle)
+
+	'''
+	rgb_img = obs['rgb']
+	depth_img = 5. * obs['depth']
+	depth_img = cv2.blur(depth_img, (3, 3))
+	#print(f'depth_img.shape = {depth_img.shape}')
+	InsSeg_img = obs["semantic"]
+	#sseg_img = convertInsSegToSSeg(InsSeg_img, self.ins2cat_dict)
+
+	if True:
+		fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(15, 6))
+		ax[0].imshow(rgb_img)
+		ax[0].get_xaxis().set_visible(False)
+		ax[0].get_yaxis().set_visible(False)
+		ax[0].set_title("rgb")
+		ax[1].imshow(InsSeg_img)
+		ax[1].get_xaxis().set_visible(False)
+		ax[1].get_yaxis().set_visible(False)
+		ax[1].set_title("sseg")
+		ax[2].imshow(depth_img)
+		ax[2].get_xaxis().set_visible(False)
+		ax[2].get_yaxis().set_visible(False)
+		ax[2].set_title("depth")
+		fig.tight_layout()
+		plt.show()
+	'''
+
 	return obs, pose

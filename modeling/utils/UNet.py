@@ -39,7 +39,7 @@ class UNet(nn.Module):
 
         self.conv_last = nn.Conv2d(64, n_class_out, 1)
 
-        self.activation = nn.Sigmoid()
+        #self.activation = nn.Sigmoid()
 
     def forward(self, input):
         B, C, cH, cW = input.shape
@@ -74,8 +74,8 @@ class UNet(nn.Module):
         x = torch.cat([x, x_original], dim=1)
         x = self.conv_original_size2(x)
 
-        x = self.conv_last(x)
+        out = self.conv_last(x)
 
-        out = self.activation(x)
+        #out = self.activation(x)
 
         return out

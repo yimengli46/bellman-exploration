@@ -29,8 +29,6 @@ def get_region(robot_pos, H, W, size=2):
 	return (y1, x1, y2, x2)
 
 class MP3DIterator:
-	"""Class to implement an iterator
-	of powers of two"""
 
 	def __init__(self, split, scene_names, num_elems=0, seed=0):
 		self.num_elems = num_elems
@@ -98,7 +96,7 @@ class MP3DIterator:
 
 		for fron in frontiers:
 			points = fron.points.transpose() # N x 2
-			R = min(1. * fron.R / cfg.PRED.MAX_AREA, 1.0)
+			R = 1. * fron.R / cfg.PRED.DIVIDE_AREA
 			U_a[points[:, 0], points[:, 1]] = R
 
 		#=================================== visualize M_p =========================================
@@ -150,8 +148,15 @@ class MP3DIterator:
 		tensor_Mp = torch.tensor(resized_Mp)
 		tensor_Ua = torch.tensor(resized_Ua).unsqueeze(0)
 
+		#================= convert input tensor into one-hot vector===========================
+		tensor_Mp_occ = tensor_Mp[0] # H x W
+		tensor_Mp_occ = F.one_hot(tensor_Mp_occ, num_classes=3).permute(2, 0, 1) # 3 x H x W
+		tensor_Mp_sem = tensor_Mp[1]
+		tensor_Mp_sem = F.one_hot(tensor_Mp_sem, num_classes=cfg.SEM_MAP.GRID_CLASS_SIZE).permute(2, 0, 1) # num_classes x H x W
+		tensor_Mp = torch.cat((tensor_Mp_occ, tensor_Mp_sem), 0)
+
 		if cfg.PRED.INPUT == 'occ_only':
-			tensor_Mp = tensor_Mp[0].unsqueeze(0)
+			tensor_Mp = tensor_Mp[0:3]
 
 		return {'input': tensor_Mp, 'output': tensor_Ua, 'shape': (self.H, self.W), 'frontiers': frontiers, \
 			'original_target': U_a}

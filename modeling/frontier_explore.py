@@ -19,7 +19,7 @@ from core import cfg
 from .utils import frontier_utils as fr_utils
 
 
-def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
+def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 	"""Major function for navigation.
 	
 	Takes in initialized habitat environment and start location.
@@ -42,7 +42,7 @@ def nav(env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 
 	if cfg.NAVI.FLAG_GT_OCC_MAP:
 		occ_map_npy = np.load(
-			f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{cfg.MAIN.SPLIT}/{scene_name}/BEV_occupancy_map.npy',
+			f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{split}/{scene_name}/BEV_occupancy_map.npy',
 			allow_pickle=True).item()
 	gt_occ_map, pose_range, coords_range, WH = read_occ_map_npy(occ_map_npy)
 	H, W = gt_occ_map.shape[:2]

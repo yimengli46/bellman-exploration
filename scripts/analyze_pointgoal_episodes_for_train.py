@@ -8,10 +8,7 @@ import matplotlib.pyplot as plt
 import quaternion as qt
 import math
 import glob
-
-def get_scene_name(episode):
-	idx_right_most_slash = episode.scene_id.rfind('/')
-	return episode.scene_id[idx_right_most_slash+1:-4]
+from modeling.utils.navigation_utils import get_scene_name
 
 split = 'train'
 saved_folder = 'output/scene_height_distribution'

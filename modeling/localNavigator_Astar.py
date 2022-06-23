@@ -330,3 +330,102 @@ class localNav_Astar:
 		path = [t[::-1] for t in path]
 
 		return len(path)
+
+	def convert_path_to_pose(self, path):
+		path = [t[::-1] for t in path]
+
+		poses = []
+		actions = []
+		points = []
+
+		for loc in path:
+			pose = pxl_coords_to_pose((loc[0], loc[1]), self.pose_range,
+									  self.coords_range, self.WH)
+			points.append(pose)
+
+		## compute theta for each point except the last one
+		## theta is in the range [-pi, pi]
+		thetas = []
+		for i in range(len(points) - 1):
+			p1 = points[i]
+			p2 = points[i + 1]
+			current_theta = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
+			thetas.append(current_theta)
+
+		#print(f'len(thetas) = {len(thetas)}, len(points) = {len(points)}')
+		assert len(thetas) == len(points) - 1
+
+		# pose: (x, y, theta)
+		previous_theta = 0
+		for i in range(len(points) - 1):
+			p1 = points[i]
+			p2 = points[i + 1]
+
+			current_theta = thetas[i]
+			## so that previous_theta is same as current_theta for the first point
+			if i == 0:
+				previous_theta = map_rot_to_planner_rot(0)
+			#print(f'previous_theta = {math.degrees(previous_theta)}, current_theta = {math.degrees(current_theta)}')
+			## first point is not the result of an action
+			## append an action before introduce a new pose
+			if i != 0:
+				## forward: 0, left: 3, right 2
+				actions.append("MOVE_FORWARD")
+			## after turning, previous theta is changed into current_theta
+			pose = (p1[0], p1[1], previous_theta)
+			poses.append(pose)
+			## first add turning points
+			## decide turn left or turn right, Flase = left, True = Right
+			bool_turn = False
+			minus_cur_pre_theta = minus_theta_fn(previous_theta, current_theta)
+			if minus_cur_pre_theta < 0:
+				bool_turn = True
+			## need to turn more than once, since each turn is 30 degree
+			while abs(minus_theta_fn(previous_theta,
+									 current_theta)) > upper_thresh_theta:
+				if bool_turn:
+					previous_theta = minus_theta_fn(upper_thresh_theta,
+													previous_theta)
+					actions.append("TURN_RIGHT")
+				else:
+					previous_theta = plus_theta_fn(upper_thresh_theta,
+												   previous_theta)
+					actions.append("TURN_LEFT")
+				pose = (p1[0], p1[1], previous_theta)
+				poses.append(pose)
+			## add one more turning points when change of theta > 15 degree
+			if abs(minus_theta_fn(previous_theta,
+								  current_theta)) > lower_thresh_theta:
+				if bool_turn:
+					actions.append("TURN_RIGHT")
+				else:
+					actions.append("TURN_LEFT")
+				pose = (p1[0], p1[1], current_theta)
+				poses.append(pose)
+			## no need to change theta any more
+			previous_theta = current_theta
+			## then add forward points
+
+			## we don't need to add p2 to poses unless p2 is the last point in points
+			if i + 1 == len(points) - 1:
+				actions.append("MOVE_FORWARD")
+				pose = (p2[0], p2[1], current_theta)
+				poses.append(pose)
+
+		assert len(poses) == (len(actions) + 1)
+
+		path_idx = 1
+		pose_lst = []
+		for i in range(0, len(poses)):
+			pose = poses[i]
+			# convert planner pose to environment pose
+			rot = -planner_rot_to_map_rot(pose[2])
+			new_pose = (pose[0], -pose[1], rot)
+			if i == 0:
+				action = ""
+			else:
+				action = actions[i - 1]
+			pose_lst.append(new_pose)
+
+		#print(f'path_idx = {self.path_idx}, path_pose_action = {self.path_pose_action}')
+		return pose_lst

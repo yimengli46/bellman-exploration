@@ -359,8 +359,18 @@ def pose_to_coords(cur_pose,
 
 	return (x_coord, z_coord)
 
+def save_sem_map_through_plt(img, name):
+	""" save the figure img at directory 'name' using matplotlib"""
+	fig, ax = plt.subplots(nrows=1, ncols=1)
+	ax.imshow(img)
+	ax.get_xaxis().set_visible(False)
+	ax.get_yaxis().set_visible(False)
+	fig.tight_layout()
+	#plt.show()
+	fig.savefig(name)
+	plt.close()
 
-def save_fig_through_plt(img, name):
+def save_occ_map_through_plt(img, name):
 	""" save the figure img at directory 'name' using matplotlib"""
 	fig, ax = plt.subplots(nrows=1, ncols=1)
 	ax.imshow(img, cmap='gray')

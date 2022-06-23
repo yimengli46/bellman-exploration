@@ -8,6 +8,7 @@ _C.GENERAL.SCENE_HEIGHTS_DICT_PATH = 'output/scene_height_distribution'
 _C.GENERAL.HABITAT_CONFIG_PATH = 'configs/exploration_see_the_floor.yaml'
 _C.GENERAL.BUILD_MAP_CONFIG_PATH = 'configs/build_map_mp3d.yaml'
 _C.GENERAL.LEARNED_MAP_GG_CONFIG_PATH = 'configs/point_nav_mp3d_for_GG.yaml'
+_C.GENERAL.DATALOADER_CONFIG_PATH = 'configs/dataloader.yaml'
 _C.GENERAL.HABITAT_TRAIN_EPISODE_DATA_PATH = 'data/habitat_data/datasets/pointnav/mp3d/temp_train/all.json.gz'
 _C.GENERAL.HABITAT_VAL_EPISODE_DATA_PATH = 'data/habitat_data/datasets/pointnav/mp3d/temp_val/all.json.gz'
 _C.GENERAL.HABITAT_TEST_EPISODE_DATA_PATH = 'data/habitat_data/datasets/pointnav/mp3d/temp_test/all.json.gz'
@@ -41,24 +42,24 @@ _C.SEM_MAP.CELL_SIZE = 0.1
 _C.SEM_MAP.WORLD_SIZE = 50.0 # world model size in each dimension (left, right, top , bottom)
 _C.SEM_MAP.GRID_Y_SIZE = 60
 _C.SEM_MAP.GRID_CLASS_SIZE = 60
+_C.SEM_MAP.HABITAT_FLOOR_IDX = 2
 
 #=============================== for navigator ====================================
 _C.NAVI = CN()
 _C.NAVI.NUM_STEPS = 600
 _C.NAVI.FLAG_GT_OCC_MAP = True
-_C.NAVI.NUM_STEPS_EXPLORE = 10
+_C.NAVI.NUM_STEPS_EXPLORE = 1
 
 _C.NAVI.DETECTOR = 'PanopticSeg'
 _C.NAVI.THRESH_REACH = 0.8
 
 _C.NAVI.USE_ROOM_TYPES = True
 
-_C.NAVI.HFOV = 360 # 360 means panorama, 90 means single view
+_C.NAVI.HFOV = 90 # 360 means panorama, 90 means single view
 
-_C.NAVI.PERCEPTION = 'UNet_Potential' # possible choices 'Anticipation', 'Potential', 'UNet_Potential'
+_C.NAVI.PERCEPTION = 'Potential' # possible choices 'Anticipation', 'Potential', 'UNet_Potential'
 
 _C.NAVI.STRATEGY = 'DP' # 'Greedy' vs 'DP'
-
 
 #========================== for short-range nav ====================================
 _C.LN = CN()
@@ -70,7 +71,7 @@ _C.DETECTRON2 = CN()
 #================================ for Frontier Exploration ===========================
 _C.FE = CN()
 _C.FE.COLLISION_VAL = 1
-_C.FE.FREE_VAL = 3
+_C.FE.FREE_VAL = 2
 _C.FE.UNOBSERVED_VAL = 0
 _C.FE.OBSTACLE_THRESHOLD = 1
 _C.FE.GROUP_INFLATION_RADIUS = 0
@@ -93,8 +94,8 @@ _C.MAP.OCCUPANCY_HEIGHT_THRESH = -1.0 # used when estimating occupancy from dept
 #============================== for model prediction ===================================
 _C.PRED = CN()
 _C.PRED.NEIGHBOR_SIZE = 10
-_C.PRED.MAX_AREA = 1000
-_C.PRED.NUM_WORKERS = 4
+_C.PRED.DIVIDE_AREA = 1000
+_C.PRED.NUM_WORKERS = 1 #4
 _C.PRED.BATCH_SIZE = 4
 _C.PRED.INPUT_WH = (128, 128)
 
@@ -121,8 +122,10 @@ _C.PRED.OUTPUT_CHANNEL = 1 # number of output channels of UNet
 
 _C.PRED.DEVICE = 'cuda'
 
+_C.PRED.NUM_GENERATE_EPISODES_PER_SCENE = 10000
+
 #================================ for visualization ============================
-_C.SEM_MAP.FLAG_VISUALIZE_EGO_OBS = False
+_C.SEM_MAP.FLAG_VISUALIZE_EGO_OBS = True
 _C.LN.FLAG_VISUALIZE_LOCAL_MAP = False
 _C.NAVI.FLAG_VISUALIZE_FINAL_TRAJ = True
 _C.NAVI.FLAG_VISUALIZE_MIDDLE_TRAJ = True

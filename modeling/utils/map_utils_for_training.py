@@ -10,12 +10,22 @@ from core import cfg
 from .build_map_utils import find_first_nonzero_elem_per_row
 from timeit import default_timer as timer
 
+def find_neighborhood(agent_coords, occupancy_map, radius=10):
+	H, W = occupancy_map.shape
+	x = np.linspace(0, W - 1, W)
+	y = np.linspace(0, H - 1, H)
+	xv, yv = np.meshgrid(x, y)
+	cell_coords = np.stack((xv, yv), axis=2)
+	cell_dist = np.sum((cell_coords - agent_coords)**2, axis=2)
+	cell_mask = (cell_dist <= radius**2)
+	#plt.imshow(cell_mask)
+	#plt.show()
+	return cell_mask
+
 """ class used to build semantic maps of the scenes
 
 The robot takes actions in the environment and use the observations to build the semantic map online.
 """
-
-
 class SemanticMap:
 
 	def __init__(self, split, scene_name, pose_range, coords_range, WH, ins2cat_dict):
@@ -36,11 +46,16 @@ class SemanticMap:
 
 		# load occupancy map
 		occ_map_path = f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{self.split}/{self.scene_name}'
-		self.occupancy_map = np.load(f'{occ_map_path}/BEV_occupancy_map.npy',
+		gt_occupancy_map = np.load(f'{occ_map_path}/BEV_occupancy_map.npy',
 									 allow_pickle=True).item()['occupancy']
+		gt_occupancy_map = np.where(gt_occupancy_map == 1, cfg.FE.FREE_VAL,
+								 gt_occupancy_map)  # free cell
+		gt_occupancy_map = np.where(gt_occupancy_map == 0, cfg.FE.COLLISION_VAL,
+								 gt_occupancy_map)  # occupied cell
+		self.gt_occupancy_map = gt_occupancy_map
 		#kernel = np.ones((5,5), np.uint8)
 		#self.occupancy_map = cv2.erode(occupancy_map.astype(np.uint8), kernel, iterations=1)
-		print(f'self.occupancy_map.shape = {self.occupancy_map.shape}')
+		print(f'self.gt_occupancy_map.shape = {self.gt_occupancy_map.shape}')
 
 		# ==================================== initialize 4d grid =================================
 		self.min_X = -cfg.SEM_MAP.WORLD_SIZE
@@ -49,7 +64,7 @@ class SemanticMap:
 		self.max_Z = cfg.SEM_MAP.WORLD_SIZE
 
 		self.x_grid = np.arange(self.min_X, self.max_X, self.cell_size)
-		self.z_grid = np.arange(self.min_Z, self.max_Z, self.cell_size)
+		self.z_grid = np.arange(self.min_Z, self.max_Z, self.cell_size)[::-1]
 
 		self.four_dim_grid = np.zeros(
 			(len(self.z_grid), cfg.SEM_MAP.GRID_Y_SIZE, len(
@@ -65,7 +80,8 @@ class SemanticMap:
 			# load rgb image, depth and sseg
 			rgb_img = obs['rgb']
 			depth_img = 5. * obs['depth']
-			depth_img = cv2.blur(depth_img, (3, 3))
+			#depth_img = cv2.blur(depth_img, (3, 3))
+			depth_img  = depth_img[:, :, 0]
 			#print(f'depth_img.shape = {depth_img.shape}')
 			InsSeg_img = obs["semantic"]
 			sseg_img = convertInsSegToSSeg(InsSeg_img, self.ins2cat_dict)
@@ -80,7 +96,7 @@ class SemanticMap:
 				ax[0].get_xaxis().set_visible(False)
 				ax[0].get_yaxis().set_visible(False)
 				ax[0].set_title("rgb")
-				ax[1].imshow(apply_color_to_map(sseg_img))
+				ax[1].imshow(apply_color_to_map(sseg_img, flag_small_categories=True))
 				ax[1].get_xaxis().set_visible(False)
 				ax[1].get_yaxis().set_visible(False)
 				ax[1].set_title("sseg")
@@ -100,11 +116,11 @@ class SemanticMap:
 					sem_map_pose,
 					gap=2,
 					FOV=90,
-					cx=160,
-					cy=320,
-					resolution_x=320,
-					resolution_y=640,
-					theta_x=-0.785,
+					cx=128,
+					cy=128,
+					resolution_x=256,
+					resolution_y=256,
+					theta_x=0.,
 					ignored_classes=self.IGNORED_CLASS)
 			elif cfg.NAVI.HFOV == 360:
 				xyz_points, sseg_points = project_pixels_to_world_coords(
@@ -112,12 +128,12 @@ class SemanticMap:
 					depth_img,
 					sem_map_pose,
 					gap=2,
-					FOV=120,
-					cx=240,
-					cy=320,
-					resolution_x=480,
-					resolution_y=640,
-					theta_x=-0.785,
+					FOV=90,
+					cx=128,
+					cy=128,
+					resolution_x=256,
+					resolution_y=256,
+					theta_x=0.,
 					ignored_classes=self.IGNORED_CLASS)
 
 			#print(f'xyz_points.shape = {xyz_points.shape}')
@@ -144,9 +160,8 @@ class SemanticMap:
 			z_coord = z_coord[mask_y_coord]
 			sseg_points = sseg_points[mask_y_coord]
 			self.four_dim_grid[z_coord, y_coord, x_coord, sseg_points] += 1
-		#assert 1==2
 
-	def get_semantic_map(self):
+	def get_semantic_map(self, agent_map_pose):
 		""" get the built semantic map. """
 		# reduce size of the four_dim_grid
 		smaller_four_dim_grid = self.four_dim_grid[self.coords_range[1]:self.coords_range[3] + 1, 
@@ -169,22 +184,19 @@ class SemanticMap:
 		#observed_area_flag = (observed_area_flag[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1])
 
 		# get occupancy map
-		'''
 		occupancy_map = np.zeros(semantic_map.shape, dtype=np.int8)
-		occupancy_map = np.where(semantic_map==57, 3, occupancy_map) # floor index 57, free space index 3
-		occupancy_map = np.where(semantic_map==self.UNDETECTED_PIXELS_CLASS, 2, occupancy_map) # explored but undetected area, index 2
-		# occupied area are the explored area but not floor
-		mask_explored_occupied_area = np.logical_and(observed_area_flag, occupancy_map==0)
-		occupancy_map[mask_explored_occupied_area] = 1 # occupied space index
+		occupancy_map = np.where(semantic_map==cfg.SEM_MAP.HABITAT_FLOOR_IDX, cfg.FE.FREE_VAL, occupancy_map) # floor index 57, free space index 3
+		mask_occupied = np.logical_and(semantic_map != cfg.SEM_MAP.HABITAT_FLOOR_IDX, observed_area_flag)
+		occupancy_map = np.where(mask_occupied, cfg.FE.COLLISION_VAL, occupancy_map)
 
-		occupancy_map = occupancy_map[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1]
-		'''
-
-		occupancy_map = self.occupancy_map.copy()
-		occupancy_map = np.where(occupancy_map == 1, cfg.FE.FREE_VAL,
-								 occupancy_map)  # free cell
-		occupancy_map = np.where(occupancy_map == 0, cfg.FE.COLLISION_VAL,
-								 occupancy_map)  # occupied cell
+		#============================== complement the region near the robot ====================
+		agent_coords = pose_to_coords(agent_map_pose, self.pose_range,
+									  self.coords_range, self.WH)
+		# find the nearby cells coordinates
+		neighborhood_mask = find_neighborhood(agent_coords, occupancy_map)
+		complement_mask = np.logical_and(neighborhood_mask, observed_area_flag==False)
+		# change the complement area
+		occupancy_map = np.where(complement_mask, cfg.FE.FREE_VAL, occupancy_map)
 
 		# add occupied cells
 		for pose in self.occupied_poses:
@@ -195,16 +207,15 @@ class SemanticMap:
 									flag_cropped=True)
 			print(f'occupied cell coords = {coords}')
 			occupancy_map[coords[1], coords[0]] = cfg.FE.COLLISION_VAL
+		
 		'''
-		temp_semantic_map = semantic_map[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1]
-		temp_occupancy_map = occupancy_map[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1]
 		fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(200, 100))
 		# visualize gt semantic map
-		ax[0].imshow(temp_semantic_map)
+		ax[0].imshow(semantic_map)
 		ax[0].get_xaxis().set_visible(False)
 		ax[0].get_yaxis().set_visible(False)
 		ax[0].set_title('semantic map')
-		ax[1].imshow(temp_occupancy_map, vmax=3)
+		ax[1].imshow(occupancy_map, cmap='gray')
 		ax[1].get_xaxis().set_visible(False)
 		ax[1].get_yaxis().set_visible(False)
 		ax[1].set_title('occupancy map')
@@ -213,7 +224,7 @@ class SemanticMap:
 
 		return semantic_map, observed_area_flag, occupancy_map
 
-	def get_observed_occupancy_map(self):
+	def get_observed_occupancy_map(self, agent_map_pose):
 		""" get currently maintained occupancy map """
 		# reduce size of the four_dim_grid
 		smaller_four_dim_grid = self.four_dim_grid[self.coords_range[1]:self.coords_range[3] + 1, 
@@ -235,11 +246,37 @@ class SemanticMap:
 		observed_area_flag = (grid_sum_cat > 0)
 		#observed_area_flag = (observed_area_flag[self.coords_range[1]:self.coords_range[3]+1, self.coords_range[0]:self.coords_range[2]+1])
 
-		occupancy_map = self.occupancy_map.copy()
-		occupancy_map = np.where(self.occupancy_map == 1, cfg.FE.FREE_VAL,
-								 occupancy_map)  # free cell
-		occupancy_map = np.where(self.occupancy_map == 0, cfg.FE.COLLISION_VAL,
-								 occupancy_map)  # occupied cell
+		# get occupancy map
+		class_list = [1] + [i for i in range(3, 41)]
+		smaller_class_grid = np.sum(smaller_four_dim_grid[:,:,:,class_list], axis=(1, 3))
+		occupancy_map = np.zeros(semantic_map.shape, dtype=np.int8)
+		mask_free = np.logical_and(smaller_class_grid == 0, observed_area_flag)
+		occupancy_map = np.where(mask_free, cfg.FE.FREE_VAL, occupancy_map) # floor index 57, free space index 3
+		mask_occupied = np.logical_and(smaller_class_grid > 0, observed_area_flag)
+		occupancy_map = np.where(mask_occupied, cfg.FE.COLLISION_VAL, occupancy_map)
+
+		'''
+		fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(200, 100))
+		# visualize gt semantic map
+		ax[0].imshow(mask_free)
+		ax[0].get_xaxis().set_visible(False)
+		ax[0].get_yaxis().set_visible(False)
+		ax[0].set_title('mask_free')
+		ax[1].imshow(mask_occupied, cmap='gray')
+		ax[1].get_xaxis().set_visible(False)
+		ax[1].get_yaxis().set_visible(False)
+		ax[1].set_title('mask_occupied')
+		plt.show()
+		'''
+
+		#============================== complement the region near the robot ====================
+		agent_coords = pose_to_coords(agent_map_pose, self.pose_range,
+									  self.coords_range, self.WH)
+		# find the nearby cells coordinates
+		neighborhood_mask = find_neighborhood(agent_coords, occupancy_map)
+		complement_mask = np.logical_and(neighborhood_mask, observed_area_flag==False)
+		# change the complement area
+		occupancy_map = np.where(complement_mask, cfg.FE.FREE_VAL, occupancy_map)
 
 		# add occupied cells
 		for pose in self.occupied_poses:
@@ -251,11 +288,21 @@ class SemanticMap:
 			print(f'occupied cell coords = {coords}')
 			occupancy_map[coords[1], coords[0]] = 1
 
-		gt_occupancy_map = occupancy_map.copy()
+		gt_occupancy_map = self.gt_occupancy_map
 
-		# add unobserved/unexplored area
-		occupancy_map[np.logical_not(
-			observed_area_flag)] = cfg.FE.UNOBSERVED_VAL
+		'''
+		fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(200, 100))
+		# visualize gt semantic map
+		ax[0].imshow(apply_color_to_map(semantic_map))
+		ax[0].get_xaxis().set_visible(False)
+		ax[0].get_yaxis().set_visible(False)
+		ax[0].set_title('semantic map')
+		ax[1].imshow(occupancy_map, cmap='gray')
+		ax[1].get_xaxis().set_visible(False)
+		ax[1].get_yaxis().set_visible(False)
+		ax[1].set_title('occupancy map')
+		plt.show()
+		'''
 
 		return occupancy_map, gt_occupancy_map, observed_area_flag, semantic_map
 

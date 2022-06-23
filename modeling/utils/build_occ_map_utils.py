@@ -4,35 +4,13 @@ import cv2
 import matplotlib.pyplot as plt
 import math
 from math import cos, sin, acos, atan2, pi, floor
-from .baseline_utils import project_pixels_to_world_coords, apply_color_to_map, save_sem_map_through_plt
-
-
-def find_first_nonzero_elem_per_row(mat):
-	H, W = mat.shape
-	x = np.linspace(0, W - 1, W)
-	y = np.linspace(0, H - 1, H)
-	xv, yv = np.meshgrid(x, y)
-
-	xv[mat == 0] = W - 1
-	min_idx_nonzero_per_row = np.min(xv, axis=1).astype(int)
-	'''
-	print(f'min_idx_nonzero_per_row.shape = {min_idx_nonzero_per_row.shape}')
-	plt.hist(min_idx_nonzero_per_row, bins = [0,20,40,60,80,100]) 
-	plt.title("histogram") 
-	plt.show()
-	'''
-	yv = yv[:, 0].astype(int)
-
-	result = mat[yv, min_idx_nonzero_per_row]
-	return result
-
+from .baseline_utils import project_pixels_to_world_coords, apply_color_to_map, save_occ_map_through_plt
+from core import cfg
 
 """ class used to build semantic maps of the scenes
 
 It takes dense observations of the environment and project pixels to the ground.
 """
-
-
 class SemanticMap:
 
 	def __init__(self, saved_folder):
@@ -58,7 +36,7 @@ class SemanticMap:
 		self.max_Z = 50.0
 
 		self.x_grid = np.arange(self.min_X, self.max_X, self.cell_size)
-		self.z_grid = np.arange(self.min_Z, self.max_Z, self.cell_size)
+		self.z_grid = np.arange(self.min_Z, self.max_Z, self.cell_size)[::-1]
 
 		self.four_dim_grid = np.zeros(
 			(len(self.z_grid), 100, len(self.x_grid), 100),
@@ -70,6 +48,7 @@ class SemanticMap:
 		self.max_x_coord = 0
 		self.min_z_coord = self.H - 1
 		self.max_z_coord = 0
+		self.max_y_coord = 0
 
 	def build_semantic_map(self, rgb_img, depth_img, sseg_img, pose, step_):
 		""" update semantic map with observations rgb_img, depth_img, sseg_img and robot pose."""
@@ -138,66 +117,82 @@ class SemanticMap:
 				min(np.max(z_coord) + self.map_boundary, self.H - 1),
 				self.max_z_coord)
 
+			self.max_y_coord = max(np.max(y_coord), self.max_y_coord)
+			print(f'max_y_coord = {self.max_y_coord}')
+
 		if step_ % self.step_size == 0:
 			self.get_semantic_map(step_)
 
 	def get_semantic_map(self, step_):
-		""" get the built semantic map. """
-		# argmax over the category axis
-		zyx_grid = np.argmax(self.four_dim_grid, axis=3)
-		# swap y dim to the last axis
-		zxy_grid = np.swapaxes(zyx_grid, 1, 2)
-		L, M, N = zxy_grid.shape
-		zxy_grid = zxy_grid.reshape(L * M, N)
+		""" get the built occ map. """
+		smaller_four_dim_grid = self.four_dim_grid[self.min_z_coord:self.max_z_coord + 1, :, 
+									self.min_x_coord:self.max_x_coord + 1, :]
+		#print(f'smaller_four_dim_grid.shape = {smaller_four_dim_grid.shape}')
+		if smaller_four_dim_grid.shape[0] > 0 and smaller_four_dim_grid.shape[2] > 0:
+			# find explored region
+			mask_explored = smaller_four_dim_grid.sum(axis=(1, 3)) > 0
+			THRESHOLD_LOW = max(0, self.max_y_coord - 1) # within 5 cells of the lowest y point
+			THRESHOLD_HIGH = max(0, self.max_y_coord - 15)
+			print(f'thresh_high = {THRESHOLD_HIGH}, thresh_low = {THRESHOLD_LOW}')
+			cells_in_occupied_range = smaller_four_dim_grid[:, THRESHOLD_HIGH:THRESHOLD_LOW, :].sum(axis=(1,3))
+			print(f'cells_in_occupied_range.shape = {cells_in_occupied_range.shape}')
+			occupancy_map = np.zeros(mask_explored.shape, dtype=np.int16)
+			occupancy_map[mask_explored == False] = cfg.FE.UNOBSERVED_VAL
+			mask_free = np.logical_and(cells_in_occupied_range == 0,
+										mask_explored)
+			mask_occupied = np.logical_and(cells_in_occupied_range > 0,
+											mask_explored)
+			occupancy_map[mask_free] = cfg.FE.FREE_VAL
+			occupancy_map[mask_occupied] = cfg.FE.COLLISION_VAL
 
-		semantic_map = find_first_nonzero_elem_per_row(zxy_grid)
-		semantic_map = semantic_map.reshape(L, M)
+			if occupancy_map.shape[0] > 0:
+				save_occ_map_through_plt(
+					occupancy_map,
+					f'{self.saved_folder}/step_{step_}_occ.jpg')
 
-		semantic_map = semantic_map[self.min_z_coord:self.max_z_coord + 1,
-									self.min_x_coord:self.max_x_coord + 1]
-		color_semantic_map = apply_color_to_map(semantic_map)
-
-		#plt.imshow(color_semantic_map)
-		#plt.show()
-		if semantic_map.shape[0] > 0:
-			save_sem_map_through_plt(
-				color_semantic_map,
-				f'{self.saved_folder}/step_{step_}_semantic.jpg')
 
 	def save_final_map(self, ENLARGE_SIZE=5):
-		""" save the built semantic map to a figure."""
-		# argmax over the category axis
-		zyx_grid = np.argmax(self.four_dim_grid, axis=3)
-		# swap y dim to the last axis
-		zxy_grid = np.swapaxes(zyx_grid, 1, 2)
-		L, M, N = zxy_grid.shape
-		zxy_grid = zxy_grid.reshape(L * M, N)
+		""" save the built occ map to a figure."""
+		smaller_four_dim_grid = self.four_dim_grid[self.min_z_coord:self.max_z_coord + 1, :, 
+									self.min_x_coord:self.max_x_coord + 1, :]
+		#print(f'smaller_four_dim_grid.shape = {smaller_four_dim_grid.shape}')
+		if smaller_four_dim_grid.shape[0] > 0 and smaller_four_dim_grid.shape[2] > 0:
+			# find explored region
+			mask_explored = smaller_four_dim_grid.sum(axis=(1, 3)) > 0
+			THRESHOLD_LOW = max(0, self.max_y_coord - 1) # within 5 cells of the lowest y point
+			THRESHOLD_HIGH = max(0, self.max_y_coord - 15)
+			print(f'thresh_high = {THRESHOLD_HIGH}, thresh_low = {THRESHOLD_LOW}')
+			cells_in_occupied_range = smaller_four_dim_grid[:, THRESHOLD_HIGH:THRESHOLD_LOW, :].sum(axis=(1,3))
+			print(f'cells_in_occupied_range.shape = {cells_in_occupied_range.shape}')
+			occupancy_map = np.zeros(mask_explored.shape, dtype=np.int16)
+			occupancy_map[mask_explored == False] = cfg.FE.UNOBSERVED_VAL
+			mask_free = np.logical_and(cells_in_occupied_range == 0,
+										mask_explored)
+			mask_occupied = np.logical_and(cells_in_occupied_range > 0,
+											mask_explored)
+			occupancy_map[mask_free] = cfg.FE.FREE_VAL
+			occupancy_map[mask_occupied] = cfg.FE.COLLISION_VAL
 
-		semantic_map = find_first_nonzero_elem_per_row(zxy_grid)
-		semantic_map = semantic_map.reshape(L, M)
+		
 
-		semantic_map = semantic_map[self.min_z_coord:self.max_z_coord + 1,
-									self.min_x_coord:self.max_x_coord + 1]
+			map_dict = {}
+			map_dict['min_x'] = self.min_x_coord
+			map_dict['max_x'] = self.max_x_coord
+			map_dict['min_z'] = self.min_z_coord
+			map_dict['max_z'] = self.max_z_coord
+			map_dict['min_X'] = self.min_X
+			map_dict['max_X'] = self.max_X
+			map_dict['min_Z'] = self.min_Z
+			map_dict['max_Z'] = self.max_Z
+			map_dict['W'] = self.W
+			map_dict['H'] = self.H
+			map_dict['occupancy'] = occupancy_map
+			print(f'occupancy_map.shape = {occupancy_map.shape}')
+			np.save(f'{self.saved_folder}/BEV_occupancy_map.npy', map_dict)
 
-		map_dict = {}
-		map_dict['min_x'] = self.min_x_coord
-		map_dict['max_x'] = self.max_x_coord
-		map_dict['min_z'] = self.min_z_coord
-		map_dict['max_z'] = self.max_z_coord
-		map_dict['min_X'] = self.min_X
-		map_dict['max_X'] = self.max_X
-		map_dict['min_Z'] = self.min_Z
-		map_dict['max_Z'] = self.max_Z
-		map_dict['W'] = self.W
-		map_dict['H'] = self.H
-		map_dict['semantic_map'] = semantic_map
-		print(f'semantic_map.shape = {semantic_map.shape}')
-		np.save(f'{self.saved_folder}/BEV_semantic_map.npy', map_dict)
-
-		semantic_map = cv2.resize(
-			semantic_map,
-			(int(semantic.shape[1] * ENLARGE_SIZE), int(semantic_map.shape[0] * ENLARGE_SIZE)),
-			interpolation=cv2.INTER_NEAREST)
-		color_semantic_map = apply_color_to_map(semantic_map)
-		save_sem_map_through_plt(color_semantic_map,
-							 f'{self.saved_folder}/final_semantic_map.jpg')
+			occupancy_map = cv2.resize(
+				occupancy_map,
+				(int(occupancy_map.shape[1] * ENLARGE_SIZE), int(occupancy_map.shape[0] * ENLARGE_SIZE)),
+				interpolation=cv2.INTER_NEAREST)
+			save_occ_map_through_plt(occupancy_map,
+								 f'{self.saved_folder}/final_occupancy_map.jpg')

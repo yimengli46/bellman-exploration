@@ -7,19 +7,19 @@ from math import cos, sin, acos, atan2, pi, floor
 from modeling.utils.baseline_utils import project_pixels_to_world_coords, convertInsSegToSSeg, apply_color_to_map, create_folder
 import habitat
 import habitat_sim
-from modeling.utils.build_map_utils import SemanticMap
+from modeling.utils.build_occ_map_utils import SemanticMap
 from habitat.tasks.utils import cartesian_to_polar, quaternion_rotate_vector
 import random
 from core import cfg
 from modeling.utils.navigation_utils import verify_img, get_scene_name, SimpleRLEnv
 
 #=========================================== fix the habitat scene shuffle ===============================
-SEED = 5
+SEED = cfg.GENERAL.RANDOM_SEED
 random.seed(SEED)
 np.random.seed(SEED)
 
-split = 'test'
-output_folder = f'output/semantic_map_temp/{split}'
+split = 'train'
+output_folder = f'output/occ_map_from_pcd_height/{split}'
 # after testing, using 8 angles is most efficient
 theta_lst = [0, pi/4, pi/2, pi*3./4, pi, pi*5./4, pi*3./2, pi*7./4]
 #theta_lst = [0]
@@ -50,7 +50,7 @@ config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-for episode_id in range(1):
+for episode_id in range(50):
 	env.reset()
 	print('episode_id = {}'.format(episode_id))
 	print('env.current_episode = {}'.format(env.current_episode))

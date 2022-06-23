@@ -6,8 +6,9 @@ import habitat_sim
 from modeling.utils.navigation_utils import SimpleRLEnv, get_scene_name
 from core import cfg
 
+split = 'test'
 scene_floor_dict = np.load(
-	f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{cfg.MAIN.SPLIT}_scene_floor_dict.npy',
+	f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy',
 	allow_pickle=True).item()
 
 #================================ load habitat env============================================
@@ -65,7 +66,7 @@ for episode_id in range(18):
 				steps = 0
 				covered_area_percent = 0
 				try:
-					flag, covered_area_percent, steps = nav(env, idx, scene_name, height, start_pose, saved_folder)
+					flag, covered_area_percent, steps = nav(split, env, idx, scene_name, height, start_pose, saved_folder)
 				except:
 					print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
 
