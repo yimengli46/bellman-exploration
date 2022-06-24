@@ -8,3 +8,4 @@ cfg.freeze()
 #print(cfg)
 
 print_cfg()
+cfg.dump(stream=open(f'temp_config.yaml', 'w'))

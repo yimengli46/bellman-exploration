@@ -81,7 +81,7 @@ class MP3D_View_Generator:
 					largest_cc = list(max(nx.connected_components(G), key=len))
 
 					#======================================= randomly generate episodes ======================
-					for idx_epi in range(cfg.PRED.NUM_GENERATE_EPISODES_PER_SCENE):
+					for idx_epi in range(cfg.PRED.VIEW.NUM_GENERATE_EPISODES_PER_SCENE):
 						start_loc, goal_loc = random.choices(largest_cc, k=2)
 						path = nx.shortest_path(G,
 												source=start_loc,

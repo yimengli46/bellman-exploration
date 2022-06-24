@@ -15,10 +15,10 @@ import cv2
 
 #'''
 if cfg.NAVI.PERCEPTION == 'UNet_Potential':
-	model = UNet(n_channel_in=cfg.PRED.INPUT_CHANNEL, n_class_out=cfg.PRED.OUTPUT_CHANNEL).to(cfg.PRED.DEVICE)
-	if cfg.PRED.INPUT == 'occ_and_sem':
+	model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).to(cfg.PRED.PARTIAL_MAP.DEVICE)
+	if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
 		checkpoint = torch.load(f'run/MP3D/unet/experiment_3/checkpoint.pth.tar')
-	elif cfg.PRED.INPUT == 'occ_only':
+	elif cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
 		checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar')
 	model.load_state_dict(checkpoint['state_dict'])
 #'''
@@ -222,16 +222,16 @@ def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map
 						plt.show()
 
 	elif cfg.NAVI.PERCEPTION == 'UNet_Potential':
-		resized_Mp = np.zeros((2, cfg.PRED.INPUT_WH[1], cfg.PRED.INPUT_WH[0]), dtype=np.float32)
-		resized_Mp[0] = cv2.resize(occupancy_grid, cfg.PRED.INPUT_WH, interpolation=cv2.INTER_NEAREST)
-		resized_Mp[1] = cv2.resize(sem_map, cfg.PRED.INPUT_WH, interpolation=cv2.INTER_NEAREST)
+		resized_Mp = np.zeros((2, cfg.PRED.PARTIAL_MAP.INPUT_WH[1], cfg.PRED.PARTIAL_MAP.INPUT_WH[0]), dtype=np.float32)
+		resized_Mp[0] = cv2.resize(occupancy_grid, cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
+		resized_Mp[1] = cv2.resize(sem_map, cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
 
 		tensor_Mp = torch.tensor(resized_Mp)
 
-		if cfg.PRED.INPUT == 'occ_only':
+		if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
 			tensor_Mp = tensor_Mp[0].unsqueeze(0)
 
-		tensor_Mp = tensor_Mp.unsqueeze(0).to(cfg.PRED.DEVICE) # for batch
+		tensor_Mp = tensor_Mp.unsqueeze(0).to(cfg.PRED.PARTIAL_MAP.DEVICE) # for batch
 		with torch.no_grad():
 			outputs = model(tensor_Mp)
 			output = outputs.cpu().numpy()[0, 0]
@@ -249,7 +249,7 @@ def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map
 			else:
 				U_a = 0.0
 
-			f.R = U_a * cfg.PRED.MAX_AREA
+			f.R = U_a * cfg.PRED.PARTIAL_MAP.MAX_AREA
 			f.D = round(sqrt(f.R), 2)
 
 		if cfg.NAVI.FLAG_VISUALIZE_FRONTIER_POTENTIAL:

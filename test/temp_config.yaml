@@ -1,0 +1,189 @@
+DETECTRON2: {}
+EVAL:
+  USE_ALL_START_POINTS: false
+FE:
+  COLLISION_VAL: 1
+  FREE_VAL: 2
+  GROUP_INFLATION_RADIUS: 0
+  OBSTACLE_THRESHOLD: 1
+  UNOBSERVED_VAL: 0
+GENERAL:
+  BUILD_MAP_CONFIG_PATH: configs/habitat_env/build_map_mp3d.yaml
+  DATALOADER_CONFIG_PATH: configs/habitat_env/dataloader.yaml
+  HABITAT_CONFIG_PATH: configs/habitat_env/exploration_see_the_floor.yaml
+  HABITAT_SCENE_DATA_PATH: data/habitat_data/scene_datasets/
+  HABITAT_TEST_EPISODE_DATA_PATH: data/habitat_data/datasets/pointnav/mp3d/temp_test/all.json.gz
+  HABITAT_TRAIN_EPISODE_DATA_PATH: data/habitat_data/datasets/pointnav/mp3d/temp_train/all.json.gz
+  HABITAT_VAL_EPISODE_DATA_PATH: data/habitat_data/datasets/pointnav/mp3d/temp_val/all.json.gz
+  LEARNED_MAP_GG_CONFIG_PATH: configs/habitat_env/point_nav_mp3d_for_GG.yaml
+  RANDOM_SEED: 5
+  SCENE_HEIGHTS_DICT_PATH: output/scene_height_distribution
+LN:
+  FLAG_VISUALIZE_LOCAL_MAP: false
+  LOCAL_MAP_MARGIN: 30
+MAIN:
+  NUM_SCENES: 61
+  SPLIT: train
+  TEST_SCENE_LIST:
+  - 2t7WUuJeko7_0
+  - 5ZKStnWn8Zo_0
+  - ARNzJeq3xxb_0
+  - RPmz2sHmrrY_0
+  - UwV83HsGsw3_0
+  - Vt2qJdWjCF2_0
+  - WYY7iVyf5p8_0
+  - YFuZgdQ5vWj_0
+  - YVUC4YcDtcY_0
+  - fzynW3qQPVF_0
+  - gYvKGZ5eRqb_0
+  - gxdoqLR6rwA_0
+  - jtcxE69GiFV_0
+  - pa4otMbVnkk_0
+  - q9vSo1VnCiC_0
+  - rqfALeAoiTq_0
+  - wc2JMjhGNzB_0
+  - yqstnuAEVhm_0
+  TRAIN_SCENE_LIST:
+  - ZMojNkEp431_0
+  - 1LXtFkjw3qL_0
+  - sT4fr6TAbpF_0
+  - r1Q1Z4BcV1o_0
+  - cV4RVeZvu5T_0
+  - EDJbREhghzL_0
+  - PX4nDJXEHrG_0
+  - YmJkqBEsHnH_0
+  - ULsKaCPVFJR_0
+  - 7y3sRwLe3Va_0
+  - mJXqzFtmKg4_0
+  - 759xd9YjKW5_0
+  - 17DRP5sb8fy_0
+  - ac26ZMwG7aT_0
+  - Pm6F8kyY3z2_0
+  - Vvot9Ly1tCj_0
+  - PuKPg4mmafe_0
+  - S9hNv5qa7GM_0
+  - vyrNrziPKCB_0
+  - SN83YJsR3w2_0
+  - rPc6DW4iMge_0
+  - r47D5H71a5s_0
+  - qoiz87JEwZ2_0
+  - 29hnd4uzFmX_0
+  - 5LpN3gDmAk7_0
+  - VFuaQ6m2Qom_0
+  - i5noydFURQK_0
+  - dhjEzFoUFzH_0
+  - E9uDoFAP3SH_0
+  - s8pcmisQ38h_0
+  - GdvgFV5R1Z5_0
+  - 5q7pvUzZiYa_0
+  - kEZ7cmS4wCh_0
+  - JF19kD82Mey_0
+  - pRbA3pwrgk9_0
+  - 2n8kARJN3HM_0
+  - HxpKQynjfin_0
+  - VzqfbhrpDEA_0
+  - Uxmj2M2itWa_0
+  - V2XKFyX4ASd_0
+  - JeFG25nYj2p_0
+  - p5wJjkQkbXX_0
+  - VLzqgDo317F_0
+  - 8WUmhLawc2A_0
+  - XcA2TqTSSAj_0
+  - D7N2EKCX4Sj_0
+  - aayBHfsNo7d_0
+  - gZ6f7yhEvPG_0
+  - D7G3Y4RVNrH_0
+  - b8cTxDM8gDG_0
+  - VVfe2KiqLaN_0
+  - uNb9QFRL6hY_0
+  - e9zR4mvMWw7_0
+  - sKLMLpTHeUy_0
+  - 82sE5b5pLXE_0
+  - 1pXnuDYAj8r_0
+  - jh4fc5c5qoQ_0
+  - ur6pFq6Qu1A_0
+  - B6ByNegPMKs_0
+  - JmbYfDe2QKZ_0
+  - gTV8FGcVJC9_0
+  VAL_SCENE_LIST:
+  - oLBMNvg9in8_0
+  - TbHJrupSAjP_0
+  - QUCTc6BB5sX_0
+  - EU6Fwq7SyZv_0
+  - zsNo4HB9uLZ_0
+  - X7HyMhZNoso_0
+  - x8F5xyUWy9e_0
+  - 8194nk5LbLH_0
+  - 2azQ1b91cZZ_0
+  - pLe4wQe7qrG_0
+  - Z6MFQCViBuw_0
+MAP:
+  CELL_SIZE: 0.05
+  CROP_SIZE: 160
+  GRID_DIM: 768
+  IMG_SIZE: 256
+  MAP_LOSS_SCALE: 1.0
+  N_SPATIAL_CLASSES: 3
+  OCCUPANCY_HEIGHT_THRESH: -1.0
+NAVI:
+  DETECTOR: PanopticSeg
+  FLAG_GT_OCC_MAP: true
+  FLAG_VISUALIZE_FINAL_TRAJ: true
+  FLAG_VISUALIZE_FRONTIER_POTENTIAL: false
+  FLAG_VISUALIZE_MIDDLE_TRAJ: true
+  HFOV: 90
+  NUM_STEPS: 600
+  NUM_STEPS_EXPLORE: 1
+  PERCEPTION: Potential
+  STRATEGY: DP
+  THRESH_REACH: 0.8
+  USE_ROOM_TYPES: true
+PRED:
+  BATCH_SIZE: 4
+  CHECKNAME: unet
+  DATASET: MP3D
+  DEVICE: cuda
+  DIVIDE_AREA: 1000
+  EPOCHS: 5
+  EVAL_INTERVAL: 2
+  FLAG_VISUALIZE_PRED_LABELS: false
+  INPUT: occ_only
+  INPUT_CHANNEL: 1
+  INPUT_WH:
+  - 128
+  - 128
+  LOSS_TYPE: CE
+  LR: 0.1
+  LR_SCHEDULER: poly
+  NEIGHBOR_SIZE: 10
+  NO_VAL: false
+  NUM_GENERATE_EPISODES_PER_SCENE: 10000
+  NUM_ITER_EVAL: 100
+  NUM_ITER_TRAIN: 5000
+  NUM_WORKERS: 1
+  OUTPUT_CHANNEL: 1
+  RENEW_SCENE_THRESH: 0.95
+  RESUME: ''
+  SAVED_FOLDER: output/VIS_PREDICT_occ_map
+SAVE:
+  OCCUPANCY_MAP_PATH: output/semantic_map
+  SEMANTIC_MAP_PATH: output/semantic_map
+  TESTING_RESULTS_FOLDER: output/TESTING_RESULTS_360degree_DP_UNet_occ_only_Predicted_Potential_10STEP_600STEPS
+SEM_MAP:
+  CELL_SIZE: 0.2
+  ENLARGE_SIZE: 5
+  FLAG_VISUALIZE_EGO_OBS: true
+  GRID_CLASS_SIZE: 60
+  GRID_Y_SIZE: 60
+  HABITAT_FLOOR_IDX: 2
+  IGNORED_MAP_CLASS:
+  - 0
+  - 59
+  IGNORED_ROOM_CLASS:
+  - 0
+  IGNORED_SEM_CLASS:
+  - 0
+  - 17
+  OBJECT_MASK_PIXEL_THRESH: 100
+  UNDETECTED_PIXELS_CLASS: 59
+  WORLD_SIZE: 50.0

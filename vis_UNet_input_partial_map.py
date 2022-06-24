@@ -20,7 +20,7 @@ dataloader_val = data.DataLoader(dataset_val, batch_size=BATCH_SIZE, num_workers
 
 device = torch.device('cuda')
 
-model = UNet(n_channel_in=cfg.PRED.INPUT_CHANNEL, n_class_out=cfg.PRED.OUTPUT_CHANNEL).to(device)
+model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).to(device)
 checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar')
 model.load_state_dict(checkpoint['state_dict'])
 
@@ -78,7 +78,7 @@ with torch.no_grad():
 
 			fig.tight_layout()
 			#plt.show()
-			fig.savefig(f'{cfg.PRED.SAVED_FOLDER}/img_{count}.jpg')
+			fig.savefig(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/img_{count}.jpg')
 			plt.close()
 			'''
 
@@ -123,7 +123,7 @@ with torch.no_grad():
 
 			fig.tight_layout()
 			#plt.show()
-			fig.savefig(f'{cfg.PRED.SAVED_FOLDER}/img_{count}_zeroout_occmap_only.jpg')
+			fig.savefig(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/img_{count}_zeroout_occmap_only.jpg')
 			plt.close()
 
 			count += 1
