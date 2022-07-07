@@ -114,7 +114,8 @@ def project_pixels_to_world_coords(sseg_img,
 								   theta_x=0.0,
 								   resolution_x=640,
 								   resolution_y=480,
-								   ignored_classes=[]):
+								   ignored_classes=[],
+								   sensor_height=cfg.SENSOR.SENSOR_HEIGHT):
 	"""Project pixels in sseg_img into world frame given depth image current_depth and camera pose current_pose.
 
   (u, v) = KRT(XYZ)
@@ -159,12 +160,25 @@ def project_pixels_to_world_coords(sseg_img,
 	points_4d[0, :] = points_4d[0, :] * points_4d[2, :]
 	points_4d[1, :] = points_4d[1, :] * points_4d[2, :]
 
+	if False:
+		points_4d_img = points_4d.reshape((4, yv.shape[0], yv.shape[1])).transpose((1, 2, 0))
+		plt.imshow(points_4d_img[:, :, 1])
+		plt.show()
+
 	## transform kp1_4d from camera1(current) frame to camera2(goal) frame through transformation matrix
 	points_3d = transformation_matrix.dot(points_4d)
 
+	# reverse y-dim and add sensor height
+	points_3d[1, :] = points_3d[1, :] * -1 + sensor_height
+
+	if False:
+		points_3d_img = points_3d.reshape((3, yv.shape[0], yv.shape[1])).transpose((1, 2, 0))
+		plt.imshow(points_3d_img[:, :, 1])
+		plt.show()
+
 	# ignore some artifacts points with depth == 0
 	depth_points = current_depth[yv.flatten(), xv.flatten()].flatten()
-	good = np.logical_and(depth_points > .5, depth_points < 5)
+	good = np.logical_and(depth_points > cfg.SENSOR.DEPTH_MIN, depth_points < cfg.SENSOR.DEPTH_MAX)
 	#print(f'points_3d.shape = {points_3d.shape}')
 	points_3d = points_3d[:, good]
 	#print(f'points_3d.shape = {points_3d.shape}')
@@ -325,7 +339,7 @@ def pxl_coords_to_pose(coords,
 					   pose_range,
 					   coords_range,
 					   WH,
-					   cell_size=0.1,
+					   cell_size=cfg.SEM_MAP.CELL_SIZE,
 					   flag_cropped=True):
 	"""convert cell location 'coords' on the map to pose (X, Z) in the habitat environment"""
 	x, y = coords
@@ -333,18 +347,18 @@ def pxl_coords_to_pose(coords,
 	min_x, min_z, max_x, max_z = coords_range
 
 	if flag_cropped:
-		X = (x + 0.5 + min_x) * cell_size + min_X
-		Z = (WH[0] - (y + 0.5 + min_z)) * cell_size + min_Z
+		X = (x + cell_size/2 + min_x) * cell_size + min_X
+		Z = (WH[0] - (y + cell_size/2 + min_z)) * cell_size + min_Z
 	else:
-		X = (x + 0.5) * cell_size + min_X
-		Z = (WH[0] - (y + 0.5)) * cell_size + min_Z
+		X = (x + cell_size/2) * cell_size + min_X
+		Z = (WH[0] - (y + cell_size/2)) * cell_size + min_Z
 	return (X, Z)
 
 def pose_to_coords(cur_pose,
 				   pose_range,
 				   coords_range,
 				   WH,
-				   cell_size=0.1,
+				   cell_size=cfg.SEM_MAP.CELL_SIZE,
 				   flag_cropped=True):
 	"""convert pose (X, Z) in the habitat environment to the cell location 'coords' on the map"""
 	tx, tz = cur_pose[:2]

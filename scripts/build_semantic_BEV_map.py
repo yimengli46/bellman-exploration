@@ -14,7 +14,7 @@ from core import cfg
 from modeling.utils.navigation_utils import verify_img, get_scene_name, SimpleRLEnv
 
 #=========================================== fix the habitat scene shuffle ===============================
-SEED = 5
+SEED = cfg.GENERAL.RANDOM_SEED
 random.seed(SEED)
 np.random.seed(SEED)
 
@@ -50,7 +50,7 @@ config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-for episode_id in range(1):
+for episode_id in range(18):
 	env.reset()
 	print('episode_id = {}'.format(episode_id))
 	print('env.current_episode = {}'.format(env.current_episode))

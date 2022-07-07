@@ -11,22 +11,18 @@ scene_floor_dict = np.load(
 	f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy',
 	allow_pickle=True).item()
 
+cfg.merge_from_file('configs/exp_360degree_Greedy_Potential_500STEPS.yaml')
+cfg.freeze()
+
 #================================ load habitat env============================================
-config = habitat.get_config(config_paths=cfg.GENERAL.HABITAT_CONFIG_PATH)
+config = habitat.get_config(config_paths=cfg.GENERAL.DATALOADER_CONFIG_PATH)
 config.defrost()
 config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_TEST_EPISODE_DATA_PATH
 config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
-if cfg.NAVI.HFOV == 360:
-	config.SIMULATOR.RGB_SENSOR.WIDTH = 480
-	config.SIMULATOR.RGB_SENSOR.HFOV = 120
-	config.SIMULATOR.DEPTH_SENSOR.WIDTH = 480
-	config.SIMULATOR.DEPTH_SENSOR.HFOV = 120
-	config.SIMULATOR.SEMANTIC_SENSOR.WIDTH = 480
-	config.SIMULATOR.SEMANTIC_SENSOR.HFOV = 120
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-for episode_id in range(18):
+for episode_id in range(17):
 	env.reset()
 	print('episode_id = {}'.format(episode_id))
 	print('env.current_episode = {}'.format(env.current_episode))
@@ -43,6 +39,7 @@ for episode_id in range(18):
 			print(f'**********scene_name = {scene_name}***********')
 
 			output_folder = cfg.SAVE.TESTING_RESULTS_FOLDER
+			create_folder(output_folder)
 			scene_output_folder = f'{output_folder}/{scene_name}'
 			create_folder(scene_output_folder)
 

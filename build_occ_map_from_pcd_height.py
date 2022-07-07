@@ -18,7 +18,7 @@ SEED = cfg.GENERAL.RANDOM_SEED
 random.seed(SEED)
 np.random.seed(SEED)
 
-split = 'train'
+split = 'test'
 output_folder = f'output/occ_map_from_pcd_height/{split}'
 # after testing, using 8 angles is most efficient
 theta_lst = [0, pi/4, pi/2, pi*3./4, pi, pi*5./4, pi*3./2, pi*7./4]
@@ -50,7 +50,7 @@ config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-for episode_id in range(50):
+for episode_id in range(1):
 	env.reset()
 	print('episode_id = {}'.format(episode_id))
 	print('env.current_episode = {}'.format(env.current_episode))

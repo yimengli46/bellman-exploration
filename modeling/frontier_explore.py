@@ -2,14 +2,13 @@ import numpy as np
 import numpy.linalg as LA
 import cv2
 import matplotlib
-#matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import math
 from math import cos, sin, acos, atan2, pi, floor, degrees
 import random
-from .utils.navigation_utils import change_brightness, SimpleRLEnv, get_obs_and_pose
+from .utils.navigation_utils import change_brightness, SimpleRLEnv, get_obs_and_pose, get_obs_and_pose_by_action
 from .utils.baseline_utils import apply_color_to_map, pose_to_coords, gen_arrow_head_marker, read_map_npy, read_occ_map_npy, plus_theta_fn
-from .utils.map_utils import SemanticMap
+from .utils.map_utils_pcd_height import SemanticMap
 from .localNavigator_Astar import localNav_Astar
 import habitat
 import habitat_sim
@@ -17,7 +16,7 @@ from habitat.tasks.utils import cartesian_to_polar, quaternion_rotate_vector
 import random
 from core import cfg
 from .utils import frontier_utils as fr_utils
-
+from modeling.localNavigator_slam import localNav_slam
 
 def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 	"""Major function for navigation.
@@ -28,6 +27,8 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 	Use local navigator to reach the frontiers.
 	When reach the limited number of steps, compute the explored area and return the numbers.
 	"""
+
+	act_dict = {-1: 'Done', 0: 'stop', 1: 'forward', 2: 'left', 3:'right'}
 
 	#============================ get scene ins to cat dict
 	scene = env.habitat_env.sim.semantic_annotations()
@@ -42,14 +43,18 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 
 	if cfg.NAVI.FLAG_GT_OCC_MAP:
 		occ_map_npy = np.load(
-			f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{split}/{scene_name}/BEV_occupancy_map.npy',
+			f'output/semantic_map_temp/{split}/{scene_name}/BEV_occupancy_map.npy',
 			allow_pickle=True).item()
 	gt_occ_map, pose_range, coords_range, WH = read_occ_map_npy(occ_map_npy)
 	H, W = gt_occ_map.shape[:2]
 
 	LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 
-	semMap_module = SemanticMap(scene_name, pose_range, coords_range, WH,
+	LS = localNav_slam(pose_range, coords_range, WH, mark_locs=True, close_small_openings=False, recover_on_collision=False, 
+	fix_thrashing=False, point_cnt=2)
+	LS.reset(gt_occ_map)
+
+	semMap_module = SemanticMap(split, scene_name, pose_range, coords_range, WH,
 								ins2cat_dict)  # build the observed sem map
 	traverse_lst = []
 
@@ -70,7 +75,7 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 		pose_list.append(pose)
 	elif cfg.NAVI.HFOV == 360:
 		obs_list, pose_list = [], []
-		for rot in [120, 240, 0]:
+		for rot in [90, 180, 270]:
 			heading_angle = rot / 180 * np.pi
 			heading_angle = plus_theta_fn(heading_angle, start_pose[2])
 			obs, pose = get_obs_and_pose(env, agent_pos, heading_angle)
@@ -102,7 +107,7 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 										 saved_folder=saved_folder)
 
 		if MODE_FIND_SUBGOAL:
-			observed_occupancy_map, gt_occupancy_map, observed_area_flag, built_semantic_map = semMap_module.get_observed_occupancy_map(
+			observed_occupancy_map, gt_occupancy_map, observed_area_flag, built_semantic_map = semMap_module.get_observed_occupancy_map(agent_map_pose
 			)
 
 			#improved_observed_occupancy_map = fr_utils.remove_isolated_points(observed_occupancy_map)
@@ -192,52 +197,32 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 		if MODE_FIND_SUBGOAL:
 			MODE_FIND_SUBGOAL = False
 			explore_steps = 0
-			flag_plan, subgoal_coords, subgoal_pose = LN.plan_to_reach_frontier(
-				chosen_frontier, agent_map_pose, observed_occupancy_map, step,
-				saved_folder)
-
-			# sometimes the local planning is not successful
-			if not flag_plan:
-				return False, 0, 0
-			print(f'subgoal_coords = {subgoal_coords}')
 
 		#====================================== take next action ================================
-		action, next_pose = LN.next_action(env, scene_height)
-		print(f'action = {action}')
-		if action == "collision":
-			step += 1
-			explore_steps += 1
-			#assert next_pose is None
-			# input next_pose is environment pose, not sem_map pose
-			semMap_module.add_occupied_cell_pose(next_pose)
-			# redo the planning
-			print(f'redo planning')
-			observed_occupancy_map, gt_occupancy_map, observed_area_flag, _ = semMap_module.get_observed_occupancy_map(
-			)
-			flag_plan, subgoal_coords, subgoal_pose = LN.plan_to_reach_frontier(
-				chosen_frontier, agent_map_pose, observed_occupancy_map, step,
-				saved_folder)
-
-			# do not take any actions
-		elif action == "":  # finished navigating to the subgoal
+		act, act_seq, subgoal_coords, subgoal_pose = LS.plan_to_reach_frontier(agent_map_pose, chosen_frontier, 
+			gt_occupancy_map)
+		print(f'subgoal_coords = {subgoal_coords}')
+		print(f'action = {act_dict[act]}')
+		
+		if act == -1 or act == 0: # finished navigating to the subgoal
 			print(f'reached the subgoal')
 			MODE_FIND_SUBGOAL = True
 			visited_frontier.add(chosen_frontier)
 		else:
 			step += 1
 			explore_steps += 1
-			print(f'next_pose = {next_pose}')
-			agent_pos = np.array([next_pose[0], scene_height, next_pose[1]])
 			# output rot is negative of the input angle
 			if cfg.NAVI.HFOV == 90:
 				obs_list, pose_list = [], []
-				heading_angle = -next_pose[2]
-				obs, pose = get_obs_and_pose(env, agent_pos, heading_angle)
+				obs, pose = get_obs_and_pose_by_action(env, act)
 				obs_list.append(obs)
 				pose_list.append(pose)
 			elif cfg.NAVI.HFOV == 360:
 				obs_list, pose_list = [], []
-				for rot in [120, 240, 0]:
+				obs, pose = get_obs_and_pose_by_action(env, act)
+				next_pose = pose
+				agent_pos = np.array([next_pose[0], scene_height, next_pose[1]])
+				for rot in [90, 180, 270, 0]:
 					heading_angle = rot / 180 * np.pi
 					heading_angle = plus_theta_fn(heading_angle, -next_pose[2])
 					obs, pose = get_obs_and_pose(env, agent_pos, heading_angle)

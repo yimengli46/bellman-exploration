@@ -31,25 +31,33 @@ _C.MAIN.TEST_SCENE_LIST = ['2t7WUuJeko7_0', '5ZKStnWn8Zo_0', 'ARNzJeq3xxb_0', 'R
 _C.MAIN.TRAIN_SCENE_LIST = ['ZMojNkEp431_0', '1LXtFkjw3qL_0', 'sT4fr6TAbpF_0', 'r1Q1Z4BcV1o_0', 'cV4RVeZvu5T_0', 'EDJbREhghzL_0', 'PX4nDJXEHrG_0', 'YmJkqBEsHnH_0', 'ULsKaCPVFJR_0', '7y3sRwLe3Va_0', 'mJXqzFtmKg4_0', '759xd9YjKW5_0', '17DRP5sb8fy_0', 'ac26ZMwG7aT_0', 'Pm6F8kyY3z2_0', 'Vvot9Ly1tCj_0', 'PuKPg4mmafe_0', 'S9hNv5qa7GM_0', 'vyrNrziPKCB_0', 'SN83YJsR3w2_0', 'rPc6DW4iMge_0', 'r47D5H71a5s_0', 'qoiz87JEwZ2_0', '29hnd4uzFmX_0', '5LpN3gDmAk7_0', 'VFuaQ6m2Qom_0', 'i5noydFURQK_0', 'dhjEzFoUFzH_0', 'E9uDoFAP3SH_0', 's8pcmisQ38h_0', 'GdvgFV5R1Z5_0', '5q7pvUzZiYa_0', 'kEZ7cmS4wCh_0', 'JF19kD82Mey_0', 'pRbA3pwrgk9_0', '2n8kARJN3HM_0', 'HxpKQynjfin_0', 'VzqfbhrpDEA_0', 'Uxmj2M2itWa_0', 'V2XKFyX4ASd_0', 'JeFG25nYj2p_0', 'p5wJjkQkbXX_0', 'VLzqgDo317F_0', '8WUmhLawc2A_0', 'XcA2TqTSSAj_0', 'D7N2EKCX4Sj_0', 'aayBHfsNo7d_0', 'gZ6f7yhEvPG_0', 'D7G3Y4RVNrH_0', 'b8cTxDM8gDG_0', 'VVfe2KiqLaN_0', 'uNb9QFRL6hY_0', 'e9zR4mvMWw7_0', 'sKLMLpTHeUy_0', '82sE5b5pLXE_0', '1pXnuDYAj8r_0', 'jh4fc5c5qoQ_0', 'ur6pFq6Qu1A_0', 'B6ByNegPMKs_0', 'JmbYfDe2QKZ_0', 'gTV8FGcVJC9_0']
 _C.MAIN.VAL_SCENE_LIST = ['oLBMNvg9in8_0', 'TbHJrupSAjP_0', 'QUCTc6BB5sX_0', 'EU6Fwq7SyZv_0', 'zsNo4HB9uLZ_0', 'X7HyMhZNoso_0', 'x8F5xyUWy9e_0', '8194nk5LbLH_0', '2azQ1b91cZZ_0', 'pLe4wQe7qrG_0', 'Z6MFQCViBuw_0']
 
+#==================================== for sensor =======================
+_C.SENSOR = CN()
+_C.SENSOR.DEPTH_MIN = 0.0
+_C.SENSOR.DEPTH_MAX = 10.0
+_C.SENSOR.SENSOR_HEIGHT = 1.25
+_C.SENSOR.AGENT_HEIGHT = 1.5
+_C.SENSOR.AGENT_RADIUS = 0.1
+
 #================================ for semantic map ===============================
 _C.SEM_MAP = CN()
 _C.SEM_MAP.ENLARGE_SIZE = 10
-_C.SEM_MAP.IGNORED_MAP_CLASS = [0, 59]
-_C.SEM_MAP.IGNORED_ROOM_CLASS = [0] # ignored class on the room type map
+_C.SEM_MAP.IGNORED_MAP_CLASS = [0,]
 _C.SEM_MAP.IGNORED_SEM_CLASS = [0, 17] # for semantic segmentation, class 17 is ceiling
 _C.SEM_MAP.OBJECT_MASK_PIXEL_THRESH = 100
-_C.SEM_MAP.UNDETECTED_PIXELS_CLASS = 59 # explored but semantic-unrecognized pixel
-_C.SEM_MAP.CELL_SIZE = 0.1
+_C.SEM_MAP.UNDETECTED_PIXELS_CLASS = 41 # explored but semantic-unrecognized pixel
+_C.SEM_MAP.CELL_SIZE = 0.05
 _C.SEM_MAP.WORLD_SIZE = 50.0 # world model size in each dimension (left, right, top , bottom)
-_C.SEM_MAP.GRID_Y_SIZE = 60
-_C.SEM_MAP.GRID_CLASS_SIZE = 60
+#_C.SEM_MAP.GRID_Y_SIZE = 60
+_C.SEM_MAP.GRID_CLASS_SIZE = 42
 _C.SEM_MAP.HABITAT_FLOOR_IDX = 2
+_C.SEM_MAP.POINTS_CNT = 2
 
 #=============================== for navigator ====================================
 _C.NAVI = CN()
 _C.NAVI.NUM_STEPS = 600
 _C.NAVI.FLAG_GT_OCC_MAP = True
-_C.NAVI.NUM_STEPS_EXPLORE = 1
+_C.NAVI.NUM_STEPS_EXPLORE = 10
 
 _C.NAVI.DETECTOR = 'PanopticSeg'
 _C.NAVI.THRESH_REACH = 0.8

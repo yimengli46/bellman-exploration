@@ -58,14 +58,14 @@ def verify_img(img):
 	return sum_img > h * w * 0.75
 
 
-def get_obs_and_pose(env, agent_pos, heading_angle):
+def get_obs_and_pose(env, agent_pos, heading_angle, keep=True):
 	""" get observation 'obs' at agent pose 'agent_pos' and orientation 'heading_angle' at current scene 'env'."""
 	agent_rot = habitat_sim.utils.common.quat_from_angle_axis(
 		heading_angle, habitat_sim.geo.GRAVITY)
 	#print(f'agent_pos = {agent_pos}, agent_rot = {agent_rot}')
 	obs = env.habitat_env.sim.get_observations_at(agent_pos,
 												  agent_rot,
-												  keep_agent_at_new_pose=True)
+												  keep_agent_at_new_pose=keep)
 	agent_pos = env.habitat_env.sim.get_agent_state().position
 	agent_rot = env.habitat_env.sim.get_agent_state().rotation
 	#print(f'agent_pos = {agent_pos}, agent_rot = {agent_rot}')
@@ -100,5 +100,19 @@ def get_obs_and_pose(env, agent_pos, heading_angle):
 		fig.tight_layout()
 		plt.show()
 	'''
+
+	return obs, pose
+
+def get_obs_and_pose_by_action(env, act):
+	obs, _, _, _ = env.step(act)
+
+	agent_pos = env.habitat_env.sim.get_agent_state().position
+	agent_rot = env.habitat_env.sim.get_agent_state().rotation
+	#print(f'agent_pos = {agent_pos}, agent_rot = {agent_rot}')
+	heading_vector = quaternion_rotate_vector(agent_rot.inverse(),
+											  np.array([0, 0, -1]))
+	phi = cartesian_to_polar(-heading_vector[2], heading_vector[0])[1]
+	angle = phi
+	pose = (agent_pos[0], agent_pos[2], angle)
 
 	return obs, pose

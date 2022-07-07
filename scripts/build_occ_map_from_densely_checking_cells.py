@@ -8,7 +8,7 @@ from modeling.utils.baseline_utils import project_pixels_to_world_coords, conver
 import habitat
 import habitat_sim
 import random
-from modeling.utils.baseline_utils import read_map_npy, pose_to_coords, save_fig_through_plt
+from modeling.utils.baseline_utils import read_map_npy, pose_to_coords, save_occ_map_through_plt
 from modeling.utils.navigation_utils import SimpleRLEnv, get_scene_name
 from core import cfg
 
@@ -17,15 +17,15 @@ SEED = cfg.GENERAL.RANDOM_SEED
 random.seed(SEED)
 np.random.seed(SEED)
 
-output_folder = f'output/semantic_map/{cfg.MAIN.SPLIT}'
-semantic_map_folder = f'output/semantic_map/{cfg.MAIN.SPLIT}'
-
+split = 'test'
+output_folder = f'output/semantic_map_temp/{split}'
+semantic_map_folder = f'output/semantic_map_temp/{split}'
 
 # after testing, using 8 angles is most efficient
 theta_lst = [0]
 #theta_lst = [0]
 built_scenes = [] 
-cell_size = 0.1
+cell_size = cfg.SEM_MAP.CELL_SIZE
 
 scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{cfg.MAIN.SPLIT}_scene_floor_dict.npy', allow_pickle=True).item()
 
@@ -40,17 +40,17 @@ grid_H, grid_W = zv.shape
 
 config = habitat.get_config(config_paths=cfg.GENERAL.BUILD_MAP_CONFIG_PATH)
 config.defrost()
-if cfg.MAIN.SPLIT == 'train':
+if split == 'train':
 	config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_TRAIN_EPISODE_DATA_PATH 
-elif cfg.MAIN.SPLIT == 'val':
+elif split == 'val':
 	config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_VAL_EPISODE_DATA_PATH
-elif cfg.MAIN.SPLIT == 'test':
+elif split == 'test':
 	config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_TEST_EPISODE_DATA_PATH
 config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-for episode_id in range(cfg.MAIN.NUM_SCENES):
+for episode_id in range(1):
 	env.reset()
 	print('episode_id = {}'.format(episode_id))
 	print('env.current_episode = {}'.format(env.current_episode))
@@ -117,7 +117,8 @@ for episode_id in range(cfg.MAIN.NUM_SCENES):
 		np.save(f'{saved_folder}/BEV_occupancy_map.npy', map_dict)
 
 		# save the final color image
-		save_fig_through_plt(occ_map, f'{saved_folder}/occ_map.jpg')
-		#assert 1==2
+		save_occ_map_through_plt(occ_map, f'{saved_folder}/occ_map.jpg')
+		
+		print(f'**********************finished building the occ map!')
 
 env.close()
