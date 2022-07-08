@@ -70,6 +70,8 @@ _C.NAVI.PERCEPTION = 'Potential' # possible choices 'Anticipation', 'Potential',
 
 _C.NAVI.STRATEGY = 'DP' # 'Greedy' vs 'DP'
 
+_C.NAVI.D_type = 'Skeleton' # 'Sqrt_R', 'Skeleton'
+
 #========================== for short-range nav ====================================
 _C.LN = CN()
 _C.LN.LOCAL_MAP_MARGIN = 30 

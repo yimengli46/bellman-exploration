@@ -34,6 +34,7 @@ class MP3DSceneDataset(data.Dataset):
 
 		M_p = npy_file['Mp']
 		U_a = npy_file['Ua']
+		U_d = npy_file['Ud']
 		frontiers = pk_file
 
 		H, W = M_p.shape[1], M_p.shape[2]
@@ -78,14 +79,18 @@ class MP3DSceneDataset(data.Dataset):
 		resized_Mp[0] = cv2.resize(M_p[0], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
 		resized_Mp[1] = cv2.resize(M_p[1], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
 
-		resized_Ua = cv2.resize(U_a, cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
+		resized_U = np.zeros((4, cfg.PRED.PARTIAL_MAP.INPUT_WH[1], cfg.PRED.PARTIAL_MAP.INPUT_WH[0]), dtype=np.float32)
+		resized_U[0] = cv2.resize(U_a, cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
+		resized_U[1] = cv2.resize(U_d[:,:,0], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
+		resized_U[2] = cv2.resize(U_d[:,:,1], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
+		resized_U[3] = cv2.resize(U_d[:,:,2], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
+
 
 		#================= convert to tensor=================
 		tensor_Mp = torch.tensor(resized_Mp, dtype=torch.long)
-		tensor_Ua = torch.tensor(resized_Ua, dtype=torch.float32).unsqueeze(0)
+		tensor_U = torch.tensor(resized_U, dtype=torch.float32)
 
 		#print(f'tensor_Mp.max = {torch.max(tensor_Mp)}')
-
 		#================= convert input tensor into one-hot vector===========================
 		tensor_Mp_occ = tensor_Mp[0] # H x W
 		tensor_Mp_occ = F.one_hot(tensor_Mp_occ, num_classes=3).permute(2, 0, 1) # 3 x H x W
@@ -96,7 +101,7 @@ class MP3DSceneDataset(data.Dataset):
 		if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
 			tensor_Mp = tensor_Mp[0:3]
 
-		return {'input': tensor_Mp, 'output': tensor_Ua, 'shape': (H, W), 'frontiers': frontiers,
+		return {'input': tensor_Mp, 'output': tensor_U, 'shape': (H, W), 'frontiers': frontiers,
 			'original_target': U_a}
 
 
@@ -133,7 +138,7 @@ def my_collate(batch):
 	return output_dict
 
 if __name__ == "__main__":
-	cfg.merge_from_file('configs/train_input_partial_map.yaml')
+	cfg.merge_from_file('configs/exp_train_input_partial_map.yaml')
 	cfg.freeze()
 
 	split = 'train'

@@ -12,8 +12,11 @@ from operator import itemgetter
 from .UNet import UNet
 import torch
 import cv2
+from skimage.morphology import skeletonize
+import sknw
+import networkx as nx
 
-#'''
+'''
 if cfg.NAVI.PERCEPTION == 'UNet_Potential':
 	model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).to(cfg.PRED.PARTIAL_MAP.DEVICE)
 	if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
@@ -21,7 +24,36 @@ if cfg.NAVI.PERCEPTION == 'UNet_Potential':
 	elif cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
 		checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar')
 	model.load_state_dict(checkpoint['state_dict'])
-#'''
+'''
+
+def skeletonize_map(occupancy_grid):
+	skeleton = skeletonize(occupancy_grid)
+	
+	graph = sknw.build_sknw(skeleton)
+
+	tsp = nx.algorithms.approximation.traveling_salesman_problem
+	path = tsp(graph)
+
+	nodes = list(graph.nodes)
+	for i in range(len(path)):
+		if not nodes:
+			index = i
+			break
+		if path[i] in nodes:
+			nodes.remove(path[i])
+	
+	d_in = path[:index]
+	d_out = path[index-1:]
+
+	cost_din = 0
+	for i in range(len(d_in)-1):
+		cost_din += graph[d_in[i]][d_in[i+1]]['weight']
+
+	cost_dout = 0
+	for i in range(len(d_out)-1):
+		cost_dout += graph[d_out[i]][d_out[i+1]]['weight']
+	
+	return cost_din+cost_dout, cost_din, cost_dout, skeleton, graph
 
 class Frontier(object):
 
@@ -55,6 +87,8 @@ class Frontier(object):
 
 		self.R = 1
 		self.D = 1.
+		self.Din = 1.
+		self.Dout = 1.
 
 	def set_props(self,
 				  prob_feasible,
@@ -188,7 +222,20 @@ def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map
 			for f in frontiers:
 				if component[int(f.centroid[0]), int(f.centroid[1])]:
 					f.R = np.sum(component)
-					f.D = round(sqrt(f.R), 2)
+					if cfg.NAVI.D_type == 'Sqrt_R':
+						f.D = round(sqrt(f.R), 2)
+						f.Din = f.D
+						f.Dout = f.D
+					elif cfg.NAVI.D_type == 'Skeleton':
+						try:
+							cost_dall, cost_din, cost_dout, skeleton, skeleton_graph = skeletonize_map(component)
+						except:
+							cost_dall = round(sqrt(f.R), 2)
+							cost_din = cost_dall
+							cost_dout = cost_dall
+						f.D = cost_dall
+						f.Din = cost_din
+						f.Dout = cost_dout
 
 					if cfg.NAVI.FLAG_VISUALIZE_FRONTIER_POTENTIAL:
 						fig, ax = plt.subplots(nrows=1,

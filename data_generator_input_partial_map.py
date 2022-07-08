@@ -96,6 +96,7 @@ class Data_Gen_MP3D:
 				if i_loc % cfg.PRED.PARTIAL_MAP.STEP_GAP == 0:
 					#================================= compute area at frontier points ========================
 					U_a = np.zeros((self.H, self.W), dtype=np.float32)
+					U_d = np.zeros((self.H, self.W, 3), dtype=np.float32)
 					observed_occupancy_map = M_p[0]
 					frontiers = fr_utils.get_frontiers(observed_occupancy_map, self.gt_occupancy_map, observed_area_flag, None)
 					agent_map_pose = (robot_loc[1], robot_loc[0])
@@ -105,6 +106,9 @@ class Data_Gen_MP3D:
 						points = fron.points.transpose() # N x 2
 						R = 1. * fron.R / cfg.PRED.PARTIAL_MAP.DIVIDE_AREA
 						U_a[points[:, 0], points[:, 1]] = R
+						U_d[points[:, 0], points[:, 1], 0] = fron.D
+						U_d[points[:, 0], points[:, 1], 1] = fron.Din
+						U_d[points[:, 0], points[:, 1], 2] = fron.Dout
 					t2 = timer()
 					print(f't2 - t1 = {t2 - t1}')
 
@@ -147,6 +151,7 @@ class Data_Gen_MP3D:
 					eps_data = {}
 					eps_data['Mp'] = M_p.copy()
 					eps_data['Ua'] = U_a.copy()
+					eps_data['Ud'] = U_d.copy()
 
 					sample_name = str(count_sample).zfill(len(str(num_samples)))
 					np.save(f'{self.scene_folder}/{sample_name}.npy', eps_data)
@@ -171,7 +176,7 @@ def multi_run_wrapper(args):
 
 
 if __name__ == "__main__":
-	cfg.merge_from_file('configs/train_input_partial_map.yaml')
+	cfg.merge_from_file('configs/exp_train_input_partial_map.yaml')
 	cfg.freeze()
 
 	SEED = cfg.GENERAL.RANDOM_SEED
