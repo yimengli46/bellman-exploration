@@ -85,13 +85,13 @@ class Data_Gen_MP3D:
 			while i_loc < len(path):
 				robot_loc = path[i_loc]
 
-				t0 = timer()
+				#t0 = timer()
 				#=================================== generate partial map M_p ==================================
 				roi = get_region(robot_loc, self.H, self.W, size=cfg.PRED.PARTIAL_MAP.NEIGHBOR_SIZE)
 				M_p[:, roi[0]:roi[2]+1, roi[1]:roi[3]+1] = self.M_c[:, roi[0]:roi[2]+1, roi[1]:roi[3]+1]
 				observed_area_flag[roi[0]:roi[2]+1, roi[1]:roi[3]+1] = True
-				t1 = timer()
-				print(f't1 - t0 = {t1 - t0}')
+				#t1 = timer()
+				#print(f't1 - t0 = {t1 - t0}')
 
 				if i_loc % cfg.PRED.PARTIAL_MAP.STEP_GAP == 0:
 					#================================= compute area at frontier points ========================
@@ -109,8 +109,8 @@ class Data_Gen_MP3D:
 						U_d[points[:, 0], points[:, 1], 0] = fron.D
 						U_d[points[:, 0], points[:, 1], 1] = fron.Din
 						U_d[points[:, 0], points[:, 1], 2] = fron.Dout
-					t2 = timer()
-					print(f't2 - t1 = {t2 - t1}')
+					#t2 = timer()
+					#print(f't2 - t1 = {t2 - t1}')
 
 					#=================================== visualize M_p =========================================
 					if cfg.PRED.PARTIAL_MAP.FLAG_VISUALIZE_PRED_LABELS:
@@ -164,8 +164,8 @@ class Data_Gen_MP3D:
 					if count_sample == num_samples:
 						return
 
-					t3 = timer()
-					print(f't3 - t2 = {t3 - t2}')
+					#t3 = timer()
+					#print(f't3 - t2 = {t3 - t2}')
 
 				i_loc += 1
 
@@ -204,7 +204,7 @@ if __name__ == "__main__":
 			gen = Data_Gen_MP3D(split, scene, saved_dir=split_folder)
 			gen.write_to_file(num_samples=cfg.PRED.PARTIAL_MAP.NUM_GENERATED_SAMPLES_PER_SCENE)
 	else:
-		with multiprocessing.Pool(processes=4) as pool:
+		with multiprocessing.Pool(processes=cfg.PRED.PARTIAL_MAP.NUM_PROCESS) as pool:
 			args0 = [split for _ in range(len(scene_list))]
 			args1 = [scene for scene in scene_list]
 			args2 = [split_folder for _ in range(len(scene_list))]

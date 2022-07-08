@@ -25,6 +25,7 @@ PRED:
     SAVED_FOLDER: 'output/model_weights_UNet_input_partial_map'
     STEP_GAP: 5
     LR: 1e-3
+    NUM_PROCESS: 4
 
 SAVE:
   TESTING_RESULTS_FOLDER: ''

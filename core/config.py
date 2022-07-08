@@ -137,6 +137,8 @@ _C.PRED.PARTIAL_MAP.DEVICE = 'cuda'
 _C.PRED.PARTIAL_MAP.NUM_GENERATED_SAMPLES_PER_SCENE = 10000
 # Number of the step gap when saving the map
 _C.PRED.PARTIAL_MAP.STEP_GAP = 1
+# Number of processes to generate data
+_C.PRED.PARTIAL_MAP.NUM_PROCESS = 4
 
 #========================= input partial map===============
 _C.PRED.VIEW = CN()
