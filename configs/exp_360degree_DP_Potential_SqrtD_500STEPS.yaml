@@ -5,7 +5,7 @@ NAVI:
   THRESH_REACH: 0.8
   HFOV: 360
   PERCEPTION: 'Potential' # possible choices 'Anticipation', 'Potential', 'UNet_Potential'
-  STRATEGY: 'Greedy'
+  STRATEGY: 'DP'
   FLAG_VISUALIZE_MIDDLE_TRAJ: False
   D_type: 'Sqrt_R'
 
@@ -13,4 +13,4 @@ SEM_MAP:
   FLAG_VISUALIZE_EGO_OBS: False
 
 SAVE:
-  TESTING_RESULTS_FOLDER: 'output/TESTING_RESULTS_360degree_Greedy_GT_Potential_10STEP_500STEPS'
+  TESTING_RESULTS_FOLDER: 'output/TESTING_RESULTS_360degree_DP_GT_Potential_D_SqrtR_10STEP_500STEPS'

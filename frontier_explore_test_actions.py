@@ -122,14 +122,17 @@ while step < cfg.NAVI.NUM_STEPS:
 		observed_occupancy_map, gt_occupancy_map, observed_area_flag, built_semantic_map = semMap_module.get_observed_occupancy_map(agent_map_pose)
 		t2 = timer()
 		print(f't2- t1 = {t2 - t1}')
-		#improved_observed_occupancy_map = fr_utils.remove_isolated_points(observed_occupancy_map)
-		t3 = timer()
-		print(f't3- t2 = {t3 - t2}')
-		frontiers = fr_utils.get_frontiers(observed_occupancy_map, gt_occupancy_map, observed_area_flag, built_semantic_map)
+		frontiers = fr_utils.get_frontiers(observed_occupancy_map)
 		frontiers = frontiers - visited_frontier
+		print(f'before filtering, num(frontiers) = {len(frontiers)}')
+		t3 = timer()
+		print(f't3 - t2 = {t3 - t2}')
+		frontiers = LN.filter_unreachable_frontiers(frontiers, agent_map_pose, observed_occupancy_map)
+		print(f'after filtering, num(frontiers) = {len(frontiers)}')
 		t4 = timer()
 		print(f't4- t3 = {t4 - t3}')
-		frontiers = LN.filter_unreachable_frontiers(frontiers, agent_map_pose, observed_occupancy_map)
+		frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
+			observed_area_flag, built_semantic_map)
 		t5 = timer()
 		print(f't5- t4 = {t5 - t4}')
 		if cfg.NAVI.STRATEGY == 'Greedy':
@@ -175,7 +178,7 @@ while step < cfg.NAVI.NUM_STEPS:
 			#ax[0].get_yaxis().set_visible(False)
 			#ax.set_title('improved observed_occ_map + frontiers')
 
-			ax[1].imshow(color_built_semantic_map)
+			ax[1].imshow(observed_occupancy_map)
 			ax[1].get_xaxis().set_visible(False)
 			ax[1].get_yaxis().set_visible(False)
 

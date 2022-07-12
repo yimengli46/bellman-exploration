@@ -17,7 +17,7 @@ SEED = cfg.GENERAL.RANDOM_SEED
 random.seed(SEED)
 np.random.seed(SEED)
 
-split = 'test'
+split = 'train'
 output_folder = f'output/semantic_map_temp/{split}'
 semantic_map_folder = f'output/semantic_map_temp/{split}'
 
@@ -27,7 +27,7 @@ theta_lst = [0]
 built_scenes = [] 
 cell_size = cfg.SEM_MAP.CELL_SIZE
 
-scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{cfg.MAIN.SPLIT}_scene_floor_dict.npy', allow_pickle=True).item()
+scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
 
 #============================= build a grid =========================================
 x = np.arange(-cfg.SEM_MAP.WORLD_SIZE, cfg.SEM_MAP.WORLD_SIZE, cell_size)
@@ -50,7 +50,7 @@ config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
 config.freeze()
 env = SimpleRLEnv(config=config)
 
-for episode_id in range(1):
+for episode_id in range(61):
 	env.reset()
 	print('episode_id = {}'.format(episode_id))
 	print('env.current_episode = {}'.format(env.current_episode))

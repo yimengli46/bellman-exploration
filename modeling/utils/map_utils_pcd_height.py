@@ -9,6 +9,8 @@ from .baseline_utils import pxl_coords_to_pose
 from core import cfg
 from .build_map_utils import find_first_nonzero_elem_per_row
 from timeit import default_timer as timer
+from skimage import morphology
+import scipy.ndimage
 
 def find_neighborhood(agent_coords, occupancy_map):
 	radius = int(cfg.SENSOR.SENSOR_HEIGHT/cfg.SEM_MAP.CELL_SIZE)
@@ -47,7 +49,7 @@ class SemanticMap:
 
 		#===================================== load gt occupancy map =============================
 		# load occupancy map
-		occ_map_path = f'output/semantic_map_temp/{self.split}/{self.scene_name}'
+		occ_map_path = f'output/semantic_map/{self.split}/{self.scene_name}'
 		gt_occupancy_map = np.load(f'{occ_map_path}/BEV_occupancy_map.npy',
 		                                                         allow_pickle=True).item()['occupancy']
 		gt_occupancy_map = np.where(gt_occupancy_map == 1, cfg.FE.FREE_VAL,
@@ -296,15 +298,29 @@ class SemanticMap:
 		plt.show()
 		'''
 
+		#============================== dilate the unknown space ===============================
+		mask_occupied = (occupancy_map == cfg.FE.COLLISION_VAL)
+		mask_unknown = (occupancy_map == cfg.FE.UNOBSERVED_VAL)
+		mask_unknown = scipy.ndimage.maximum_filter(mask_unknown, size=3)
+		mask_unknown[mask_occupied == 1] = 0
+		occupancy_map = np.where(mask_unknown, cfg.FE.UNOBSERVED_VAL, occupancy_map)
+
+		#============================= fill in the holes in the known area =====================
+		mask_known = (occupancy_map != cfg.FE.UNOBSERVED_VAL)
+		mask_known = morphology.remove_small_holes(mask_known, 10000, connectivity=2)
+		mask_known[mask_occupied == 1] = 0
+		occupancy_map = np.where(mask_known, cfg.FE.FREE_VAL, occupancy_map)
+
 		#============================== complement the region near the robot ====================
 		agent_coords = pose_to_coords(agent_map_pose, self.pose_range,
 									  self.coords_range, self.WH)
 		# find the nearby cells coordinates
 		neighborhood_mask = find_neighborhood(agent_coords, occupancy_map)
-		complement_mask = np.logical_and(neighborhood_mask, observed_area_flag==False)
+		complement_mask = np.logical_and(neighborhood_mask, mask_occupied==False)
 		# change the complement area
 		occupancy_map = np.where(complement_mask, cfg.FE.FREE_VAL, occupancy_map)
 
+		observed_area_flag = (occupancy_map != cfg.FE.UNOBSERVED_VAL)
 		'''
 		# add occupied cells
 		for pose in self.occupied_poses:

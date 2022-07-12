@@ -175,11 +175,10 @@ def mask_grid_with_frontiers(occupancy_grid, frontiers, do_not_mask=None):
 	return masked_grid
 
 
-def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map):
+def get_frontiers(occupancy_grid):
 	""" detect frontiers from occupancy_grid. 
-
-	When the perception info is 'Potential', we use gt_occupancy_grid to compute the area of the component.
 	"""
+
 	filtered_grid = scipy.ndimage.maximum_filter(
 		occupancy_grid == cfg.FE.UNOBSERVED_VAL, size=3)
 	frontier_point_mask = np.logical_and(filtered_grid,
@@ -195,7 +194,7 @@ def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map
 			collision_val=1.0) > 0.5
 
 	# Group the frontier points into connected components
-	labels, nb = scipy.ndimage.label(inflated_frontier_mask)
+	labels, nb = scipy.ndimage.label(inflated_frontier_mask, structure=np.ones((3,3)))
 
 	# Extract the frontiers
 	frontiers = set()
@@ -208,6 +207,11 @@ def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map
 								raw_frontier_indices[1][None, :]),
 							   axis=0)))
 
+	return frontiers
+
+def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map):
+	# When the perception info is 'Potential', we use gt_occupancy_grid to compute the area of the component.
+	
 	# Compute potential
 	if cfg.NAVI.PERCEPTION == 'Potential':
 		free_but_unobserved_flag = np.logical_and(
