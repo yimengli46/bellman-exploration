@@ -87,6 +87,9 @@ class SemanticMap:
 		#============================================
 		self.H, self.W = len(self.z_grid), len(self.x_grid)
 
+		self.loc_on_map = np.zeros((self.coords_range[3]+1-self.coords_range[1], 
+			self.coords_range[2]+1-self.coords_range[0]), dtype=np.float32)
+
 	def build_semantic_map(self, obs_list, pose_list, step=0, saved_folder=''):
 		""" update semantic map with observations rgb_img, depth_img, sseg_img and robot pose."""
 		assert len(obs_list) == len(pose_list)
@@ -100,6 +103,10 @@ class SemanticMap:
 			InsSeg_img = obs["semantic"]
 			sseg_img = convertInsSegToSSeg(InsSeg_img, self.ins2cat_dict)
 			sem_map_pose = (pose[0], -pose[1], -pose[2])  # x, z, theta
+
+			agent_coords = pose_to_coords(sem_map_pose, self.pose_range, self.coords_range, self.WH)
+			self.loc_on_map[agent_coords[1], agent_coords[0]] = 1
+
 			#print('pose = {}'.format(pose))
 			rgb_lst.append(rgb_img)
 			depth_lst.append(depth_img)
@@ -320,35 +327,24 @@ class SemanticMap:
 		# change the complement area
 		occupancy_map = np.where(complement_mask, cfg.FE.FREE_VAL, occupancy_map)
 
+		'''
+		#============================== dilate the obstacles for motion planning ================
+		mask_occupied = (occupancy_map == cfg.FE.COLLISION_VAL)
+		selem2 = morphology.disk(2)
+		mask_occupied = morphology.binary_dilation(mask_occupied, selem2)
+		occupancy_map = np.where(mask_occupied, cfg.FE.COLLISION_VAL, occupancy_map)
+		
+		#selem1 = morphology.disk(1)
+		#traversible_locs = morphology.binary_dilation(self.loc_on_map, selem1) == True
+		traversible_locs = self.loc_on_map
+		mask_free = (occupancy_map == cfg.FE.FREE_VAL)
+		mask_free = np.logical_or(traversible_locs, mask_free)
+		occupancy_map = np.where(mask_free, cfg.FE.FREE_VAL, occupancy_map)
+		'''
+
 		observed_area_flag = (occupancy_map != cfg.FE.UNOBSERVED_VAL)
-		'''
-		# add occupied cells
-		for pose in self.occupied_poses:
-			coords = pose_to_coords(pose,
-									self.pose_range,
-									self.coords_range,
-									self.WH,
-									flag_cropped=True)
-			print(f'occupied cell coords = {coords}')
-			occupancy_map[coords[1], coords[0]] = 1
-		'''
-
 		gt_occupancy_map = self.gt_occupancy_map
-
-		'''
-		fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(200, 100))
-		# visualize gt semantic map
-		ax[0].imshow(apply_color_to_map(semantic_map))
-		ax[0].get_xaxis().set_visible(False)
-		ax[0].get_yaxis().set_visible(False)
-		ax[0].set_title('semantic map')
-		ax[1].imshow(occupancy_map, cmap='gray')
-		ax[1].get_xaxis().set_visible(False)
-		ax[1].get_yaxis().set_visible(False)
-		ax[1].set_title('occupancy map')
-		plt.show()
-		'''
-
+		
 		return occupancy_map, gt_occupancy_map, observed_area_flag, semantic_map
 
 	def add_occupied_cell_pose(self, pose):

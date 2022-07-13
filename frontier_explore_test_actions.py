@@ -63,7 +63,7 @@ H, W = gt_occ_map.shape[:2]
 
 LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 
-LS = localNav_slam(pose_range, coords_range, WH, mark_locs=True, close_small_openings=False, recover_on_collision=False, 
+LS = localNav_slam(pose_range, coords_range, WH, mark_locs=True, close_small_openings=False, recover_on_collision=True, 
 	fix_thrashing=False, point_cnt=2)
 LS.reset(gt_occ_map)
 
@@ -109,6 +109,7 @@ while step < cfg.NAVI.NUM_STEPS:
 	pose = pose_list[-1]
 	print(f'agent position = {pose[:2]}, angle = {pose[2]}')
 	agent_map_pose = (pose[0], -pose[1], -pose[2])
+	print(f'agent_map_pose, x = {agent_map_pose[0]}, y = {agent_map_pose[1]}, angle = {np.rad2deg(agent_map_pose[2])}')
 	traverse_lst.append(agent_map_pose)
 
 	# add the observed area
@@ -205,7 +206,7 @@ while step < cfg.NAVI.NUM_STEPS:
 	# ================================ take next action ====================================
 	t7 = timer()
 	act, act_seq, subgoal_coords, subgoal_pose = LS.plan_to_reach_frontier(agent_map_pose, chosen_frontier, 
-		gt_occupancy_map)
+		observed_occupancy_map)
 	t8 = timer()
 	print(f't8 - t7 = {t8 - t7}')
 	print(f'subgoal_coords = {subgoal_coords}')

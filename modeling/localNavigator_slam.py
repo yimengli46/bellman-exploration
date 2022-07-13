@@ -6,7 +6,7 @@ from .utils.fmm_planner import FMMPlanner
 import skimage
 import matplotlib.pyplot as plt
 from core import cfg
-from .utils.baseline_utils import pose_to_coords, pxl_coords_to_pose
+from .utils.baseline_utils import pose_to_coords, pxl_coords_to_pose, gen_arrow_head_marker
 from math import pi
 
 class localNav_slam(object):
@@ -39,23 +39,75 @@ class localNav_slam(object):
 		# 1 rotates left 
 		# 2 rotates right
 		# 3 agent stop
-		self.loc_on_map = np.zeros(occ_map.shape, dtype=np.float32)
+		self.visited = np.zeros(occ_map.shape, dtype=np.int16)
+		self.collision_map = np.zeros(occ_map.shape, dtype=np.int16)
 
-		#self.current_loc = pose_to_coords(agent_map_pose, self.pose_range, self.coords_range, self.WH)
+		self.current_loc = None
 
 		self.goal_loc = None
 		self.last_act = 3
 		self.locs = []
 		self.acts = []
+		self.recovery_actions = []
+		self.flag_collision = False
+		self.num_resets = 0
+		self.col_width = 1
 
-		if not soft:
-			self.num_resets = 0
-			self.count = self.count+1
-			self.trials = 0
-			self.recovery_actions = []
-			self.thrashing_actions = []
 	
 	def plan_to_reach_frontier(self, agent_map_pose, chosen_frontier, occ_map):
+		'''
+		# check collision
+		if self.current_loc is not None and self.last_act == 0: # last action is moving forward
+			if self.check_drift(agent_map_pose) and len(self.recovery_actions) == 0:
+				if self.num_resets == 6:
+					print(f'!! collision detected, entering recovery actions ...')
+					num_rots = int(np.round(180 / self.dt))
+					self.recovery_actions = [1]*num_rots + [0]*6
+					self.flag_collision = True
+					self.num_resets = 0
+				else:
+					print(f'!! collision detected, do nothing ...')
+					self.num_resets += 1
+		'''
+
+		#============================ collision check ===========================
+		if self.current_loc is not None and self.last_act == 0:
+		#if True:
+			x1, y1, t1 = self.current_loc
+			#t1 = -t1
+			x2, y2, _ = agent_map_pose
+			buf = 4
+			length = 2
+
+			if abs(x1 - x2) < 0.05 and abs(y1 - y2) < 0.05:
+				self.col_width += 2
+				if self.col_width == 7:
+					length = 4
+					buf = 3
+				self.col_width = min(self.col_width, 5)
+			else:
+				self.col_width = 1
+
+			#length = 4
+			#self.col_width = 20
+			#buf = 10
+
+			if self.check_drift(agent_map_pose): #collison
+			#if True:
+				print(f'!! collision detected, do nothing ...')
+				self.flag_collision = True
+				width = self.col_width
+				for i in range(length):
+					for j in range(width):
+						#wx = x1 + 0.05 * ((i + buf) * np.sin(t1) + (j - width // 2) * np.cos(t1))
+						#wy = y1 + 0.05 * ((i + buf) * np.cos(t1) - (j - width // 2) * np.sin(t1))
+						wx = x1 + 0.05 * (i + buf) * np.sin(t1) + 0.05 * (j - width // 2) * np.cos(t1)
+						wy = y1 + 0.05 * (i + buf) * np.cos(t1) - 0.05 * (j - width // 2) * np.sin(t1)
+						cell_coords = pose_to_coords([wx, wy], self.pose_range, self.coords_range, self.WH)
+						self.collision_map[cell_coords[1], cell_coords[0]] = 1
+
+
+		#===========================================================================
 		self.current_loc = agent_map_pose
 		fron_centroid_coords = (int(chosen_frontier.centroid[1]),
 								int(chosen_frontier.centroid[0]))
@@ -70,31 +122,50 @@ class localNav_slam(object):
 		theta = (theta - .5 * pi)
 		state = np.array([agent_coords[0], agent_coords[1], theta])
 		
+		#=========================== update traversible map =========================
+
+		## dilate the obstacle in the configuration space 
 		obstacle = (occ_map == cfg.FE.COLLISION_VAL)
 		traversible = skimage.morphology.binary_dilation(obstacle, self.selem) != True
-		if self.mark_locs:
-			traversible_locs = skimage.morphology.binary_dilation(self.loc_on_map, self.selem) == True
-			traversible = np.logical_or(traversible_locs, traversible)
-		
-		if self.close_small_openings:
-			n = self.num_erosions
-			reachable = False
-			# multi rounds of erosion and dilation
-			while n >= 0 and not reachable:
-				traversible_open = traversible.copy()
-				for i in range(n):
-					traversible_open = skimage.morphology.binary_erosion(traversible_open, self.selem_small)
-				for i in range(n):
-					traversible_open = skimage.morphology.binary_dilation(traversible_open, self.selem_small)
-				planner = FMMPlanner(traversible_open, 360//self.dt)
-				goal_loc_int = np.array(subgoal_coords).astype(np.int32)
-				reachable = planner.set_goal(goal_loc_int)
-				reachable = reachable[int(round(state[1])), int(round(state[0]))]
-				n = n-1
-		else:
-			planner = FMMPlanner(traversible, 360//self.dt)
-			goal_loc_int = np.array(subgoal_coords).astype(np.int32)
-			reachable = planner.set_goal(goal_loc_int)
+		traversible_original = traversible.copy()
+
+		## add the collision map
+		traversible[self.collision_map == 1] = 0
+
+		## add visited map
+		traversible[self.visited == 1] = 1
+
+		## add current loc
+		traversible[agent_coords[1]-1:agent_coords[1]+2, 
+					agent_coords[0]-1:agent_coords[0]+2] = 1
+
+		## add goal loc
+		traversible[subgoal_coords[1]-1:subgoal_coords[1]+2, 
+					subgoal_coords[0]-1:subgoal_coords[0]+2] = 1
+
+		#traversible_locs = skimage.morphology.binary_dilation(self.visited, self.selem) == True
+		#traversible = np.logical_or(traversible_locs, traversible)
+
+		#'''
+		if self.flag_collision:
+			if False:
+				fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(25, 10))
+				ax[0].imshow(traversible_original, cmap='gray')
+				marker, scale = gen_arrow_head_marker(agent_map_pose[2])
+				ax[0].scatter(agent_coords[0], agent_coords[1], marker=marker, s=(30*scale)**2, c='red', zorder=5)
+				ax[1].imshow(traversible, cmap='gray')
+				ax[2].imshow(self.collision_map)
+				ax[2].scatter(agent_coords[0], agent_coords[1], marker=marker, s=(10*scale)**2, c='red', zorder=5)
+				fig.tight_layout()
+				plt.title('observed area')
+				plt.show()
+			self.flag_collision = False
+		#'''
+
+		#================================== planning =================================		
+		planner = FMMPlanner(traversible, 360//self.dt)
+		goal_loc_int = np.array(subgoal_coords).astype(np.int32)
+		reachable = planner.set_goal(goal_loc_int)
 
 		self.fmm_dist = planner.fmm_dist * 1
 		a, state, act_seq = planner.get_action(state)
@@ -108,39 +179,27 @@ class localNav_slam(object):
 		elif a == 0:
 			a = 3
 
+		'''
+		# still in the recovery process
+		if len(self.recovery_actions) > 0:
+			a = self.recovery_actions[0]
+			self.recovery_actions = self.recovery_actions[1:]
+			print(f'--execute recovery action {a}')
+		'''
+
 		self.act_seq = act_seq
-		self.act_idx = 0
+		self.last_act = a
 
 		act = self.act_trans_dict[a]
 		return act, act_seq, subgoal_coords, subgoal_pose
 
-	'''
-	def next_action(self):
-		if len(self.act_seq) == self.act_idx:
-			return -1
-		act = self.act_seq[self.act_idx]
-		act = self.act_trans_dict[act]
-		self.act_idx += 1
-		return act
-	'''
 
-	'''
-	def update_loc(self, last_act, pointgoal=None):
-		# Currently ignores goal_loc.
-		if last_act == 1: # rotate left
-			self.current_loc[2] = self.current_loc[2] + self.dt*np.pi/180.
-		elif last_act == 2: # rotate right
-			self.current_loc[2] = self.current_loc[2] - self.dt*np.pi/180.
-		elif last_act == 0:
-			self.current_loc[0] = self.current_loc[0] + 25*np.cos(self.current_loc[2])
-			self.current_loc[1] = self.current_loc[1] + 25*np.sin(self.current_loc[2])
-		self.locs.append(self.current_loc+0)
-		self.mark_on_map(self.current_loc)
-	'''
+
+
 	
 	def mark_on_map(self, loc):
 		# input is the coordinates on the map
-		self.loc_on_map[loc[1], loc[0]] = 1
+		self.visited[loc[1], loc[0]] = 1
 	
 	def soft_reset(self, pointgoal):
 		# This reset is called if there is drift in the position of the goal
@@ -165,88 +224,12 @@ class localNav_slam(object):
 		else:
 			self.recovery_actions = []
 	
-	'''
-	def check_drift(self, pointgoal):
-		xy = self.compute_xy_from_pointnav(pointgoal)
-		goal_loc = xy*1
-		goal_loc[0] = goal_loc[0] + self.current_loc[0]
-		goal_loc[1] = goal_loc[1] + self.current_loc[1]
-		# np.set_printoptions(precision=3, suppress=True)
-		# print(self.last_act, self.current_loc, goal_loc, self.goal_loc, xy, pointgoal)
-		return np.linalg.norm(goal_loc - self.goal_loc) > 5
-	'''
+	def check_drift(self, agent_map_pose):
+		previous_pose = np.array((self.current_loc[0], self.current_loc[1]))
+		current_pose = np.array((agent_map_pose[0], agent_map_pose[1]))
+		moving_dist = np.linalg.norm(previous_pose - current_pose)
+		return moving_dist < 0.20
 
-	'''
-	def check_thrashing(self, n, acts):
-		thrashing = False
-		if len(acts) > n:
-			last_act = acts[-1]
-			thrashing = last_act == 1 or last_act == 2
-			for i in range(2, n+1):
-				if thrashing:
-					thrashing = acts[-i] == 3-last_act
-					last_act = acts[-i]
-				else:
-					break
-		return thrashing
-	'''
 	
-	def compute_xy_from_pointnav(self, pointgoal):
-		xy = np.array([np.cos(pointgoal[1]+self.current_loc[2]), 
-									 np.sin(pointgoal[1]+self.current_loc[2])], dtype=np.float32)
-		xy = xy*pointgoal[0]*100
-		return xy
-		
-	def act(self):
-		if self.RESET:
-			self.RESET = False
-			return self._act(0, True)
-		else:
-			return self._act(0, False)
-	
-	def _act(self, i, done):
-		if done:
-			self._reset(pointgoal[0]*100.)
-			# self.current_loc has been set inside reset
-			xy = self.compute_xy_from_pointnav(pointgoal)
-			self.goal_loc = xy*1
-			self.goal_loc[0] = self.goal_loc[0] + self.current_loc[0]
-			self.goal_loc[1] = self.goal_loc[1] + self.current_loc[1]
-			self.mark_on_map(self.goal_loc)
-			self.mark_on_map(self.current_loc)
-		
-		self.update_loc(self.last_act)
 
-		'''
-		drift = self.check_drift(pointgoal)
-		if self.reset_if_drift and drift:
-			# import pdb; pdb.set_trace()
-			self.soft_reset(pointgoal)
-		'''
-
-		act, act_seq = self.plan_path(self.goal_loc)
-		
-		'''
-		if self.recover_on_collision:
-			if len(self.recovery_actions) > 0:
-				act = self.recovery_actions[0] 
-				self.recovery_actions = self.recovery_actions[1:]
-		
-		thrashing = self.check_thrashing(8, self.acts)
-		if thrashing and len(self.thrashing_actions) == 0:
-			self.thrashing_actions = act_seq 
-			# print(1, self.thrashing_actions)
-		
-		if self.fix_thrashing:
-			if len(self.thrashing_actions) > 0:
-				act = self.thrashing_actions[0] 
-				self.thrashing_actions = self.thrashing_actions[1:]
-				# print(2, self.thrashing_actions)
-		'''
-
-		self.acts.append(act)
-		self.last_act = act 
-		
-		return act
-	
 	

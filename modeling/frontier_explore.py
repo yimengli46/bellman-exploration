@@ -43,7 +43,7 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 
 	if cfg.NAVI.FLAG_GT_OCC_MAP:
 		occ_map_npy = np.load(
-			f'output/semantic_map_temp/{split}/{scene_name}/BEV_occupancy_map.npy',
+			f'output/semantic_map/{split}/{scene_name}/BEV_occupancy_map.npy',
 			allow_pickle=True).item()
 	gt_occ_map, pose_range, coords_range, WH = read_occ_map_npy(occ_map_npy)
 	H, W = gt_occ_map.shape[:2]
@@ -75,7 +75,7 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 		pose_list.append(pose)
 	elif cfg.NAVI.HFOV == 360:
 		obs_list, pose_list = [], []
-		for rot in [90, 180, 270]:
+		for rot in [90, 180, 270, 0]:
 			heading_angle = rot / 180 * np.pi
 			heading_angle = plus_theta_fn(heading_angle, start_pose[2])
 			obs, pose = get_obs_and_pose(env, agent_pos, heading_angle)
@@ -110,16 +110,14 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 			observed_occupancy_map, gt_occupancy_map, observed_area_flag, built_semantic_map = semMap_module.get_observed_occupancy_map(agent_map_pose
 			)
 
-			#improved_observed_occupancy_map = fr_utils.remove_isolated_points(observed_occupancy_map)
-
-			frontiers = fr_utils.get_frontiers(observed_occupancy_map,
-											   gt_occupancy_map,
-											   observed_area_flag,
-											   built_semantic_map)
+			frontiers = fr_utils.get_frontiers(observed_occupancy_map)
 			frontiers = frontiers - visited_frontier
 
 			frontiers = LN.filter_unreachable_frontiers(
 				frontiers, agent_map_pose, observed_occupancy_map)
+
+			frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
+				observed_area_flag, built_semantic_map)
 
 			if cfg.NAVI.STRATEGY == 'Greedy':
 				chosen_frontier = fr_utils.get_frontier_with_maximum_area(
@@ -200,7 +198,7 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 
 		#====================================== take next action ================================
 		act, act_seq, subgoal_coords, subgoal_pose = LS.plan_to_reach_frontier(agent_map_pose, chosen_frontier, 
-			gt_occupancy_map)
+			observed_occupancy_map)
 		print(f'subgoal_coords = {subgoal_coords}')
 		print(f'action = {act_dict[act]}')
 		
