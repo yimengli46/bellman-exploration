@@ -1,7 +1,7 @@
 NAVI:
   NUM_STEPS: 500
   FLAG_GT_OCC_MAP: True
-  NUM_STEPS_EXPLORE: 10
+  NUM_STEPS_EXPLORE: 1
   THRESH_REACH: 0.8
   HFOV: 360
   PERCEPTION: 'Potential' # possible choices 'Anticipation', 'Potential', 'UNet_Potential'
@@ -13,4 +13,4 @@ SEM_MAP:
   FLAG_VISUALIZE_EGO_OBS: False
 
 SAVE:
-  TESTING_RESULTS_FOLDER: 'output/TESTING_RESULTS_360degree_DP_GT_Potential_D_Skeleton_10STEP_500STEPS'
+  TESTING_RESULTS_FOLDER: 'output/TESTING_RESULTS_360degree_DP_GT_Potential_D_Skeleton_DinDout_1STEP_500STEPS'
