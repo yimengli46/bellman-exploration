@@ -183,7 +183,7 @@ if __name__ == "__main__":
 	random.seed(SEED)
 	np.random.seed(SEED)
 
-	split = 'train'
+	split = cfg.MAIN.SPLIT
 	if split == 'train':
 		scene_list = cfg.MAIN.TRAIN_SCENE_LIST
 	elif split == 'val':
@@ -191,7 +191,7 @@ if __name__ == "__main__":
 	elif split == 'test':
 		scene_list = cfg.MAIN.TEST_SCENE_LIST
 		
-	output_folder = 'output/training_data_input_partial_map'
+	output_folder = cfg.PRED.PARTIAL_MAP.GEN_SAMPLES_SAVED_FOLDER
 	if not os.path.exists(output_folder):
 		os.mkdir(output_folder)
 
@@ -199,14 +199,22 @@ if __name__ == "__main__":
 	if not os.path.exists(split_folder):
 		os.mkdir(split_folder)
 
-	if False: # single process
+	if cfg.PRED.PARTIAL_MAP.multiprocessing == 'single': # single process
 		for scene in scene_list: 
 			gen = Data_Gen_MP3D(split, scene, saved_dir=split_folder)
 			gen.write_to_file(num_samples=cfg.PRED.PARTIAL_MAP.NUM_GENERATED_SAMPLES_PER_SCENE)
-	else:
+	elif cfg.PRED.PARTIAL_MAP.multiprocessing == 'mp':
 		with multiprocessing.Pool(processes=cfg.PRED.PARTIAL_MAP.NUM_PROCESS) as pool:
 			args0 = [split for _ in range(len(scene_list))]
 			args1 = [scene for scene in scene_list]
 			args2 = [split_folder for _ in range(len(scene_list))]
 			pool.map(multi_run_wrapper, list(zip(args0, args1, args2)))
 			pool.close()
+	elif cfg.PRED.PARTIAL_MAP.multiprocessing == 'mpi4y':
+		from mpi4py.futures import MPIPoolExecutor
+		args0 = [split for _ in range(len(scene_list))]
+		args1 = [scene for scene in scene_list]
+		args2 = [split_folder for _ in range(len(scene_list))]
+		executor = MPIPoolExecutor()
+		prime_sets = executor.map(multi_run_wrapper, list(zip(args0, args1, args2)))
+		executor.shutdown()
