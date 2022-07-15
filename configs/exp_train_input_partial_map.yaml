@@ -1,3 +1,6 @@
+MAIN:
+  SPLIT: 'val'
+
 NAVI:
   FLAG_GT_OCC_MAP: true
   HFOV: 360
@@ -6,30 +9,33 @@ NAVI:
 
 PRED:
   PARTIAL_MAP:
-    BATCH_SIZE: 2
+    BATCH_SIZE: 24
     CHECKNAME: unet
     DEVICE: cuda
-    DIVIDE_AREA: 1000
+    DIVIDE_AREA: 100
     EPOCHS: 30
     EVAL_INTERVAL: 2
     FLAG_VISUALIZE_PRED_LABELS: false
     INPUT: occ_and_sem
     INPUT_CHANNEL: 45 # 42 + 3
     OUTPUT_CHANNEL: 4
-    INPUT_WH: (128, 128)
-    LOSS_TYPE: CE
+    INPUT_WH: (256, 256)
+    LOSS_TYPE: L1
     NEIGHBOR_SIZE: 20
-    NUM_GENERATED_SAMPLES_PER_SCENE: 100
-    NUM_WORKERS: 2
+    NUM_GENERATED_SAMPLES_PER_SCENE: 1000
+    NUM_WORKERS: 16
     RESUME: ''
     SAVED_FOLDER: 'output/model_weights_UNet_input_partial_map'
     STEP_GAP: 5
     LR: 1e-3
-    NUM_PROCESS: 4
+    NUM_PROCESS: 24
+    multiprocessing: 'mp'
+    GEN_SAMPLES_SAVED_FOLDER: 'output/training_data_input_partial_map_1000samples'
+
 
 SAVE:
   TESTING_RESULTS_FOLDER: ''
 
 SEM_MAP:
-  CELL_SIZE: 0.1
+  CELL_SIZE: 0.05
   GRID_CLASS_SIZE: 42

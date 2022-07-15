@@ -139,6 +139,10 @@ _C.PRED.PARTIAL_MAP.NUM_GENERATED_SAMPLES_PER_SCENE = 10000
 _C.PRED.PARTIAL_MAP.STEP_GAP = 1
 # Number of processes to generate data
 _C.PRED.PARTIAL_MAP.NUM_PROCESS = 4
+# Use MPI4py
+_C.PRED.PARTIAL_MAP.multiprocessing = 'mp' # 'single', 'mp', 'mpi4py'
+# folder to save the generated data
+_C.PRED.PARTIAL_MAP.GEN_SAMPLES_SAVED_FOLDER = 'output/model_weights_UNet_input_partial_map'
 
 #========================= input partial map===============
 _C.PRED.VIEW = CN()

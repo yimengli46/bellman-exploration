@@ -13,7 +13,7 @@ from core import cfg
 from itertools import islice
 
 #======================================================================================
-cfg.merge_from_file('configs/train_input_partial_map.yaml')
+cfg.merge_from_file('configs/exp_train_input_partial_map.yaml')
 cfg.freeze()
 
 output_folder = cfg.PRED.PARTIAL_MAP.SAVED_FOLDER
@@ -37,12 +37,23 @@ def MSELoss(logit, target):
 
 	return result
 
+def L1Loss(logit, target):
+	mask_zero = (target > 0)
+	logit = logit * mask_zero
+	num_nonzero = torch.sum(mask_zero) + 1.
+	#print(f'num_nonzero = {num_nonzero}')
+
+	#result = loss(logit, target)
+	result = (torch.abs(logit - target)).sum() / num_nonzero
+
+	return result
+
 #============================================ Define Tensorboard Summary =================================
 summary = TensorboardSummary(saver.experiment_dir)
 writer = summary.create_summary()
 
 #=========================================================== Define Dataloader ==================================================
-data_folder = 'output/training_data_input_partial_map'
+data_folder = cfg.PRED.PARTIAL_MAP.GEN_SAMPLES_SAVED_FOLDER
 dataset_train = get_all_scene_dataset('train', cfg.MAIN.TRAIN_SCENE_LIST, data_folder)
 dataloader_train = data.DataLoader(dataset_train, 
 	batch_size=cfg.PRED.PARTIAL_MAP.BATCH_SIZE, 
@@ -72,7 +83,7 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 # Define Criterion
 # whether to use class balanced weights
 weight = None
-criterion = MSELoss
+criterion = L1Loss
 
 #===================================================== Resuming checkpoint ====================================================
 best_pred = 0.0
