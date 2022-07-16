@@ -3,3 +3,5 @@ __pycache__/
 trained_weights
 data/
 run/
+requirements_py36.txt
+run.sh
