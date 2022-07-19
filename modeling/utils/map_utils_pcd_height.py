@@ -9,6 +9,8 @@ from .baseline_utils import pxl_coords_to_pose
 from core import cfg
 from .build_map_utils import find_first_nonzero_elem_per_row
 from timeit import default_timer as timer
+from skimage import morphology
+import scipy.ndimage
 
 def find_neighborhood(agent_coords, occupancy_map):
 	radius = int(cfg.SENSOR.SENSOR_HEIGHT/cfg.SEM_MAP.CELL_SIZE)
@@ -47,7 +49,7 @@ class SemanticMap:
 
 		#===================================== load gt occupancy map =============================
 		# load occupancy map
-		occ_map_path = f'output/semantic_map_temp/{self.split}/{self.scene_name}'
+		occ_map_path = f'output/semantic_map/{self.split}/{self.scene_name}'
 		gt_occupancy_map = np.load(f'{occ_map_path}/BEV_occupancy_map.npy',
 		                                                         allow_pickle=True).item()['occupancy']
 		gt_occupancy_map = np.where(gt_occupancy_map == 1, cfg.FE.FREE_VAL,
@@ -85,6 +87,9 @@ class SemanticMap:
 		#============================================
 		self.H, self.W = len(self.z_grid), len(self.x_grid)
 
+		self.loc_on_map = np.zeros((self.coords_range[3]+1-self.coords_range[1], 
+			self.coords_range[2]+1-self.coords_range[0]), dtype=np.float32)
+
 	def build_semantic_map(self, obs_list, pose_list, step=0, saved_folder=''):
 		""" update semantic map with observations rgb_img, depth_img, sseg_img and robot pose."""
 		assert len(obs_list) == len(pose_list)
@@ -98,6 +103,10 @@ class SemanticMap:
 			InsSeg_img = obs["semantic"]
 			sseg_img = convertInsSegToSSeg(InsSeg_img, self.ins2cat_dict)
 			sem_map_pose = (pose[0], -pose[1], -pose[2])  # x, z, theta
+
+			agent_coords = pose_to_coords(sem_map_pose, self.pose_range, self.coords_range, self.WH)
+			self.loc_on_map[agent_coords[1], agent_coords[0]] = 1
+
 			#print('pose = {}'.format(pose))
 			rgb_lst.append(rgb_img)
 			depth_lst.append(depth_img)
@@ -296,43 +305,46 @@ class SemanticMap:
 		plt.show()
 		'''
 
+		#============================== dilate the unknown space ===============================
+		mask_occupied = (occupancy_map == cfg.FE.COLLISION_VAL)
+		mask_unknown = (occupancy_map == cfg.FE.UNOBSERVED_VAL)
+		mask_unknown = scipy.ndimage.maximum_filter(mask_unknown, size=3)
+		mask_unknown[mask_occupied == 1] = 0
+		occupancy_map = np.where(mask_unknown, cfg.FE.UNOBSERVED_VAL, occupancy_map)
+
+		#============================= fill in the holes in the known area =====================
+		mask_known = (occupancy_map != cfg.FE.UNOBSERVED_VAL)
+		mask_known = morphology.remove_small_holes(mask_known, 10000, connectivity=2)
+		mask_known[mask_occupied == 1] = 0
+		occupancy_map = np.where(mask_known, cfg.FE.FREE_VAL, occupancy_map)
+
 		#============================== complement the region near the robot ====================
 		agent_coords = pose_to_coords(agent_map_pose, self.pose_range,
 									  self.coords_range, self.WH)
 		# find the nearby cells coordinates
 		neighborhood_mask = find_neighborhood(agent_coords, occupancy_map)
-		complement_mask = np.logical_and(neighborhood_mask, observed_area_flag==False)
+		complement_mask = np.logical_and(neighborhood_mask, mask_occupied==False)
 		# change the complement area
 		occupancy_map = np.where(complement_mask, cfg.FE.FREE_VAL, occupancy_map)
 
 		'''
-		# add occupied cells
-		for pose in self.occupied_poses:
-			coords = pose_to_coords(pose,
-									self.pose_range,
-									self.coords_range,
-									self.WH,
-									flag_cropped=True)
-			print(f'occupied cell coords = {coords}')
-			occupancy_map[coords[1], coords[0]] = 1
+		#============================== dilate the obstacles for motion planning ================
+		mask_occupied = (occupancy_map == cfg.FE.COLLISION_VAL)
+		selem2 = morphology.disk(2)
+		mask_occupied = morphology.binary_dilation(mask_occupied, selem2)
+		occupancy_map = np.where(mask_occupied, cfg.FE.COLLISION_VAL, occupancy_map)
+		
+		#selem1 = morphology.disk(1)
+		#traversible_locs = morphology.binary_dilation(self.loc_on_map, selem1) == True
+		traversible_locs = self.loc_on_map
+		mask_free = (occupancy_map == cfg.FE.FREE_VAL)
+		mask_free = np.logical_or(traversible_locs, mask_free)
+		occupancy_map = np.where(mask_free, cfg.FE.FREE_VAL, occupancy_map)
 		'''
 
+		observed_area_flag = (occupancy_map != cfg.FE.UNOBSERVED_VAL)
 		gt_occupancy_map = self.gt_occupancy_map
-
-		'''
-		fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(200, 100))
-		# visualize gt semantic map
-		ax[0].imshow(apply_color_to_map(semantic_map))
-		ax[0].get_xaxis().set_visible(False)
-		ax[0].get_yaxis().set_visible(False)
-		ax[0].set_title('semantic map')
-		ax[1].imshow(occupancy_map, cmap='gray')
-		ax[1].get_xaxis().set_visible(False)
-		ax[1].get_yaxis().set_visible(False)
-		ax[1].set_title('occupancy map')
-		plt.show()
-		'''
-
+		
 		return occupancy_map, gt_occupancy_map, observed_area_flag, semantic_map
 
 	def add_occupied_cell_pose(self, pose):
