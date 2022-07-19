@@ -397,7 +397,7 @@ def count_free_space_at_frontiers(frontiers, gt_occupancy_grid, area=10):
 		#print(f'fron.area_neigh = {fron.area_neigh}')
 
 
-def get_frontier_with_DP(frontiers, agent_pose, observed_occupancy_map, steps,
+def get_frontier_with_DP(frontiers, agent_pose, G, steps,
 						 LN):
 	""" select the frontier from frontiers with the Bellman Equation.
 
@@ -405,9 +405,9 @@ def get_frontier_with_DP(frontiers, agent_pose, observed_occupancy_map, steps,
 	"""
 	max_Q = 0
 	max_frontier = None
-	G = LN.get_G_from_map(observed_occupancy_map)
+	#G = LN.get_G_from_map(observed_occupancy_map)
 	agent_coord = LN.get_agent_coords(agent_pose)
-	steps = steps / 3.
+	steps = steps / 5.
 
 	for fron in frontiers:
 		#print('-------------------------------------------------------------')

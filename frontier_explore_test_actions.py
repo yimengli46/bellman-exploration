@@ -26,7 +26,7 @@ scene_name = 'yqstnuAEVhm_0' #'17DRP5sb8fy_0' #'yqstnuAEVhm_0'
 
 scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
 
-cfg.merge_from_file('configs/exp_360degree_Greedy_Potential_500STEPS.yaml')
+cfg.merge_from_file('configs/exp_360degree_DP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml')
 cfg.freeze()
 
 act_dict = {-1: 'Done', 0: 'stop', 1: 'forward', 2: 'left', 3:'right'}
@@ -107,9 +107,9 @@ while step < cfg.NAVI.NUM_STEPS:
 
 	#=============================== get agent global pose on habitat env ========================#
 	pose = pose_list[-1]
-	print(f'agent position = {pose[:2]}, angle = {pose[2]}')
+	#print(f'agent position = {pose[:2]}, angle = {pose[2]}')
 	agent_map_pose = (pose[0], -pose[1], -pose[2])
-	print(f'agent_map_pose, x = {agent_map_pose[0]}, y = {agent_map_pose[1]}, angle = {np.rad2deg(agent_map_pose[2])}')
+	#print(f'agent_map_pose, x = {agent_map_pose[0]}, y = {agent_map_pose[1]}, angle = {np.rad2deg(agent_map_pose[2])}')
 	traverse_lst.append(agent_map_pose)
 
 	# add the observed area
@@ -122,31 +122,31 @@ while step < cfg.NAVI.NUM_STEPS:
 		t1 = timer()
 		observed_occupancy_map, gt_occupancy_map, observed_area_flag, built_semantic_map = semMap_module.get_observed_occupancy_map(agent_map_pose)
 		t2 = timer()
-		print(f't2- t1 = {t2 - t1}')
+		print(f'get occupan map time = {t2 - t1}')
 		frontiers = fr_utils.get_frontiers(observed_occupancy_map)
 		frontiers = frontiers - visited_frontier
 		print(f'before filtering, num(frontiers) = {len(frontiers)}')
 		t3 = timer()
-		print(f't3 - t2 = {t3 - t2}')
-		frontiers = LN.filter_unreachable_frontiers(frontiers, agent_map_pose, observed_occupancy_map)
+		print(f'get frontier time = {t3 - t2}')
+		frontiers, G = LN.filter_unreachable_frontiers(frontiers, agent_map_pose, observed_occupancy_map)
 		print(f'after filtering, num(frontiers) = {len(frontiers)}')
 		t4 = timer()
-		print(f't4- t3 = {t4 - t3}')
+		print(f'filter unreachable frontiers time = {t4 - t3}')
 		frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
 			observed_area_flag, built_semantic_map)
 		t5 = timer()
-		print(f't5- t4 = {t5 - t4}')
+		print(f'compute frontier potential time = {t5 - t4}')
 		if cfg.NAVI.STRATEGY == 'Greedy':
 			chosen_frontier = fr_utils.get_frontier_with_maximum_area(frontiers, gt_occupancy_map)
 		elif cfg.NAVI.STRATEGY == 'DP':
 			top_frontiers = fr_utils.select_top_frontiers(frontiers, top_n=5)
-			chosen_frontier = fr_utils.get_frontier_with_DP(top_frontiers, agent_map_pose, observed_occupancy_map, \
+			chosen_frontier = fr_utils.get_frontier_with_DP(top_frontiers, agent_map_pose, G, \
 				cfg.NAVI.NUM_STEPS-step, LN)
 		t6 = timer()
-		print(f't6- t5 = {t6 - t5}')
+		print(f'select frontiers time = {t6 - t5}')
 
 		#============================================= visualize semantic map ===========================================#
-		if True:
+		if False:
 			#==================================== visualize the path on the map ==============================
 			#built_semantic_map, observed_area_flag, _ = semMap_module.get_semantic_map()
 
@@ -208,8 +208,8 @@ while step < cfg.NAVI.NUM_STEPS:
 	act, act_seq, subgoal_coords, subgoal_pose = LS.plan_to_reach_frontier(agent_map_pose, chosen_frontier, 
 		observed_occupancy_map)
 	t8 = timer()
-	print(f't8 - t7 = {t8 - t7}')
-	print(f'subgoal_coords = {subgoal_coords}')
+	print(f'local navigation time = {t8 - t7}')
+	#print(f'subgoal_coords = {subgoal_coords}')
 	#act = LS.next_action()
 	print(f'action = {act_dict[act]}')
 	

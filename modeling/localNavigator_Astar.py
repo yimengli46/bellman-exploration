@@ -6,33 +6,44 @@ import heapq as hq
 from collections import deque
 from core import cfg
 import networkx as nx
+from timeit import default_timer as timer
 
 upper_thresh_theta = math.pi / 6
 lower_thresh_theta = math.pi / 12
 
 
-def build_graph(occupancy_map):
+def build_graph(occupancy_map, flag_eight_neighs=True):
 	"""
 	Convert the grid-like occupancy_map into a graph G through networkx.
 	Each node in the graph corresponds to a free cell in the occupancy map.
 	Each node has 8 neighbors.
 	"""
+	#t1 = timer()
 	H, W = occupancy_map.shape
-	G = nx.grid_2d_graph(*occupancy_map.shape)
+	G = nx.grid_2d_graph(H, W)
+	#t2 = timer()
+	#print(f'**** grid_2d_graph time = {t2 - t1}')
 
-	G.add_edges_from([((x, y), (x + 1, y + 1)) for x in range(1, H - 1)
-					  for y in range(1, W - 1)] + [((x, y), (x - 1, y - 1))
-												   for x in range(1, H - 1)
-												   for y in range(1, W - 1)] +
-					 [((x, y), (x - 1, y + 1)) for x in range(1, H - 1)
-					  for y in range(1, W - 1)] + [((x, y), (x + 1, y - 1))
-												   for x in range(1, H - 1)
-												   for y in range(1, W - 1)])
+	if flag_eight_neighs:
+		for edge in G.edges:
+			G.edges[edge]['weight'] = 1
+		G.add_edges_from([((x, y), (x + 1, y + 1)) for x in range(0, H - 1)
+						  for y in range(0, W - 1)] + [((x + 1, y), (x, y + 1))
+													   for x in range(0, H - 1)
+													   for y in range(0, W - 1)], weight=1.4)
 
-	# remove those nodes where the corresponding value is != 0
-	for val, node in zip(occupancy_map.ravel(), sorted(G.nodes())):
-		if val != cfg.FE.FREE_VAL:
-			G.remove_node(node)
+	# remove those nodes where map is occupied
+	mask_occupied_node = (occupancy_map.ravel() == cfg.FE.COLLISION_VAL)
+	nodes_npy = np.array(sorted(G.nodes))
+	nodes_occupied = nodes_npy[mask_occupied_node]
+	lst_nodes_occupied = list(map(tuple, nodes_occupied))
+	#t3 = timer()
+	#print(f'**** get occupied nodes list time = {t3 - t2}')
+	
+	G.remove_nodes_from(lst_nodes_occupied)
+
+	#t4 = timer()
+	#print(f'**** remove nodes from time = {t4 - t3}')
 
 	return G
 
@@ -246,16 +257,25 @@ class localNav_Astar:
 									  self.coords_range, self.WH)
 		#print(f'agent_coords = {agent_coords}')
 
+		#t1 = timer()
 		#================================ find a reachable subgoal on the map ==============================
 		local_occupancy_map = occupancy_map.copy()
 		local_occupancy_map[local_occupancy_map ==
 							cfg.FE.UNOBSERVED_VAL] = cfg.FE.COLLISION_VAL
-
-		G = build_graph(local_occupancy_map)
+		#t2 = timer()
+		#print(f'====> get local map time = {t2 - t1}')
+		if cfg.NAVI.STRATEGY == 'Greedy':
+			G = build_graph(local_occupancy_map, flag_eight_neighs=False)
+		elif cfg.NAVI.STRATEGY == 'DP':
+			G = build_graph(local_occupancy_map, flag_eight_neighs=True)
+		#t3 = timer()
+		#print(f'====> build graph time = {t3 - t2}')
 
 		reachable_locs = list(
 			nx.node_connected_component(G, (agent_coords[1], agent_coords[0])))
 		reachable_locs = [t[::-1] for t in reachable_locs]
+		#t4 = timer()
+		#print(f'====> get connected components time = {t4 - t3}')
 
 		filtered_frontiers = set()
 		for fron in frontiers:
@@ -263,7 +283,9 @@ class localNav_Astar:
 									int(fron.centroid[0]))
 			if fron_centroid_coords in reachable_locs:
 				filtered_frontiers.add(fron)
-		return filtered_frontiers
+		#t5 = timer()
+		#print(f'====> filter frontiers time = {t5 - t4}')
+		return filtered_frontiers, G
 
 	def filter_unreachable_frontiers_temp(self, frontiers, agent_coords,
 										  occupancy_map):
@@ -278,7 +300,10 @@ class localNav_Astar:
 		local_occupancy_map[local_occupancy_map ==
 							cfg.FE.UNOBSERVED_VAL] = cfg.FE.COLLISION_VAL
 
-		G = build_graph(local_occupancy_map)
+		if cfg.NAVI.STRATEGY == 'Greedy':
+			G = build_graph(local_occupancy_map, flag_eight_neighs=False)
+		elif cfg.NAVI.STRATEGY == 'DP':
+			G = build_graph(local_occupancy_map, flag_eight_neighs=True)
 
 		reachable_locs = list(
 			nx.node_connected_component(G, (agent_coords[1], agent_coords[0])))
