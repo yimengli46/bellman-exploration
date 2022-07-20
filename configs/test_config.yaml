@@ -1,0 +1,6 @@
+MAIN:
+  SPLIT: 'train'
+
+SEM_MAP:
+  ENLARGE_SIZE: 5
+  CELL_SIZE: 0.2
