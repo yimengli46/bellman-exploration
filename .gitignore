@@ -2,6 +2,7 @@ output/
 __pycache__/
 trained_weights
 data/
+data
 run/
 requirements_py36.txt
 run.sh

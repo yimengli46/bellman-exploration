@@ -8,7 +8,8 @@ from modeling.utils.baseline_utils import project_pixels_to_world_coords, conver
 import habitat
 import habitat_sim
 from modeling.utils.build_map_utils import SemanticMap
-from habitat.tasks.utils import cartesian_to_polar, quaternion_rotate_vector
+from habitat.tasks.utils import cartesian_to_polar
+from habitat.utils.geometry_utils import quaternion_rotate_vector
 import random
 from core import cfg
 from modeling.utils.navigation_utils import verify_img, get_scene_name, SimpleRLEnv

@@ -6,7 +6,6 @@ from modeling.utils.navigation_utils import SimpleRLEnv, get_scene_name, get_obs
 from core import cfg
 from modeling.localNavigator_Astar import localNav_Astar
 from modeling.utils.baseline_utils import read_occ_map_npy
-from habitat.tasks.utils import cartesian_to_polar, quaternion_rotate_vector
 import matplotlib.pyplot as plt
 
 from models.predictors import get_predictor_from_options

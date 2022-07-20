@@ -12,7 +12,6 @@ from .utils.map_utils_pcd_height import SemanticMap
 from .localNavigator_Astar import localNav_Astar
 import habitat
 import habitat_sim
-from habitat.tasks.utils import cartesian_to_polar, quaternion_rotate_vector
 import random
 from core import cfg
 from .utils import frontier_utils as fr_utils
