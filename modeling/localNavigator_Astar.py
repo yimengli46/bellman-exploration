@@ -7,6 +7,7 @@ from collections import deque
 from core import cfg
 import networkx as nx
 from timeit import default_timer as timer
+import scipy.ndimage
 
 upper_thresh_theta = math.pi / 6
 lower_thresh_theta = math.pi / 12
@@ -258,22 +259,17 @@ class localNav_Astar:
 		#print(f'agent_coords = {agent_coords}')
 
 		#t1 = timer()
-		#================================ find a reachable subgoal on the map ==============================
-		local_occupancy_map = occupancy_map.copy()
-		local_occupancy_map[local_occupancy_map ==
-							cfg.FE.UNOBSERVED_VAL] = cfg.FE.COLLISION_VAL
+		binary_occupancy_map = occupancy_map.copy()
+		binary_occupancy_map[binary_occupancy_map == cfg.FE.UNOBSERVED_VAL] = cfg.FE.COLLISION_VAL
+		binary_occupancy_map[binary_occupancy_map == cfg.FE.COLLISION_VAL] = 0
 		#t2 = timer()
 		#print(f'====> get local map time = {t2 - t1}')
-		if cfg.NAVI.STRATEGY == 'Greedy':
-			G = build_graph(local_occupancy_map, flag_eight_neighs=False)
-		elif cfg.NAVI.STRATEGY == 'DP':
-			G = build_graph(local_occupancy_map, flag_eight_neighs=True)
+
 		#t3 = timer()
 		#print(f'====> build graph time = {t3 - t2}')
 
-		reachable_locs = list(
-			nx.node_connected_component(G, (agent_coords[1], agent_coords[0])))
-		reachable_locs = [t[::-1] for t in reachable_locs]
+		labels, nb = scipy.ndimage.label(binary_occupancy_map, structure=np.ones((3,3)))
+		agent_label = labels[agent_coords[1], agent_coords[0]]
 		#t4 = timer()
 		#print(f'====> get connected components time = {t4 - t3}')
 
@@ -281,11 +277,16 @@ class localNav_Astar:
 		for fron in frontiers:
 			fron_centroid_coords = (int(fron.centroid[1]),
 									int(fron.centroid[0]))
-			if fron_centroid_coords in reachable_locs:
+			fron_label = labels[fron_centroid_coords[1], fron_centroid_coords[0]]
+			if fron_label == agent_label:
 				filtered_frontiers.add(fron)
 		#t5 = timer()
 		#print(f'====> filter frontiers time = {t5 - t4}')
-		return filtered_frontiers, G
+
+		binary_occupancy_map[binary_occupancy_map != 0] = 1
+		binary_occupancy_map[binary_occupancy_map == 0] = 1000
+
+		return filtered_frontiers, binary_occupancy_map
 
 	def filter_unreachable_frontiers_temp(self, frontiers, agent_coords,
 										  occupancy_map):
@@ -295,25 +296,19 @@ class localNav_Astar:
 		If the center of frontier is included in the connected component, this frontier is kept.
 
 		"""
-		#================================ find a reachable subgoal on the map ==============================
-		local_occupancy_map = occupancy_map.copy()
-		local_occupancy_map[local_occupancy_map ==
-							cfg.FE.UNOBSERVED_VAL] = cfg.FE.COLLISION_VAL
+		binary_occupancy_map = occupancy_map.copy()
+		binary_occupancy_map[binary_occupancy_map == cfg.FE.UNOBSERVED_VAL] = cfg.FE.COLLISION_VAL
+		binary_occupancy_map[binary_occupancy_map == cfg.FE.COLLISION_VAL] = 0
 
-		if cfg.NAVI.STRATEGY == 'Greedy':
-			G = build_graph(local_occupancy_map, flag_eight_neighs=False)
-		elif cfg.NAVI.STRATEGY == 'DP':
-			G = build_graph(local_occupancy_map, flag_eight_neighs=True)
-
-		reachable_locs = list(
-			nx.node_connected_component(G, (agent_coords[1], agent_coords[0])))
-		reachable_locs = [t[::-1] for t in reachable_locs]
+		labels, nb = scipy.ndimage.label(binary_occupancy_map, structure=np.ones((3,3)))
+		agent_label = labels[agent_coords[1], agent_coords[0]]
 
 		filtered_frontiers = set()
 		for fron in frontiers:
 			fron_centroid_coords = (int(fron.centroid[1]),
 									int(fron.centroid[0]))
-			if fron_centroid_coords in reachable_locs:
+			fron_label = labels[fron_centroid_coords[1], fron_centroid_coords[0]]
+			if fron_label == agent_label:
 				filtered_frontiers.add(fron)
 		return filtered_frontiers
 

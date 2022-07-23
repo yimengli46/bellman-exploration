@@ -15,6 +15,8 @@ import cv2
 from skimage.morphology import skeletonize
 import sknw
 import networkx as nx
+from skimage.graph import MCP_Geometric as MCPG
+from skimage.graph import route_through_array
 
 '''
 if cfg.NAVI.PERCEPTION == 'UNet_Potential':
@@ -397,8 +399,7 @@ def count_free_space_at_frontiers(frontiers, gt_occupancy_grid, area=10):
 		#print(f'fron.area_neigh = {fron.area_neigh}')
 
 
-def get_frontier_with_DP(frontiers, agent_pose, G, steps,
-						 LN):
+def get_frontier_with_DP(frontiers, agent_pose, dist_occupancy_map, steps, LN):
 	""" select the frontier from frontiers with the Bellman Equation.
 
 	from agent_pose and the observed_occupancy_map, compute D and L.
@@ -413,7 +414,7 @@ def get_frontier_with_DP(frontiers, agent_pose, G, steps,
 		#print('-------------------------------------------------------------')
 		visited_frontiers = set()
 		Q = compute_Q(agent_coord, fron, frontiers, visited_frontiers, steps,
-					  G, LN)
+					  dist_occupancy_map)
 		if Q >= max_Q:
 			max_Q = Q
 			max_frontier = fron
@@ -421,11 +422,13 @@ def get_frontier_with_DP(frontiers, agent_pose, G, steps,
 
 
 def compute_Q(agent_coord, target_frontier, frontiers, visited_frontiers,
-			  steps, G, LN):
+			  steps, dist_occupancy_map):
 	""" compute the Q values of the frontier 'target_frontier'"""
 	#print(f'agent_coord = {agent_coord}, target_frontier = {target_frontier.centroid}, steps = {steps}')
 	Q = 0
-	L = LN.compute_L(G, agent_coord, target_frontier)
+	#L = LN.compute_L(G, agent_coord, target_frontier)
+	_, L = route_through_array(dist_occupancy_map, (agent_coord[1], agent_coord[0]), 
+		(int(target_frontier.centroid[0]), int(target_frontier.centroid[1])))
 
 	# cond 1: agent has enough steps to reach target_frontier
 	if steps > L:
@@ -448,7 +451,7 @@ def compute_Q(agent_coord, target_frontier, frontiers, visited_frontiers,
 					fron_centroid_coords = (int(target_frontier.centroid[1]),
 											int(target_frontier.centroid[0]))
 					next_Q = compute_Q(fron_centroid_coords, fron, frontiers,
-									   visited_frontiers.copy(), steps, G, LN)
+									   visited_frontiers.copy(), steps, dist_occupancy_map)
 					if next_Q > max_next_Q:
 						max_next_Q = next_Q
 				Q += max_next_Q

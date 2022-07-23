@@ -26,7 +26,7 @@ scene_name = 'yqstnuAEVhm_0' #'17DRP5sb8fy_0' #'yqstnuAEVhm_0'
 
 scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
 
-cfg.merge_from_file('configs/exp_360degree_DP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml')
+cfg.merge_from_file('configs/exp_360degree_DP_GT_Potential_SqrtD_1STEP_500STEPS.yaml')
 cfg.freeze()
 
 act_dict = {-1: 'Done', 0: 'stop', 1: 'forward', 2: 'left', 3:'right'}
@@ -128,7 +128,7 @@ while step < cfg.NAVI.NUM_STEPS:
 		print(f'before filtering, num(frontiers) = {len(frontiers)}')
 		t3 = timer()
 		print(f'get frontier time = {t3 - t2}')
-		frontiers, G = LN.filter_unreachable_frontiers(frontiers, agent_map_pose, observed_occupancy_map)
+		frontiers, dist_occupancy_map = LN.filter_unreachable_frontiers(frontiers, agent_map_pose, observed_occupancy_map)
 		print(f'after filtering, num(frontiers) = {len(frontiers)}')
 		t4 = timer()
 		print(f'filter unreachable frontiers time = {t4 - t3}')
@@ -140,7 +140,7 @@ while step < cfg.NAVI.NUM_STEPS:
 			chosen_frontier = fr_utils.get_frontier_with_maximum_area(frontiers, gt_occupancy_map)
 		elif cfg.NAVI.STRATEGY == 'DP':
 			top_frontiers = fr_utils.select_top_frontiers(frontiers, top_n=5)
-			chosen_frontier = fr_utils.get_frontier_with_DP(top_frontiers, agent_map_pose, G, \
+			chosen_frontier = fr_utils.get_frontier_with_DP(top_frontiers, agent_map_pose, dist_occupancy_map, \
 				cfg.NAVI.NUM_STEPS-step, LN)
 		t6 = timer()
 		print(f'select frontiers time = {t6 - t5}')

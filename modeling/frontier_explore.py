@@ -113,7 +113,7 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 			frontiers = fr_utils.get_frontiers(observed_occupancy_map)
 			frontiers = frontiers - visited_frontier
 
-			frontiers, G = LN.filter_unreachable_frontiers(
+			frontiers, dist_occupancy_map = LN.filter_unreachable_frontiers(
 				frontiers, agent_map_pose, observed_occupancy_map)
 
 			frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
@@ -125,7 +125,7 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 			elif cfg.NAVI.STRATEGY == 'DP':
 				top_frontiers = fr_utils.select_top_frontiers(frontiers,
 															  top_n=5)
-				chosen_frontier = fr_utils.get_frontier_with_DP(top_frontiers, agent_map_pose, G, \
+				chosen_frontier = fr_utils.get_frontier_with_DP(top_frontiers, agent_map_pose, dist_occupancy_map, \
 				 cfg.NAVI.NUM_STEPS-step, LN)
 
 			#============================================= visualize semantic map ===========================================#
