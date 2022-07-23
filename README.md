@@ -10,19 +10,48 @@ mkdir output
 ```
 
 ### Dependencies
+We use `python==3.7.4`.  
+We recommend using a conda environment.  
+```
+conda create --name bellman_explore python=3.7.4
+source activate bellman_explore
+```
 Install the following dependencies before you run the code:  
 ```
 pip install -r requirements.txt
 ```
-Install habitat-lab and habitat-sim following guidance from [here](https://github.com/facebookresearch/habitat-lab "here").  
+You can install Habitat-Lab and Habitat-Sim following guidance from [here](https://github.com/facebookresearch/habitat-lab "here").  
+We recommend to install Habitat-Lab and Habitat-Sim from the source code.  
+We use `habitat==0.2.1` and `habitat_sim==0.2.1`.  
+Use the following commands to set it up:  
+```
+# install habitat-lab
+git clone --branch stable https://github.com/facebookresearch/habitat-lab.git
+cd habitat-lab
+git checkout tags/stable
+pip install -e .
+
+# install habitat-sim
+git clone --recurse --branch stable https://github.com/facebookresearch/habitat-sim.git
+cd habitat-sim
+pip install -r requirements.txt
+sudo apt-get update || true
+# These are fairly ubiquitous packages and your system likely has them already,
+# but if not, let's get the essentials for EGL support:
+sudo apt-get install -y --no-install-recommends \
+     libjpeg-dev libglm-dev libgl1-mesa-glx libegl1-mesa-dev mesa-utils xorg-dev freeglut3-dev
+git checkout tags/stable
+python setup.py install --with-cuda
+```
 If you don't want to install all the requirements, the necessary dependencies are:  
 ```
-habitat=0.1.4
-habitat-sim=0.1.7
-torch=1.8.0
-torchvision=0.9.0
-matplotlib=3.3.4
-networkx=2.6.3
+habitat==0.2.1
+habitat-sim==0.2.1
+torch==1.8.0
+torchvision==0.9.0
+matplotlib==3.3.4
+networkx==2.6.3
+scikit-fmm==2022.3.26
 ```
 
 ### Dataset Setup
@@ -34,10 +63,9 @@ Unzip the episode data and put it under `habitat-lab/data/datasets/pointnav/mp3d
 Create softlinks to the data.  
 ```
 cd  bellman-exploration-2022
-mkdir data
-ln -s data/habitat_data habitat-lab/data
+ln -s habitat-lab/data data
 ```
-Then you need to organize the habitat data in the following way.  
+The code requires the datasets in data folder in the following format:
 ```
 habitat-lab/data
                 /datasets/pointnav/mp3d

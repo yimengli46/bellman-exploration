@@ -9,10 +9,10 @@ _C.GENERAL.HABITAT_CONFIG_PATH = 'configs/habitat_env/exploration_see_the_floor.
 _C.GENERAL.BUILD_MAP_CONFIG_PATH = 'configs/habitat_env/build_map_mp3d.yaml'
 _C.GENERAL.LEARNED_MAP_GG_CONFIG_PATH = 'configs/habitat_env/point_nav_mp3d_for_GG.yaml'
 _C.GENERAL.DATALOADER_CONFIG_PATH = 'configs/habitat_env/dataloader.yaml'
-_C.GENERAL.HABITAT_TRAIN_EPISODE_DATA_PATH = 'data/habitat_data/datasets/pointnav/mp3d/temp_train/all.json.gz'
-_C.GENERAL.HABITAT_VAL_EPISODE_DATA_PATH = 'data/habitat_data/datasets/pointnav/mp3d/temp_val/all.json.gz'
-_C.GENERAL.HABITAT_TEST_EPISODE_DATA_PATH = 'data/habitat_data/datasets/pointnav/mp3d/temp_test/all.json.gz'
-_C.GENERAL.HABITAT_SCENE_DATA_PATH = 'data/habitat_data/scene_datasets/'
+_C.GENERAL.HABITAT_TRAIN_EPISODE_DATA_PATH = 'data/datasets/pointnav/mp3d/temp_train/all.json.gz'
+_C.GENERAL.HABITAT_VAL_EPISODE_DATA_PATH = 'data/datasets/pointnav/mp3d/temp_val/all.json.gz'
+_C.GENERAL.HABITAT_TEST_EPISODE_DATA_PATH = 'data/datasets/pointnav/mp3d/temp_test/all.json.gz'
+_C.GENERAL.HABITAT_SCENE_DATA_PATH = 'data/scene_datasets/'
 _C.GENERAL.RANDOM_SEED = 5
 
 #================================= for save =======================================

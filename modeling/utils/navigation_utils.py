@@ -7,7 +7,8 @@ import networkx as nx
 import random
 import habitat
 import habitat_sim
-from habitat.tasks.utils import cartesian_to_polar, quaternion_rotate_vector
+from habitat.tasks.utils import cartesian_to_polar
+from habitat.utils.geometry_utils import quaternion_rotate_vector
 from .baseline_utils import convertInsSegToSSeg
 import matplotlib.pyplot as plt
 

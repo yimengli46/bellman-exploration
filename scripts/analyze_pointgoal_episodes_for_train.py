@@ -1,7 +1,7 @@
 import os
 import numpy as np
-
-from habitat.tasks.utils import cartesian_to_polar, quaternion_rotate_vector
+from habitat.tasks.utils import cartesian_to_polar
+from habitat.utils.geometry_utils import quaternion_rotate_vector
 import gzip
 import json
 import matplotlib.pyplot as plt
