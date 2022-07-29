@@ -377,7 +377,9 @@ def get_frontier_with_maximum_area(frontiers, gt_occupancy_grid):
 			elif fron.R > max_area:
 				max_area = fron.R
 				max_fron = fron
-
+			elif fron.R == max_area and hash(fron) > hash(max_fron):
+				max_area = fron.R
+				max_fron = fron
 	return max_fron
 
 
@@ -416,6 +418,9 @@ def get_frontier_with_DP(frontiers, agent_pose, dist_occupancy_map, steps, LN):
 		Q = compute_Q(agent_coord, fron, frontiers, visited_frontiers, steps,
 					  dist_occupancy_map)
 		if Q >= max_Q:
+			max_Q = Q
+			max_frontier = fron
+		elif Q == max_Q and hash(fron) > hash(max_frontier):
 			max_Q = Q
 			max_frontier = fron
 	return max_frontier

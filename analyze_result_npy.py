@@ -1,6 +1,8 @@
 import numpy as np 
 from core import cfg
 import pandas as pd
+from modeling.utils.baseline_utils import read_map_npy
+import matplotlib.pyplot as plt
 
 scene_list = cfg.MAIN.TEST_SCENE_LIST
 output_folder = 'output' #cfg.SAVE.TESTING_RESULTS_FOLDER
@@ -10,15 +12,22 @@ result_folder = 'TESTING_RESULTS_360degree_DP_GT_Potential_D_Skeleton_Dall_1STEP
 
 avg_percent_list = []
 avg_step_list = []
-thresh_percent = .2
+thresh_percent = .5
 
 
-df = pd.DataFrame(columns=['Scene', 'Run', 'Num_steps', 'Coverage'])
+df = pd.DataFrame(columns=['Scene', 'Run', 'Num_steps', 'Coverage', 'Scene_Area'])
 df['Num_steps'] = df['Num_steps'].astype(int)
 df['Coverage'] = df['Coverage'].astype(float)
 
 for scene_name in scene_list:
-	try:
+	#try:
+		#========================== load the scene map===========================
+		sem_map_npy = np.load(
+			f'output/semantic_map/test/{scene_name}/BEV_semantic_map.npy',
+			allow_pickle=True).item()
+		semantic_map, pose_range, coords_range, WH = read_map_npy(sem_map_npy)
+		occ_map = semantic_map > 0
+		area = np.sum(occ_map) * .0025
 
 		results_npy = np.load(f'{output_folder}/{result_folder}/results_{scene_name}.npy', allow_pickle=True).item()
 		num_test = len(results_npy.keys())
@@ -37,10 +46,10 @@ for scene_name in scene_list:
 					percent_list.append(percent)
 					step_list.append(step)
 
-				df = df.append({'Scene': scene_name, 'Run': i, 'Num_steps': step, 'Coverage': percent}, 
+				df = df.append({'Scene': scene_name, 'Run': i, 'Num_steps': step, 'Coverage': percent, 'Scene_Area': area}, 
 					ignore_index=True)
 			else:
-				df = df.append({'Scene': scene_name, 'Run': i, 'Num_steps': np.nan, 'Coverage': np.nan}, 
+				df = df.append({'Scene': scene_name, 'Run': i, 'Num_steps': np.nan, 'Coverage': np.nan, 'Scene_Area': area}, 
 					ignore_index=True)
 
 		percent_list = np.array(percent_list)
@@ -56,7 +65,7 @@ for scene_name in scene_list:
 		if avg_percent > 0:
 			avg_percent_list.append(avg_percent)
 			avg_step_list.append(avg_step)
-	except:
+	#except:
 		print(f'failed to process scene {scene_name}.')
 
 print('=========================================================================================')
@@ -90,5 +99,25 @@ scene_info.rename(columns={'Num_steps': 'Avg_Num_steps', 'Coverage': 'Avg_Covera
 #================================ write df to html ==========================================
 html = scene_info.to_html()
 html_f.write(f'<h5>Description by each scene</h5>')
+html_f.write(html)
+#html_f.close()
+
+
+
+#=========================== group results by area size ===================================
+df2['Area_Type'] = 'small'
+df2.loc[df2['Scene_Area'] > 200, 'Area_Type'] = 'medium'
+df2.loc[df2['Scene_Area'] > 500, 'Area_Type'] = 'large'
+
+scene_grp = df2.groupby(['Area_Type'])
+scene_step = scene_grp['Num_steps'].mean()
+scene_cov = scene_grp['Coverage'].mean()
+
+scene_info = pd.concat([scene_step, scene_cov], axis='columns', sort=False)
+scene_info.rename(columns={'Num_steps': 'Avg_Num_steps', 'Coverage': 'Avg_Coverage'}, inplace=True)
+
+#================================ write df to html ==========================================
+html = scene_info.to_html()
+html_f.write(f'<h5>Description by the area</h5>')
 html_f.write(html)
 html_f.close()

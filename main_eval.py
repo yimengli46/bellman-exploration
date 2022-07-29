@@ -11,7 +11,7 @@ def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--config',
 						type=str,
-						required=True,
+						required=False,
 						default='exp_360degree_Greedy_GT_Potential_10STEP_500STEPS.yaml')
 	args = parser.parse_args()
 
@@ -67,12 +67,14 @@ def main():
 						f'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA EPS {idx} BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 					)
 					start_pose = data
+					print(f'start_pose = {start_pose}')
 					saved_folder = f'{scene_output_folder}/eps_{idx}'
-					create_folder(saved_folder, clean_up=True)
+					create_folder(saved_folder, clean_up=False)
 					flag = False
 					steps = 0
 					covered_area_percent = 0
 					try:
+						assert 1==2
 						flag, covered_area_percent, steps = nav(split, env, idx, scene_name, height, start_pose, saved_folder)
 					except:
 						print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
