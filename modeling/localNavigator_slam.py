@@ -106,7 +106,6 @@ class localNav_slam(object):
 						cell_coords = pose_to_coords([wx, wy], self.pose_range, self.coords_range, self.WH)
 						self.collision_map[cell_coords[1], cell_coords[0]] = 1
 
-
 		#===========================================================================
 		self.current_loc = agent_map_pose
 		fron_centroid_coords = (int(chosen_frontier.centroid[1]),
@@ -180,6 +179,20 @@ class localNav_slam(object):
 			a = 3
 
 		'''
+		if a == 3:
+			fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(25, 10))
+			ax[0].imshow(traversible_original, cmap='gray')
+			marker, scale = gen_arrow_head_marker(agent_map_pose[2])
+			ax[0].scatter(agent_coords[0], agent_coords[1], marker=marker, s=(30*scale)**2, c='red', zorder=5)
+			ax[1].imshow(traversible, cmap='gray')
+			ax[2].imshow(self.collision_map)
+			ax[2].scatter(agent_coords[0], agent_coords[1], marker=marker, s=(10*scale)**2, c='red', zorder=5)
+			fig.tight_layout()
+			plt.title('observed area')
+			plt.show()
+		'''
+
+		'''
 		# still in the recovery process
 		if len(self.recovery_actions) > 0:
 			a = self.recovery_actions[0]
@@ -192,10 +205,6 @@ class localNav_slam(object):
 
 		act = self.act_trans_dict[a]
 		return act, act_seq, subgoal_coords, subgoal_pose
-
-
-
-
 	
 	def mark_on_map(self, loc):
 		# input is the coordinates on the map
