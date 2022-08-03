@@ -74,7 +74,6 @@ def main():
 					steps = 0
 					covered_area_percent = 0
 					try:
-						assert 1==2
 						flag, covered_area_percent, steps = nav(split, env, idx, scene_name, height, start_pose, saved_folder)
 					except:
 						print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')

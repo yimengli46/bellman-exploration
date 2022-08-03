@@ -125,7 +125,10 @@ class localNav_slam(object):
 
 		## dilate the obstacle in the configuration space 
 		obstacle = (occ_map == cfg.FE.COLLISION_VAL)
-		traversible = skimage.morphology.binary_dilation(obstacle, self.selem) != True
+		if cfg.NAVI.GT_OCC_MAP_TYPE == 'PCD_HEIGHT':
+			traversible = skimage.morphology.binary_dilation(obstacle, self.selem) != True
+		else:
+			traversible = (obstacle != True)
 		traversible_original = traversible.copy()
 
 		## add the collision map

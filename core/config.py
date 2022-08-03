@@ -52,11 +52,13 @@ _C.SEM_MAP.WORLD_SIZE = 50.0 # world model size in each dimension (left, right, 
 _C.SEM_MAP.GRID_CLASS_SIZE = 42
 _C.SEM_MAP.HABITAT_FLOOR_IDX = 2
 _C.SEM_MAP.POINTS_CNT = 2
+_C.SEM_MAP.GAP_COMPLEMENT = 10 # complement the gap between the robot neighborhood and the projected occupancy map
 
 #=============================== for navigator ====================================
 _C.NAVI = CN()
 _C.NAVI.NUM_STEPS = 600
-_C.NAVI.FLAG_GT_OCC_MAP = True
+# how to build the ground-truth occ map, calling simulator or build it with point cloud height
+_C.NAVI.GT_OCC_MAP_TYPE = 'NAV_MESH' #'PCD_HEIGHT', 'NAV_MESH'
 _C.NAVI.NUM_STEPS_EXPLORE = 10
 
 _C.NAVI.DETECTOR = 'PanopticSeg'
