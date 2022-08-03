@@ -25,7 +25,7 @@ scene_name = 'yqstnuAEVhm_0' #'17DRP5sb8fy_0' #'yqstnuAEVhm_0'
 
 scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
 
-cfg.merge_from_file('configs/exp_360degree_Greedy_GT_Potential_1STEP_500STEPS.yaml')
+cfg.merge_from_file('configs/exp_360degree_DP_NAVMESH_MAP_GT_Potential_SqrtD_1STEP_500STEPS.yaml')
 cfg.freeze()
 
 act_dict = {-1: 'Done', 0: 'stop', 1: 'forward', 2: 'left', 3:'right'}
@@ -44,7 +44,7 @@ env = SimpleRLEnv(config=config)
 env.reset()
 
 scene_height = scene_floor_dict[env_scene][floor_id]['y']
-start_pose = (4.45681, -7.65056, -2.9602) #(0.272, -5.5946, -1.1016) #(-0.35, -0.85, 0.2964) #(0.03828, -8.55946, 0.2964)
+start_pose = (0.03828, -8.55946, 0.2964) #(0.272, -5.5946, -1.1016) #(-0.35, -0.85, 0.2964) #(0.03828, -8.55946, 0.2964)
 saved_folder = f'output/TESTING_RESULTS_Frontier'
 
 #============================ get scene ins to cat dict
@@ -55,7 +55,7 @@ ins2cat_dict = {int(obj.id.split("_")[-1]): obj.category.index() for obj in scen
 np.random.seed(cfg.GENERAL.RANDOM_SEED)
 random.seed(cfg.GENERAL.RANDOM_SEED)
 
-if cfg.NAVI.FLAG_GT_OCC_MAP:
+if cfg.NAVI.GT_OCC_MAP_TYPE == 'NAV_MESH':
 	occ_map_npy = np.load(f'output/semantic_map/{split}/{scene_name}/BEV_occupancy_map.npy', allow_pickle=True).item()
 gt_occ_map, pose_range, coords_range, WH = read_occ_map_npy(occ_map_npy)
 H, W = gt_occ_map.shape[:2]
@@ -145,7 +145,7 @@ while step < cfg.NAVI.NUM_STEPS:
 		print(f'select frontiers time = {t6 - t5}')
 
 		#============================================= visualize semantic map ===========================================#
-		if False:
+		if True:
 			#==================================== visualize the path on the map ==============================
 			#built_semantic_map, observed_area_flag, _ = semMap_module.get_semantic_map()
 
@@ -216,53 +216,6 @@ while step < cfg.NAVI.NUM_STEPS:
 		print(f'reached the subgoal')
 		MODE_FIND_SUBGOAL = True
 		visited_frontier.add(chosen_frontier)
-
-		#============================================= visualize semantic map ===========================================#
-		if True:
-			#==================================== visualize the path on the map ==============================
-			#built_semantic_map, observed_area_flag, _ = semMap_module.get_semantic_map()
-
-			color_built_semantic_map = apply_color_to_map(built_semantic_map, flag_small_categories=True)
-			#color_built_semantic_map = change_brightness(color_built_semantic_map, observed_area_flag, value=60)
-
-			#=================================== visualize the agent pose as red nodes =======================
-			x_coord_lst, z_coord_lst, theta_lst = [], [], []
-			for cur_pose in traverse_lst:
-				x_coord, z_coord = pose_to_coords((cur_pose[0], cur_pose[1]), pose_range, coords_range, WH)
-				x_coord_lst.append(x_coord)
-				z_coord_lst.append(z_coord)			
-				theta_lst.append(cur_pose[2])
-
-			#'''
-			fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(20, 10))
-			ax[0].imshow(observed_occupancy_map, cmap='gray')
-			marker, scale = gen_arrow_head_marker(theta_lst[-1])
-			ax[0].scatter(x_coord_lst[-1], z_coord_lst[-1], marker=marker, s=(30*scale)**2, c='red', zorder=5)
-			ax[0].plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
-			#'''
-			for f in frontiers:
-				ax[0].scatter(f.points[1], f.points[0], c='yellow', zorder=2)
-				ax[0].scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
-			#'''
-			if chosen_frontier is not None:
-				ax[0].scatter(chosen_frontier.points[1], chosen_frontier.points[0], c='green', zorder=4)
-				ax[0].scatter(chosen_frontier.centroid[1], chosen_frontier.centroid[0], c='red', zorder=4)
-			#ax[0].get_xaxis().set_visible(False)
-			#ax[0].get_yaxis().set_visible(False)
-			#ax.set_title('improved observed_occ_map + frontiers')
-
-			ax[1].imshow(observed_occupancy_map)
-			ax[1].get_xaxis().set_visible(False)
-			ax[1].get_yaxis().set_visible(False)
-
-			fig.tight_layout()
-			plt.title('observed area')
-			plt.show()
-			#fig.savefig(f'{saved_folder}/step_{step}_semmap.jpg')
-			#plt.close()
-			#assert 1==2
-			#'''
-
 	else:
 		step += 1
 		explore_steps += 1

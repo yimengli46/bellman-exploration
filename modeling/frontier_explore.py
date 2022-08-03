@@ -40,7 +40,7 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 	np.random.seed(cfg.GENERAL.RANDOM_SEED)
 	random.seed(cfg.GENERAL.RANDOM_SEED)
 
-	if cfg.NAVI.FLAG_GT_OCC_MAP:
+	if cfg.NAVI.GT_OCC_MAP_TYPE == 'NAV_MESH':
 		occ_map_npy = np.load(
 			f'output/semantic_map/{split}/{scene_name}/BEV_occupancy_map.npy',
 			allow_pickle=True).item()
