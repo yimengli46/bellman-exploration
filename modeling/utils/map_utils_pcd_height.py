@@ -100,8 +100,8 @@ class SemanticMap:
 		#============================================
 		self.H, self.W = len(self.z_grid), len(self.x_grid)
 
-		self.loc_on_map = np.zeros((self.coords_range[3]+1-self.coords_range[1], 
-			self.coords_range[2]+1-self.coords_range[0]), dtype=np.float32)
+		self.neighborhood_history = np.zeros((self.coords_range[3]+1-self.coords_range[1], 
+			self.coords_range[2]+1-self.coords_range[0]), dtype=np.bool)
 
 	def build_semantic_map(self, obs_list, pose_list, step=0, saved_folder=''):
 		""" update semantic map with observations rgb_img, depth_img, sseg_img and robot pose."""
@@ -118,7 +118,6 @@ class SemanticMap:
 			sem_map_pose = (pose[0], -pose[1], -pose[2])  # x, z, theta
 
 			agent_coords = pose_to_coords(sem_map_pose, self.pose_range, self.coords_range, self.WH)
-			self.loc_on_map[agent_coords[1], agent_coords[0]] = 1
 
 			#print('pose = {}'.format(pose))
 			rgb_lst.append(rgb_img)
@@ -314,7 +313,8 @@ class SemanticMap:
 									  self.coords_range, self.WH)
 		# find the nearby cells coordinates
 		neighborhood_mask = find_neighborhood(agent_coords, occupancy_map)
-		complement_mask = np.logical_and(neighborhood_mask, occupancy_map == cfg.FE.UNOBSERVED_VAL)
+		self.neighborhood_history = np.logical_or(self.neighborhood_history, neighborhood_mask)
+		complement_mask = np.logical_and(self.neighborhood_history, occupancy_map == cfg.FE.UNOBSERVED_VAL)
 		# change the complement area
 		if cfg.NAVI.GT_OCC_MAP_TYPE == 'PCD_HEIGHT':
 			occupancy_map = np.where(complement_mask, cfg.FE.FREE_VAL, occupancy_map)
@@ -337,6 +337,8 @@ class SemanticMap:
 		##============================= add current loc =========================
 		occupancy_map[agent_coords[1]-1:agent_coords[1]+2, 
 					agent_coords[0]-1:agent_coords[0]+2] = cfg.FE.FREE_VAL
+		self.neighborhood_history[agent_coords[1]-1:agent_coords[1]+2, 
+					agent_coords[0]-1:agent_coords[0]+2] = True
 
 		'''
 		fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(100, 100))
