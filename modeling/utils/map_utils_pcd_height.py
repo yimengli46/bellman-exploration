@@ -21,17 +21,18 @@ def find_neighborhood(agent_coords, occupancy_map):
 	H, W = occupancy_map.shape
 	for idx in range(len(rr_cir)):
 		rr_line, cc_line = line(agent_coords[1], agent_coords[0], rr_cir[idx], cc_cir[idx])
+		# make sure the points are inside the map
 		mask_line = np.logical_and(np.logical_and(rr_line >= 0, rr_line < H), 
 			np.logical_and(cc_line >= 0, cc_line < W))
 		rr_line = rr_line[mask_line]
 		cc_line = cc_line[mask_line]
-		all_first_observed = np.nonzero(occupancy_map[rr_line, cc_line] != cfg.FE.UNOBSERVED_VAL)[0]
-		if len(all_first_observed) == 0:
-			idx_first_observed = len(rr_line)
-		else:
-			idx_first_observed = all_first_observed[0]
-		rr_full_cir = np.concatenate((rr_full_cir, rr_line[:idx_first_observed]))
-		cc_full_cir = np.concatenate((cc_full_cir, cc_line[:idx_first_observed]))
+		# find the start point and the last point to complement
+		first_unknown = np.nonzero(occupancy_map[rr_line, cc_line] == cfg.FE.UNOBSERVED_VAL)[0]
+		first_collision = np.nonzero(occupancy_map[rr_line, cc_line] == cfg.FE.COLLISION_VAL)[0]
+		idx_first_unknown = 0 if len(first_unknown) == 0 else first_unknown[0]
+		idx_first_collision = len(rr_line) if len(first_collision) == 0 else first_collision[0]
+		rr_full_cir = np.concatenate((rr_full_cir, rr_line[idx_first_unknown:idx_first_collision]))
+		cc_full_cir = np.concatenate((cc_full_cir, cc_line[idx_first_unknown:idx_first_collision]))
 	mask_complement = np.zeros(occupancy_map.shape, dtype='bool')
 	mask_complement[rr_full_cir, cc_full_cir] = True
 	return mask_complement
@@ -315,7 +316,10 @@ class SemanticMap:
 		neighborhood_mask = find_neighborhood(agent_coords, occupancy_map)
 		complement_mask = np.logical_and(neighborhood_mask, occupancy_map == cfg.FE.UNOBSERVED_VAL)
 		# change the complement area
-		occupancy_map = np.where(complement_mask, cfg.FE.FREE_VAL, occupancy_map)
+		if cfg.NAVI.GT_OCC_MAP_TYPE == 'PCD_HEIGHT':
+			occupancy_map = np.where(complement_mask, cfg.FE.FREE_VAL, occupancy_map)
+		elif cfg.NAVI.GT_OCC_MAP_TYPE == 'NAV_MESH':
+			occupancy_map = np.where(complement_mask, self.gt_occupancy_map, occupancy_map)
 
 		#============================== dilate the unknown space ===============================
 		mask_occupied = (occupancy_map == cfg.FE.COLLISION_VAL)
@@ -329,7 +333,7 @@ class SemanticMap:
 		mask_known = morphology.remove_small_holes(mask_known, 10000, connectivity=2)
 		mask_known[mask_occupied == 1] = 0
 		occupancy_map = np.where(mask_known, cfg.FE.FREE_VAL, occupancy_map)
-
+		
 		##============================= add current loc =========================
 		occupancy_map[agent_coords[1]-1:agent_coords[1]+2, 
 					agent_coords[0]-1:agent_coords[0]+2] = cfg.FE.FREE_VAL

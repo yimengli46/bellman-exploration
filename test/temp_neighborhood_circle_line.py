@@ -94,28 +94,29 @@ occupancy_map[~observed_area_flag] = cfg.FE.UNOBSERVED_VAL
 
 agent_map_pose = (30, 100) # (81, 111)
 occupancy_map[agent_map_pose[1]-20:agent_map_pose[1]+20, agent_map_pose[0]-20:agent_map_pose[0]+20] = cfg.FE.UNOBSERVED_VAL
+#occupancy_map[agent_map_pose[1]-5:agent_map_pose[1]+5, agent_map_pose[0]-5:agent_map_pose[0]+5] = cfg.FE.FREE_VAL
+
 
 # draw circle
 #'''
 t1 = timer()
-rr_cir, cc_cir = circle_perimeter(agent_map_pose[1], agent_map_pose[0], 100, method='andres')
+rr_cir, cc_cir = circle_perimeter(agent_map_pose[1], agent_map_pose[0], 10, method='andres')
 rr_full_cir = np.array([], dtype='int64')
 cc_full_cir = np.array([], dtype='int64')
 for idx in range(len(rr_cir)):
 	rr_line, cc_line = line(agent_map_pose[1], agent_map_pose[0], rr_cir[idx], cc_cir[idx])
-	#'''
+
 	mask_line = np.logical_and(np.logical_and(rr_line >= 0, rr_line < H), 
 		np.logical_and(cc_line >= 0, cc_line < W))
 	rr_line = rr_line[mask_line]
 	cc_line = cc_line[mask_line]
-	#'''
-	all_first_observed = np.nonzero(occupancy_map[rr_line, cc_line] != cfg.FE.UNOBSERVED_VAL)[0]
-	if len(all_first_observed) == 0:
-		idx_first_observed = len(rr_line)
-	else:
-		idx_first_observed = all_first_observed[0]
-	rr_full_cir = np.concatenate((rr_full_cir, rr_line[:idx_first_observed]))
-	cc_full_cir = np.concatenate((cc_full_cir, cc_line[:idx_first_observed]))
+	
+	first_unknown = np.nonzero(occupancy_map[rr_line, cc_line] == cfg.FE.UNOBSERVED_VAL)[0]
+	first_collision = np.nonzero(occupancy_map[rr_line, cc_line] == cfg.FE.COLLISION_VAL)[0]
+	idx_first_unknown = 0 if len(first_unknown) == 0 else first_unknown[0]
+	idx_first_collision = len(rr_line) if len(first_collision) == 0 else first_collision[0]
+	rr_full_cir = np.concatenate((rr_full_cir, rr_line[idx_first_unknown:idx_first_collision]))
+	cc_full_cir = np.concatenate((cc_full_cir, cc_line[idx_first_unknown:idx_first_collision]))
 
 mask_complement = np.zeros(occupancy_map.shape, dtype='bool')
 mask_complement[rr_full_cir, cc_full_cir] = True
