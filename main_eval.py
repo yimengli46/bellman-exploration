@@ -12,7 +12,7 @@ def main():
 	parser.add_argument('--config',
 						type=str,
 						required=False,
-						default='exp_360degree_Greedy_GT_Potential_10STEP_500STEPS.yaml')
+						default='exp_360degree_Greedy_NAVMESH_MAP_GT_Potential_1STEP_500STEPS.yaml')
 	args = parser.parse_args()
 
 	cfg.merge_from_file(f'configs/{args.config}')

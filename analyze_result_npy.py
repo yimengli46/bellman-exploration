@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 scene_list = cfg.MAIN.TEST_SCENE_LIST
 output_folder = 'output' #cfg.SAVE.TESTING_RESULTS_FOLDER
-result_folder = 'TESTING_RESULTS_360degree_DP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS'
+result_folder = 'TESTING_RESULTS_360degree_DP_NAVMESH_MAP_GT_Potential_D_SqrtR_1STEP_500STEPS'
 #scene_list = ['2t7WUuJeko7_0', '5ZKStnWn8Zo_0', 'ARNzJeq3xxb_0', 'RPmz2sHmrrY_0', 'Vt2qJdWjCF2_0', 'WYY7iVyf5p8_0', 'YFuZgdQ5vWj_0', 'YVUC4YcDtcY_0', 'fzynW3qQPVF_0', 'gYvKGZ5eRqb_0', 'gxdoqLR6rwA_0', 'q9vSo1VnCiC_0', 'rqfALeAoiTq_0', 'wc2JMjhGNzB_0', 'yqstnuAEVhm_0']
 
 
