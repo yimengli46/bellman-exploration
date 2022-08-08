@@ -410,7 +410,6 @@ def get_frontier_with_DP(frontiers, agent_pose, dist_occupancy_map, steps, LN):
 	max_frontier = None
 	#G = LN.get_G_from_map(observed_occupancy_map)
 	agent_coord = LN.get_agent_coords(agent_pose)
-	steps = steps / 5.
 
 	for fron in frontiers:
 		#print('-------------------------------------------------------------')
@@ -434,6 +433,9 @@ def compute_Q(agent_coord, target_frontier, frontiers, visited_frontiers,
 	#L = LN.compute_L(G, agent_coord, target_frontier)
 	_, L = route_through_array(dist_occupancy_map, (agent_coord[1], agent_coord[0]), 
 		(int(target_frontier.centroid[0]), int(target_frontier.centroid[1])))
+	# move forward 5 cells. every move forward is combined with 2 turnings.
+	L = L / 5. * 3
+	target_frontier.D = target_frontier.D / 5. * 3
 
 	# cond 1: agent has enough steps to reach target_frontier
 	if steps > L:
