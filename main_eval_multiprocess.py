@@ -7,32 +7,37 @@ from modeling.utils.navigation_utils import SimpleRLEnv, get_scene_name
 from core import cfg
 import argparse
 import multiprocessing
+import os
 
-def build_env(env_scene):
+def build_env(env_scene, device_id=0):
 	#================================ load habitat env============================================
 	config = habitat.get_config(config_paths=cfg.GENERAL.DATALOADER_CONFIG_PATH)
 	config.defrost()
 	#config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_TEST_EPISODE_DATA_PATH
 	config.SIMULATOR.SCENE = f'{cfg.GENERAL.HABITAT_SCENE_DATA_PATH}/mp3d/{env_scene}/{env_scene}.glb'
 	config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
+	config.SIMULATOR.HABITAT_SIM_V0.GPU_DEVICE_ID = device_id
 	config.freeze()
 	env = habitat.sims.make_sim(config.SIMULATOR.TYPE, config=config.SIMULATOR)
 	return env
 
 def nav_test(env_scene, output_folder, scene_floor_dict):
+	#============================ get a gpu
+	device_id = gpu_Q.get()
+
 	floor_id = 0
 	split = 'test'
 	scene_dict = scene_floor_dict[env_scene]
 	height = scene_dict[0]['y']
 	scene_name = f'{env_scene}_{floor_id}'
 
-	print(f'**********scene_name = {scene_name}***********')
+	#================ initialize habitat env =================
+	env = build_env(env_scene, device_id=device_id)
+	env.reset()
+
+	print(f'**********scene_name = {scene_name}, device_id ={device_id}***********')
 	scene_output_folder = f'{output_folder}/{scene_name}'
 	create_folder(scene_output_folder)
-
-	#================ initialize habitat env =================
-	env = build_env(env_scene)
-	env.reset()
 
 	#================ load testing data ==================
 	testing_data = scene_dict[floor_id]['start_pose']
@@ -42,7 +47,6 @@ def nav_test(env_scene, output_folder, scene_floor_dict):
 
 	results = {}
 	for idx, data in enumerate(testing_data):
-		#for idx in range(1, 2):
 		data = testing_data[idx]
 		print(
 			f'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA EPS {idx} BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
@@ -54,11 +58,11 @@ def nav_test(env_scene, output_folder, scene_floor_dict):
 		flag = False
 		steps = 0
 		covered_area_percent = 0
-		#try:
-		flag, covered_area_percent, steps = nav(split, env, idx, scene_name, height, start_pose, saved_folder)
-			#print(f'EEEEEEEEEEEEEEEEEEE {scene_name} EPS {idx} FFFFFFFFFFFFFFFF')
-		#except:
-		#	print(f'CCCCCCCCCCCCCC failed {scene_name} EPS {idx} DDDDDDDDDDDDDDD')
+		#'''
+		try:
+			flag, covered_area_percent, steps = nav(split, env, idx, scene_name, height, start_pose, saved_folder)
+		except:
+			print(f'CCCCCCCCCCCCCC failed {scene_name} EPS {idx} DDDDDDDDDDDDDDD')
 
 		result = {}
 		result['eps_id'] = idx
@@ -67,10 +71,14 @@ def nav_test(env_scene, output_folder, scene_floor_dict):
 		result['flag'] = flag
 
 		results[idx] = result
+		#'''
 
 	np.save(f'{output_folder}/results_{scene_name}.npy', results)
 
 	env.close()
+
+	#================================ release the gpu============================
+	gpu_Q.put(device_id)
 
 def multi_run_wrapper(args):
 	""" wrapper for multiprocessor """
@@ -87,6 +95,14 @@ def main():
 	cfg.merge_from_file(f'configs/{args.config}')
 	cfg.freeze()
 
+	#====================== get the available GPU devices ============================
+	visible_devices = os.environ["CUDA_VISIBLE_DEVICES"].split(",")
+	devices = [int(dev) for dev in visible_devices]
+
+	for device_id in devices:
+		for _ in range(cfg.MP.PROC_PER_GPU):
+			gpu_Q.put(device_id)
+
 	#=============================== basic setup =======================================
 	split = 'test'
 	scene_floor_dict = np.load(
@@ -96,12 +112,14 @@ def main():
 	output_folder = cfg.SAVE.LARGE_TESTING_RESULTS_FOLDER
 	create_folder(output_folder)
 
-	with multiprocessing.Pool(processes=cfg.MP.GPU_CAPACITY) as pool:
-		args0 = cfg.MAIN.TEST_SCENE_NO_FLOOR_LIST
+	args0 = cfg.MAIN.TEST_SCENE_NO_FLOOR_LIST
+	with multiprocessing.Pool(processes=len(args0)) as pool:
 		args1 = [output_folder for _ in range(len(args0))]
 		args2 = [scene_floor_dict for _ in range(len(args0))]
 		pool.map(multi_run_wrapper, list(zip(args0, args1, args2)))
 		pool.close()
+		pool.join()
 
 if __name__ == "__main__":
+	gpu_Q = multiprocessing.Queue()
 	main()
