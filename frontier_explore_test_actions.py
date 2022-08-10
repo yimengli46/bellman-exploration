@@ -149,7 +149,7 @@ while step < cfg.NAVI.NUM_STEPS:
 			#==================================== visualize the path on the map ==============================
 			#built_semantic_map, observed_area_flag, _ = semMap_module.get_semantic_map()
 
-			color_built_semantic_map = apply_color_to_map(built_semantic_map, flag_small_categories=True)
+			#color_built_semantic_map = apply_color_to_map(built_semantic_map, flag_small_categories=True)
 			#color_built_semantic_map = change_brightness(color_built_semantic_map, observed_area_flag, value=60)
 
 			#=================================== visualize the agent pose as red nodes =======================
@@ -166,16 +166,14 @@ while step < cfg.NAVI.NUM_STEPS:
 			marker, scale = gen_arrow_head_marker(theta_lst[-1])
 			ax[0].scatter(x_coord_lst[-1], z_coord_lst[-1], marker=marker, s=(30*scale)**2, c='red', zorder=5)
 			ax[0].plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
-			#'''
 			for f in frontiers:
-				ax[0].scatter(f.points[1], f.points[0], c='yellow', zorder=2)
+				ax[0].scatter(f.points[1], f.points[0], c='green', zorder=2)
 				ax[0].scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
-			#'''
 			if chosen_frontier is not None:
-				ax[0].scatter(chosen_frontier.points[1], chosen_frontier.points[0], c='green', zorder=4)
+				ax[0].scatter(chosen_frontier.points[1], chosen_frontier.points[0], c='yellow', zorder=4)
 				ax[0].scatter(chosen_frontier.centroid[1], chosen_frontier.centroid[0], c='red', zorder=4)
-			#ax[0].get_xaxis().set_visible(False)
-			#ax[0].get_yaxis().set_visible(False)
+			ax[0].get_xaxis().set_visible(False)
+			ax[0].get_yaxis().set_visible(False)
 			#ax.set_title('improved observed_occ_map + frontiers')
 
 			ax[1].imshow(observed_occupancy_map)
@@ -189,6 +187,38 @@ while step < cfg.NAVI.NUM_STEPS:
 			#plt.close()
 			#assert 1==2
 			#'''
+
+			#==================== show the unobserved map with lower brightness ===================
+			'''
+			color_occ_map = np.zeros((H, W, 3), dtype='uint8')
+			color_occ_map[gt_occ_map == 1] = [255, 255, 255]
+			color_occ_map[gt_occ_map == 0] = [120, 120, 130]
+			color_occ_map = change_brightness(color_occ_map, observed_area_flag, value=60)
+
+			fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 10))
+			ax.imshow(color_occ_map)
+			marker, scale = gen_arrow_head_marker(theta_lst[-1])
+			ax.scatter(x_coord_lst[-1], z_coord_lst[-1], marker=marker, s=(30*scale)**2, c='blue', zorder=5)
+			ax.plot(x_coord_lst, z_coord_lst, lw=5, c='magenta', zorder=3)
+
+			for f in frontiers:
+				ax.scatter(f.points[1], f.points[0], c='green', zorder=2)
+				ax.scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
+			if chosen_frontier is not None:
+				ax.scatter(chosen_frontier.points[1], chosen_frontier.points[0], c='yellow', zorder=4)
+				ax.scatter(chosen_frontier.centroid[1], chosen_frontier.centroid[0], c='red', zorder=4)
+			ax.get_xaxis().set_visible(False)
+			ax.get_yaxis().set_visible(False)
+			#ax.set_title('improved observed_occ_map + frontiers')
+
+
+			fig.tight_layout()
+			#plt.title('observed area')
+			#plt.show()
+			fig.savefig(f'{saved_folder}/step_{step}_semmap.jpg')
+			plt.close()
+			'''
+
 
 	#===================================== check if exploration is done ========================
 	if chosen_frontier is None:

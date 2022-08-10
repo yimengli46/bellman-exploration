@@ -64,11 +64,9 @@ def get_obs_and_pose(env, agent_pos, heading_angle, keep=True):
 	agent_rot = habitat_sim.utils.common.quat_from_angle_axis(
 		heading_angle, habitat_sim.geo.GRAVITY)
 	#print(f'agent_pos = {agent_pos}, agent_rot = {agent_rot}')
-	obs = env.habitat_env.sim.get_observations_at(agent_pos,
-												  agent_rot,
-												  keep_agent_at_new_pose=keep)
-	agent_pos = env.habitat_env.sim.get_agent_state().position
-	agent_rot = env.habitat_env.sim.get_agent_state().rotation
+	obs = env.get_observations_at(agent_pos, agent_rot, keep_agent_at_new_pose=keep)
+	agent_pos = env.get_agent_state().position
+	agent_rot = env.get_agent_state().rotation
 	#print(f'agent_pos = {agent_pos}, agent_rot = {agent_rot}')
 	heading_vector = quaternion_rotate_vector(agent_rot.inverse(),
 											  np.array([0, 0, -1]))
@@ -105,10 +103,10 @@ def get_obs_and_pose(env, agent_pos, heading_angle, keep=True):
 	return obs, pose
 
 def get_obs_and_pose_by_action(env, act):
-	obs, _, _, _ = env.step(act)
+	obs, _, _ = env.step(act)
 
-	agent_pos = env.habitat_env.sim.get_agent_state().position
-	agent_rot = env.habitat_env.sim.get_agent_state().rotation
+	agent_pos = env.get_agent_state().position
+	agent_rot = env.get_agent_state().rotation
 	#print(f'agent_pos = {agent_pos}, agent_rot = {agent_rot}')
 	heading_vector = quaternion_rotate_vector(agent_rot.inverse(),
 											  np.array([0, 0, -1]))
