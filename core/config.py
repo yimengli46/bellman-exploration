@@ -19,14 +19,17 @@ _C.GENERAL.RANDOM_SEED = 5
 _C.SAVE = CN()
 _C.SAVE.SEMANTIC_MAP_PATH = 'output/semantic_map' 
 _C.SAVE.OCCUPANCY_MAP_PATH = 'output/semantic_map' # built occupancy map
+# saving folder for 3*18=54 test cases
 _C.SAVE.TESTING_RESULTS_FOLDER = 'output/TESTING_RESULTS_360degree_DP_UNet_occ_only_Predicted_Potential_10STEP_600STEPS'
+# saving folder for over 1000 test cases
+_C.SAVE.LARGE_TESTING_RESULTS_FOLDER = 'output/LARGE_TESTING_RESULTS_360degree_DP_UNet_occ_only_Predicted_Potential_10STEP_600STEPS'
 
 #================================== for main_nav.py =====================
 _C.MAIN = CN()
 _C.MAIN.SPLIT = 'test' # select from 'train', 'val', 'test'
 _C.MAIN.NUM_SCENES = 61 # for ('train', 'val', 'test'), num_scenes = (61, 11, 18), 90 in total.
 _C.MAIN.TEST_SCENE_LIST = ['2t7WUuJeko7_0', '5ZKStnWn8Zo_0', 'ARNzJeq3xxb_0', 'RPmz2sHmrrY_0', 'UwV83HsGsw3_0', 'Vt2qJdWjCF2_0', 'WYY7iVyf5p8_0', 'YFuZgdQ5vWj_0', 'YVUC4YcDtcY_0', 'fzynW3qQPVF_0', 'gYvKGZ5eRqb_0', 'gxdoqLR6rwA_0', 'jtcxE69GiFV_0', 'pa4otMbVnkk_0', 'q9vSo1VnCiC_0', 'rqfALeAoiTq_0', 'wc2JMjhGNzB_0', 'yqstnuAEVhm_0']
-
+_C.MAIN.TEST_SCENE_NO_FLOOR_LIST = ['2t7WUuJeko7', '5ZKStnWn8Zo', 'ARNzJeq3xxb', 'RPmz2sHmrrY', 'UwV83HsGsw3', 'Vt2qJdWjCF2', 'WYY7iVyf5p8', 'YFuZgdQ5vWj', 'YVUC4YcDtcY', 'fzynW3qQPVF', 'gYvKGZ5eRqb', 'gxdoqLR6rwA', 'jtcxE69GiFV', 'pa4otMbVnkk', 'q9vSo1VnCiC', 'rqfALeAoiTq', 'wc2JMjhGNzB', 'yqstnuAEVhm']
 
 _C.MAIN.TRAIN_SCENE_LIST = ['ZMojNkEp431_0', '1LXtFkjw3qL_0', 'sT4fr6TAbpF_0', 'r1Q1Z4BcV1o_0', 'cV4RVeZvu5T_0', 'EDJbREhghzL_0', 'PX4nDJXEHrG_0', 'YmJkqBEsHnH_0', 'ULsKaCPVFJR_0', '7y3sRwLe3Va_0', 'mJXqzFtmKg4_0', '759xd9YjKW5_0', '17DRP5sb8fy_0', 'ac26ZMwG7aT_0', 'Pm6F8kyY3z2_0', 'Vvot9Ly1tCj_0', 'PuKPg4mmafe_0', 'S9hNv5qa7GM_0', 'vyrNrziPKCB_0', 'SN83YJsR3w2_0', 'rPc6DW4iMge_0', 'r47D5H71a5s_0', 'qoiz87JEwZ2_0', '29hnd4uzFmX_0', '5LpN3gDmAk7_0', 'VFuaQ6m2Qom_0', 'i5noydFURQK_0', 'dhjEzFoUFzH_0', 'E9uDoFAP3SH_0', 's8pcmisQ38h_0', 'GdvgFV5R1Z5_0', '5q7pvUzZiYa_0', 'kEZ7cmS4wCh_0', 'JF19kD82Mey_0', 'pRbA3pwrgk9_0', '2n8kARJN3HM_0', 'HxpKQynjfin_0', 'VzqfbhrpDEA_0', 'Uxmj2M2itWa_0', 'V2XKFyX4ASd_0', 'JeFG25nYj2p_0', 'p5wJjkQkbXX_0', 'VLzqgDo317F_0', '8WUmhLawc2A_0', 'XcA2TqTSSAj_0', 'D7N2EKCX4Sj_0', 'aayBHfsNo7d_0', 'gZ6f7yhEvPG_0', 'D7G3Y4RVNrH_0', 'b8cTxDM8gDG_0', 'VVfe2KiqLaN_0', 'uNb9QFRL6hY_0', 'e9zR4mvMWw7_0', 'sKLMLpTHeUy_0', '82sE5b5pLXE_0', '1pXnuDYAj8r_0', 'jh4fc5c5qoQ_0', 'ur6pFq6Qu1A_0', 'B6ByNegPMKs_0', 'JmbYfDe2QKZ_0', 'gTV8FGcVJC9_0']
 _C.MAIN.VAL_SCENE_LIST = ['oLBMNvg9in8_0', 'TbHJrupSAjP_0', 'QUCTc6BB5sX_0', 'EU6Fwq7SyZv_0', 'zsNo4HB9uLZ_0', 'X7HyMhZNoso_0', 'x8F5xyUWy9e_0', '8194nk5LbLH_0', '2azQ1b91cZZ_0', 'pLe4wQe7qrG_0', 'Z6MFQCViBuw_0']
@@ -148,6 +151,12 @@ _C.PRED.PARTIAL_MAP.GEN_SAMPLES_SAVED_FOLDER = 'output/model_weights_UNet_input_
 
 #========================= input partial map===============
 _C.PRED.VIEW = CN()
+
+
+#=========================== multiprocessing =======================
+_C.MP = CN()
+# num of gpus to use for running the test
+_C.MP.GPU_CAPACITY = 1
 
 #================================ for visualization ============================
 _C.SEM_MAP.FLAG_VISUALIZE_EGO_OBS = True

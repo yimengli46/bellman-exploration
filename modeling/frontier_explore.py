@@ -30,7 +30,7 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 	act_dict = {-1: 'Done', 0: 'stop', 1: 'forward', 2: 'left', 3:'right'}
 
 	#============================ get scene ins to cat dict
-	scene = env.habitat_env.sim.semantic_annotations()
+	scene = env.semantic_annotations()
 	ins2cat_dict = {
 		int(obj.id.split("_")[-1]): obj.category.index()
 		for obj in scene.objects
@@ -62,7 +62,7 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 	agent_pos = np.array([start_pose[0], scene_height,
 						  start_pose[1]])  # (6.6, -6.9), (3.6, -4.5)
 	# check if the start point is navigable
-	if not env.habitat_env.sim.is_navigable(agent_pos):
+	if not env.is_navigable(agent_pos):
 		print(f'start pose is not navigable ...')
 		assert 1 == 2
 
