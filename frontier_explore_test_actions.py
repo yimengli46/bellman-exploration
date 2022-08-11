@@ -37,10 +37,11 @@ if split == 'train':
 	config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_TRAIN_EPISODE_DATA_PATH
 elif split == 'test':
 	config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_TEST_EPISODE_DATA_PATH
+config.SIMULATOR.SCENE = f'{cfg.GENERAL.HABITAT_SCENE_DATA_PATH}/mp3d/{env_scene}/{env_scene}.glb'
 config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
 config.freeze()
 
-env = SimpleRLEnv(config=config)
+env = habitat.sims.make_sim(config.SIMULATOR.TYPE, config=config.SIMULATOR)
 env.reset()
 
 scene_height = scene_floor_dict[env_scene][floor_id]['y']
@@ -48,7 +49,7 @@ start_pose = (0.03828, -8.55946, 0.2964) #(0.272, -5.5946, -1.1016) #(-0.35, -0.
 saved_folder = f'output/TESTING_RESULTS_Frontier'
 
 #============================ get scene ins to cat dict
-scene = env.habitat_env.sim.semantic_annotations()
+scene = env.semantic_annotations()
 ins2cat_dict = {int(obj.id.split("_")[-1]): obj.category.index() for obj in scene.objects}
 
 #=================================== start original navigation code ========================
@@ -73,7 +74,7 @@ traverse_lst = []
 
 agent_pos = np.array([start_pose[0], scene_height, start_pose[1]]) # (6.6, -6.9), (3.6, -4.5)
 # check if the start point is navigable
-if not env.habitat_env.sim.is_navigable(agent_pos):
+if not env.is_navigable(agent_pos):
 	print(f'start pose is not navigable ...')
 	assert 1==2
 

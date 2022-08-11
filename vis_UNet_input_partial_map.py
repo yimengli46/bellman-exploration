@@ -4,29 +4,40 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 from modeling.utils.UNet import UNet
-from dataloader_MP3D import MP3DDataset, my_collate
 import torch.nn.functional as F
 from modeling.utils.baseline_utils import apply_color_to_map
 from core import cfg
 import torch.utils.data as data
 from itertools import islice
 import cv2
+from dataloader_input_partial_map import get_all_scene_dataset, my_collate
 
-Total_Samples = 1000
+cfg.merge_from_file('configs/exp_train_input_partial_map.yaml')
+cfg.freeze()
+
+Total_Samples = 100
 BATCH_SIZE = 4
 
-dataset_val = MP3DDataset(split='val', scene_names=cfg.MAIN.VAL_SCENE_LIST, worker_size=1, seed=cfg.GENERAL.RANDOM_SEED, num_elems=10000)
-dataloader_val = data.DataLoader(dataset_val, batch_size=BATCH_SIZE, num_workers=1, collate_fn=my_collate)
+data_folder = cfg.PRED.PARTIAL_MAP.GEN_SAMPLES_SAVED_FOLDER
+dataset_val = get_all_scene_dataset('val', ['pLe4wQe7qrG_0'], data_folder)
+dataloader_val = data.DataLoader(dataset_val, 
+	batch_size=BATCH_SIZE, 
+	num_workers=2,
+	shuffle=False,
+	collate_fn=my_collate,
+	)
 
 device = torch.device('cuda')
 
-model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).to(device)
-checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar')
+model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).cuda()
+checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_5/checkpoint.pth.tar')
 model.load_state_dict(checkpoint['state_dict'])
+
+#assert 1==2
 
 with torch.no_grad():
 	count = 0
-	for batch in islice(dataloader_val, Total_Samples//BATCH_SIZE):
+	for batch in dataloader_val:
 		images, targets, HWs, frontiers = batch['input'], batch['output'], batch['shape'], batch['frontiers']
 		original_targets = batch['original_target']
 		#print('images = {}'.format(images))
@@ -122,9 +133,9 @@ with torch.no_grad():
 					ax[1][1].text(centroid_x, centroid_y, f'{output_val:.2f}', fontsize=20, color='white')
 
 			fig.tight_layout()
-			#plt.show()
-			fig.savefig(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/img_{count}_zeroout_occmap_only.jpg')
-			plt.close()
+			plt.show()
+			#fig.savefig(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/img_{count}_zeroout_occmap_only.jpg')
+			#plt.close()
 
 			count += 1
 			#assert 1==2

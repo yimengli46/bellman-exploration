@@ -24,20 +24,17 @@ def main():
 		f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy',
 		allow_pickle=True).item()
 
-	#================================ load habitat env============================================
-	config = habitat.get_config(config_paths=cfg.GENERAL.DATALOADER_CONFIG_PATH)
-	config.defrost()
-	config.DATASET.DATA_PATH = cfg.GENERAL.HABITAT_TEST_EPISODE_DATA_PATH
-	config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
-	config.freeze()
-	env = SimpleRLEnv(config=config)
+	for env_scene in cfg.MAIN.TEST_SCENE_NO_FLOOR_LIST:
 
-	for episode_id in range(18):
+		#================================ load habitat env============================================
+		config = habitat.get_config(config_paths=cfg.GENERAL.DATALOADER_CONFIG_PATH)
+		config.defrost()
+		config.SIMULATOR.SCENE = f'{cfg.GENERAL.HABITAT_SCENE_DATA_PATH}/mp3d/{env_scene}/{env_scene}.glb'
+		config.DATASET.SCENES_DIR = cfg.GENERAL.HABITAT_SCENE_DATA_PATH
+		config.freeze()
+		env = habitat.sims.make_sim(config.SIMULATOR.TYPE, config=config.SIMULATOR)
+
 		env.reset()
-		print('episode_id = {}'.format(episode_id))
-		print('env.current_episode = {}'.format(env.current_episode))
-
-		env_scene = get_scene_name(env.current_episode)
 		scene_dict = scene_floor_dict[env_scene]
 
 		#=============================== traverse each floor ===========================
