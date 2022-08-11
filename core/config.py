@@ -157,6 +157,8 @@ _C.PRED.VIEW = CN()
 _C.MP = CN()
 # num of gpus to use for running the test
 _C.MP.GPU_CAPACITY = 1
+# number of processes running on a GPU
+_C.MP.PROC_PER_GPU = 1
 
 #================================ for visualization ============================
 _C.SEM_MAP.FLAG_VISUALIZE_EGO_OBS = True
