@@ -15,9 +15,56 @@ from math import sqrt
 
 from skimage.morphology import skeletonize
 import sknw
+from modeling.utils.navigation_utils import change_brightness
 
-def display_skeleton(skeleton, graph):
-	plt.imshow(skeleton, cmap='gray')
+def create_dense_graph(skeleton, flag_eight_neighs=True):
+	H, W = skeleton.shape
+	G = nx.grid_2d_graph(H, W)
+
+	if flag_eight_neighs:
+		for edge in G.edges:
+			G.edges[edge]['weight'] = 1
+		G.add_edges_from([((x, y), (x + 1, y + 1)) for x in range(0, H - 1)
+						  for y in range(0, W - 1)] + [((x + 1, y), (x, y + 1))
+													   for x in range(0, H - 1)
+													   for y in range(0, W - 1)], weight=1.4)
+	# remove those nodes where map is occupied
+	mask_occupied_node = (skeleton.ravel() == False)
+	nodes_npy = np.array(sorted(G.nodes))
+	nodes_occupied = nodes_npy[mask_occupied_node]
+	lst_nodes_occupied = list(map(tuple, nodes_occupied))
+	G.remove_nodes_from(lst_nodes_occupied)
+
+	return G
+
+
+def my_tsp(G, source_node=0, weight="weight", cycle=True):
+	#method = nx.algorithms.approximation.christofides
+	method = nx.algorithms.approximation.greedy_tsp
+	nodes = list(G.nodes)
+
+	dist = {}
+	path = {}
+	for n, (d, p) in nx.all_pairs_dijkstra(G, weight=weight):
+		dist[n] = d
+		path[n] = p
+
+	GG = nx.Graph()
+	for u in nodes:
+		for v in nodes:
+			if u == v:
+				continue
+			GG.add_edge(u, v, weight=dist[u][v])
+	best_GG = method(GG, weight, source=source_node)
+
+	best_path = []
+	for u, v in nx.utils.pairwise(best_GG):
+		best_path.extend(path[u][v][:-1])
+	best_path.append(v)
+	return best_path
+
+def display_skeleton(occupancy_grid, graph):
+	plt.imshow(occupancy_grid, cmap='gray')
 
 	# draw edges by pts
 	for (s,e) in graph.edges():
@@ -41,8 +88,11 @@ def skeletonize_map(occupancy_grid):#, display=False):
 	if True:
 		display_skeleton(skeleton, graph)
    
-	tsp = nx.algorithms.approximation.traveling_salesman_problem
-	path = tsp(graph)
+	#tsp = nx.algorithms.approximation.traveling_salesman_problem
+	#path = tsp(graph)
+	#path = nx.algorithms.approximation.greedy_tsp(graph)
+	path = my_tsp(graph)
+	print(f'path = {path}')
 
 	nodes = list(graph.nodes)
 	for i in range(len(path)):
@@ -65,8 +115,47 @@ def skeletonize_map(occupancy_grid):#, display=False):
 	
 	return cost_din+cost_dout, cost_din, cost_dout, skeleton, graph
 
+def skeletonize_frontier_on_the_graph(component_occ_grid, skeleton_G):
+	array_nodes = np.array(skeleton_G.nodes)
+	mask = component_occ_grid[array_nodes[:, 0], array_nodes[:, 1]]
 
-def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag):
+	sub_G_nodes = list(map(tuple, array_nodes[mask]))
+	sub_G = skeleton_G.subgraph(sub_G_nodes)
+
+	'''	
+	plt.imshow(component_occ_grid, cmap='gray')
+	nodes = sub_G.nodes()
+	ps = np.array(nodes)
+	plt.plot(ps[:,1], ps[:,0], 'r.')
+	plt.show()
+	'''
+
+	cost_din = len(sub_G.nodes)
+	cost_dout = len(sub_G.nodes)
+	cost_dall = cost_din + cost_dout
+
+	return cost_dall, cost_din, cost_dout, sub_G
+
+def skeletonize_frontier(component_occ_grid, skeleton):
+	skeleton_component = np.where(component_occ_grid, skeleton, False)
+
+	#'''
+	cp_component_occ_grid = component_occ_grid.copy().astype('int16')
+	cp_component_occ_grid[skeleton_component] = 3	
+	plt.imshow(cp_component_occ_grid)
+	
+	plt.show()
+	#'''
+
+	cost_din = np.sum(skeleton_component)
+	cost_dout = np.sum(skeleton_component)
+	cost_dall = (cost_din + cost_dout)/2
+
+	return cost_dall, cost_din, cost_dout, skeleton_component
+
+
+
+def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag, skeleton):
 	filtered_grid = scipy.ndimage.maximum_filter(occupancy_grid == cfg.FE.UNOBSERVED_VAL, size=3)
 	frontier_point_mask = np.logical_and(filtered_grid, occupancy_grid == cfg.FE.FREE_VAL)
 
@@ -103,12 +192,15 @@ def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag):
 				if component[int(f.centroid[0]), int(f.centroid[1])]:
 					f.R = np.sum(component)
 					#f.D = round(sqrt(f.R), 2)
-					try:
-						cost_dall, cost_din, cost_dout, skeleton, skeleton_graph = skeletonize_map(component)#, display=True)
+					#try:
+					#cost_dall, cost_din, cost_dout, skeleton, skeleton_graph = skeletonize_map(component)#, display=True)
+					cost_dall, cost_din, cost_dout, skeleton_component = skeletonize_frontier(component, skeleton)
+					'''
 					except:
 						cost_dall = round(sqrt(f.R), 2)
 						cost_din = cost_dall
 						cost_dout = cost_dall
+					'''
 					print(f'cost_dall = {cost_dall}, cost_din = {cost_din}, cost_dout = {cost_dout}')
 
 					if True:
@@ -125,17 +217,9 @@ def get_frontiers(occupancy_grid, gt_occupancy_grid, observed_area_flag):
 						ax[1].get_yaxis().set_visible(False)
 						ax[1].set_title(f'area potential, component {ii}')
 
-						ax[2].imshow(skeleton, cmap='gray')
-						# draw edges by pts
-						for (s,e) in skeleton_graph.edges():
-							ps = skeleton_graph[s][e]['pts']
-							ax[2].plot(ps[:,1], ps[:,0], 'green')
-							
-						# draw node by o
-						nodes = skeleton_graph.nodes()
-						ps = np.array([nodes[i]['o'] for i in nodes])
-						ax[2].plot(ps[:,1], ps[:,0], 'r.')
-
+						cp_component = component.copy().astype('int16')
+						cp_component[skeleton_component] = 3	
+						ax[2].imshow(cp_component)
 						ax[2].get_xaxis().set_visible(False)
 						ax[2].get_yaxis().set_visible(False)
 						ax[2].set_title('skeleton')
@@ -152,15 +236,15 @@ gt_occ_map, pose_range, coords_range, WH = read_occ_map_npy(occ_map_npy)
 
 cp_gt_occ_map = gt_occ_map.copy()
 
-'''
+#=========================== get the skeleton image of the whole map ==========================
 skeleton = skeletonize(cp_gt_occ_map)
-graph = sknw.build_sknw(skeleton)
-display_skeleton(skeleton, graph)
-tsp = nx.algorithms.approximation.traveling_salesman_problem
-path = tsp(graph)
+#graph = sknw.build_sknw(skeleton)
+#display_skeleton(cp_gt_occ_map, graph)
 
-skeletonize_map(cp_gt_occ_map, display=True)
-'''
+skeleton_G = create_dense_graph(skeleton)
+
+
+
 
 LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 
@@ -176,11 +260,21 @@ observed_area_flag[BLOCK:H-BLOCK, BLOCK:W-BLOCK] = True
 
 occupancy_map[~observed_area_flag] = cfg.FE.UNOBSERVED_VAL
 
-#plt.imshow(occupancy_map)
-#plt.show()
+#================================= visualize skeleton on the unobserved area ======================
+color_occ_map = np.zeros((H, W, 3), dtype='uint8')
+color_occ_map[cp_gt_occ_map == 1] = [255, 255, 255]
+color_occ_map[cp_gt_occ_map == 0] = [120, 120, 130]
+color_occ_map = change_brightness(color_occ_map, occupancy_map != cfg.FE.UNOBSERVED_VAL, value=60) 
+plt.imshow(color_occ_map)
+nodes = skeleton_G.nodes()
+ps = np.array(nodes)
+plt.plot(ps[:,1], ps[:,0], 'r.')
+plt.show()
+#assert 1==2
+
 
 agent_map_pose = (31, 111)
-frontiers = get_frontiers(occupancy_map, gt_occ_map, observed_area_flag)
+frontiers = get_frontiers(occupancy_map, gt_occ_map, observed_area_flag, skeleton)
 
 frontiers = LN.filter_unreachable_frontiers_temp(frontiers, agent_map_pose, occupancy_map)
 
