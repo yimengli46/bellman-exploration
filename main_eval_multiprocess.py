@@ -109,7 +109,10 @@ def main():
 		f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy',
 		allow_pickle=True).item()
 
-	output_folder = cfg.SAVE.LARGE_TESTING_RESULTS_FOLDER
+	if cfg.EXPERIMENTS.SIZE == 'small':
+		output_folder = cfg.SAVE.TESTING_RESULTS_FOLDER
+	elif cfg.EXPERIMENTS.SIZE == 'large':
+		output_folder = cfg.SAVE.LARGE_TESTING_RESULTS_FOLDER
 	create_folder(output_folder)
 
 	args0 = cfg.MAIN.TEST_SCENE_NO_FLOOR_LIST

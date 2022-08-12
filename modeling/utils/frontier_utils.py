@@ -57,6 +57,23 @@ def skeletonize_map(occupancy_grid):
 	
 	return cost_din+cost_dout, cost_din, cost_dout, skeleton, graph
 
+def skeletonize_frontier(component_occ_grid, skeleton):
+	skeleton_component = np.where(component_occ_grid, skeleton, False)
+
+	'''
+	cp_component_occ_grid = component_occ_grid.copy().astype('int16')
+	cp_component_occ_grid[skeleton_component] = 3	
+	plt.imshow(cp_component_occ_grid)
+	
+	plt.show()
+	'''
+
+	cost_din = max(np.sum(skeleton_component), 1)
+	cost_dout = max(np.sum(skeleton_component), 1)
+	cost_dall = (cost_din + cost_dout)
+
+	return cost_dall, cost_din, cost_dout, skeleton_component
+
 class Frontier(object):
 
 	def __init__(self, points):
@@ -223,6 +240,10 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 
 		labels, nb = scipy.ndimage.label(free_but_unobserved_flag)
 
+		if cfg.NAVI.D_type == 'Skeleton':
+			binary_gt_occupancy_grid = np.where(gt_occupancy_grid == cfg.FE.FREE_VAL, 1, 0)
+			skeleton = skeletonize(binary_gt_occupancy_grid)
+
 		for ii in range(nb):
 			component = (labels == (ii + 1))
 			for f in frontiers:
@@ -234,7 +255,7 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 						f.Dout = f.D
 					elif cfg.NAVI.D_type == 'Skeleton':
 						try:
-							cost_dall, cost_din, cost_dout, skeleton, skeleton_graph = skeletonize_map(component)
+							cost_dall, cost_din, cost_dout, skeleton_component = skeletonize_frontier(component, skeleton)
 						except:
 							cost_dall = round(sqrt(f.R), 2)
 							cost_din = cost_dall
@@ -265,7 +286,12 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 						ax[1].get_yaxis().set_visible(False)
 						ax[1].set_title('area potential')
 
-						ax[2].imshow(gt_occupancy_grid)
+						cp_component = component.copy().astype('int16')
+						cp_component[skeleton_component] = 3	
+						ax[2].imshow(cp_component)
+						ax[2].get_xaxis().set_visible(False)
+						ax[2].get_yaxis().set_visible(False)
+						ax[2].set_title('skeleton')
 						ax[2].get_xaxis().set_visible(False)
 						ax[2].get_yaxis().set_visible(False)
 						ax[2].set_title('gt occupancy map')

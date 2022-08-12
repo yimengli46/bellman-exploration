@@ -25,6 +25,7 @@ def main():
 		allow_pickle=True).item()
 
 	for env_scene in cfg.MAIN.TEST_SCENE_NO_FLOOR_LIST:
+	#for env_scene in ['Vt2qJdWjCF2']:
 
 		#================================ load habitat env============================================
 		config = habitat.get_config(config_paths=cfg.GENERAL.DATALOADER_CONFIG_PATH)
@@ -45,7 +46,10 @@ def main():
 			if scene_name in cfg.MAIN.TEST_SCENE_LIST:
 				print(f'**********scene_name = {scene_name}***********')
 
-				output_folder = cfg.SAVE.TESTING_RESULTS_FOLDER
+				if cfg.EXPERIMENTS.SIZE == 'small':
+					output_folder = cfg.SAVE.TESTING_RESULTS_FOLDER
+				elif cfg.EXPERIMENTS.SIZE == 'large':
+					output_folder = cfg.SAVE.LARGE_TESTING_RESULTS_FOLDER
 				create_folder(output_folder)
 				scene_output_folder = f'{output_folder}/{scene_name}'
 				create_folder(scene_output_folder)
