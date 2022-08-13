@@ -183,6 +183,36 @@ def my_tsp(G, weight="weight"):
 	best_path.append(v)
 	return best_path
 
+def prune_skeleton_graph(skeleton_G):
+	dict_node_numEdges = {}
+	for edge in skeleton_G.edges():
+		u, v = edge
+		for node in [u, v]:
+			if node in dict_node_numEdges:
+				dict_node_numEdges[node] += 1
+			else:
+				dict_node_numEdges[node] = 1
+	to_prune_nodes = []
+	for k, v in dict_node_numEdges.items():
+		if v < 2:
+			to_prune_nodes.append(k)
+	skeleton_G_pruned = skeleton_G.copy()
+	skeleton_G_pruned.remove_nodes_from(to_prune_nodes)
+	return skeleton_G_pruned
+
+def skeleton_G_to_skeleton(occ_grid, skeleton_G):
+	skeleton = np.zeros(occ_grid.shape, dtype=bool)
+	for edge in skeleton_G.edges():
+		pts = np.array(skeleton_G.edges[edge]['pts'])
+		skeleton[pts[:, 0], pts[:, 1]] = True 
+	return skeleton
+
+def prune_skeleton(occ_grid, skeleton):
+	skeleton_G = sknw.build_sknw(skeleton)
+	pruned_skeleton_G = prune_skeleton_graph(skeleton_G)
+	skeleton = skeleton_G_to_skeleton(occ_grid, pruned_skeleton_G)
+	return skeleton
+
 class Frontier(object):
 
 	def __init__(self, points):

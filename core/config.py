@@ -77,6 +77,8 @@ _C.NAVI.STRATEGY = 'DP' # 'Greedy' vs 'DP'
 
 _C.NAVI.D_type = 'Skeleton' # 'Sqrt_R', 'Skeleton'
 
+_C.NAVI.PRUNE_SKELETON = False # Prun skeleton or not
+
 #========================== for short-range nav ====================================
 _C.LN = CN()
 _C.LN.LOCAL_MAP_MARGIN = 30 

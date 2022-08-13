@@ -50,6 +50,8 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 	# for computing gt skeleton
 	if cfg.NAVI.D_type == 'Skeleton':
 		skeleton = skeletonize(gt_occ_map)
+		if cfg.NAVI.PRUNE_SKELETON:
+			skeleton = fr_utils.prune_skeleton(gt_occ_map, skeleton)
 
 	LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 

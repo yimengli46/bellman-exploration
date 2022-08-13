@@ -27,7 +27,7 @@ scene_name = 'yqstnuAEVhm_0' #'17DRP5sb8fy_0' #'yqstnuAEVhm_0'
 
 scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
 
-cfg.merge_from_file('configs/exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS_whole_skeleton_graph.yaml')
+cfg.merge_from_file('configs/exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS_whole_skeleton_graph_pruned.yaml')
 cfg.freeze()
 
 act_dict = {-1: 'Done', 0: 'stop', 1: 'forward', 2: 'left', 3:'right'}
@@ -66,6 +66,8 @@ H, W = gt_occ_map.shape[:2]
 if cfg.NAVI.D_type == 'Skeleton':
 	skeleton = skeletonize(gt_occ_map)
 	#skeleton_G = fr_utils.create_dense_graph(skeleton)
+	if cfg.NAVI.PRUNE_SKELETON:
+		skeleton = fr_utils.prune_skeleton(gt_occ_map, skeleton)
 
 LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 
