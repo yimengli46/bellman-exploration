@@ -16,6 +16,7 @@ import random
 from core import cfg
 from .utils import frontier_utils as fr_utils
 from modeling.localNavigator_slam import localNav_slam
+from skimage.morphology import skeletonize
 
 def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_folder):
 	"""Major function for navigation.
@@ -46,6 +47,9 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 			allow_pickle=True).item()
 	gt_occ_map, pose_range, coords_range, WH = read_occ_map_npy(occ_map_npy)
 	H, W = gt_occ_map.shape[:2]
+	# for computing gt skeleton
+	if cfg.NAVI.D_type == 'Skeleton':
+		skeleton = skeletonize(gt_occ_map)
 
 	LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 
@@ -115,8 +119,12 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 			frontiers, dist_occupancy_map = LN.filter_unreachable_frontiers(
 				frontiers, agent_map_pose, observed_occupancy_map)
 
-			frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
-				observed_area_flag, built_semantic_map)
+			if cfg.NAVI.D_type == 'Skeleton':
+				frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
+					observed_area_flag, built_semantic_map, skeleton)
+			else:
+				frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
+					observed_area_flag, built_semantic_map, None)
 
 			if cfg.NAVI.STRATEGY == 'Greedy':
 				chosen_frontier = fr_utils.get_frontier_with_maximum_area(

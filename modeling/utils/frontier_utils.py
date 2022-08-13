@@ -57,6 +57,71 @@ def skeletonize_map(occupancy_grid):
 	
 	return cost_din+cost_dout, cost_din, cost_dout, skeleton, graph
 
+def skeletonize_frontier_graph(component_occ_grid, skeleton):
+	component_skeleton = np.where(component_occ_grid, skeleton, False)
+
+	if np.sum(component_skeleton) > 0:
+		component_G = sknw.build_sknw(component_skeleton)
+
+		#================= computed connected components =============================
+		list_ccs = [component_G.subgraph(c).copy() for c in nx.connected_components(component_G)] 
+		#print(f'len(list_ccs) = {len(list_ccs)}')
+
+		'''	
+		plt.imshow(component_occ_grid, cmap='gray')
+		for sub_G in set_ccs:
+			nodes = sub_G.nodes()
+			ps = np.array(nodes)
+			plt.plot(ps[:,1], ps[:,0], c=np.random.rand(3,))
+		plt.show()
+		'''
+
+		#====================== compute the cost of each component and then add them up
+		arr_cost_dall = np.zeros(len(list_ccs))
+		arr_cost_din = np.zeros(len(list_ccs))
+		arr_cost_dout = np.zeros(len(list_ccs))
+		for idx, sub_G in enumerate(list_ccs):
+			#print(f'sub_G has {len(sub_G.nodes)} nodes.')
+			if len(sub_G.nodes) > 1: # sub_G has more than one nodes
+				path = my_tsp(sub_G)
+				#=================== split path into d_in and d_out
+				nodes = list(sub_G.nodes)
+				for i in range(len(path)):
+					if not nodes:
+						index = i
+						break
+					if path[i] in nodes:
+						nodes.remove(path[i])
+				#================== compute cost_din and cost_dout
+				d_in = path[:index]
+				d_out = path[index-1:]
+				cost_din = 0
+				for i in range(len(d_in)-1):
+					cost_din += sub_G[d_in[i]][d_in[i+1]]['weight']
+				cost_dout = 0
+				for i in range(len(d_out)-1):
+					cost_dout += sub_G[d_out[i]][d_out[i+1]]['weight']
+				cost_dall = cost_din + cost_dout
+			else:
+				cost_din = 1
+				cost_dout = 1
+				cost_dall = cost_din + cost_dout
+			
+			arr_cost_dall[idx] = cost_dall
+			arr_cost_din[idx] = cost_din
+			arr_cost_dout[idx] = cost_dout
+
+		cost_dall = np.sum(arr_cost_dall)
+		cost_din = np.sum(arr_cost_din)
+		cost_dout = np.sum(arr_cost_dout)
+	else:
+		cost_din = 1
+		cost_dout = 1
+		cost_dall = cost_din + cost_dout
+		component_G = nx.Graph()
+
+	return cost_dall, cost_din, cost_dout, component_G
+
 def skeletonize_frontier(component_occ_grid, skeleton):
 	skeleton_component = np.where(component_occ_grid, skeleton, False)
 
@@ -73,6 +138,50 @@ def skeletonize_frontier(component_occ_grid, skeleton):
 	cost_dall = (cost_din + cost_dout)
 
 	return cost_dall, cost_din, cost_dout, skeleton_component
+
+def create_dense_graph(skeleton, flag_eight_neighs=True):
+	H, W = skeleton.shape
+	G = nx.grid_2d_graph(H, W)
+
+	if flag_eight_neighs:
+		for edge in G.edges:
+			G.edges[edge]['weight'] = 1
+		G.add_edges_from([((x, y), (x + 1, y + 1)) for x in range(0, H - 1)
+						  for y in range(0, W - 1)] + [((x + 1, y), (x, y + 1))
+													   for x in range(0, H - 1)
+													   for y in range(0, W - 1)], weight=1.4)
+	# remove those nodes where map is occupied
+	mask_occupied_node = (skeleton.ravel() == False)
+	nodes_npy = np.array(sorted(G.nodes))
+	nodes_occupied = nodes_npy[mask_occupied_node]
+	lst_nodes_occupied = list(map(tuple, nodes_occupied))
+	G.remove_nodes_from(lst_nodes_occupied)
+
+	return G
+
+def my_tsp(G, weight="weight"):
+	method = nx.algorithms.approximation.christofides
+	nodes = list(G.nodes)
+
+	dist = {}
+	path = {}
+	for n, (d, p) in nx.all_pairs_dijkstra(G, weight=weight):
+		dist[n] = d
+		path[n] = p
+
+	GG = nx.Graph()
+	for u in nodes:
+		for v in nodes:
+			if u == v:
+				continue
+			GG.add_edge(u, v, weight=dist[u][v])
+	best_GG = method(GG, weight)
+
+	best_path = []
+	for u, v in nx.utils.pairwise(best_GG):
+		best_path.extend(path[u][v][:-1])
+	best_path.append(v)
+	return best_path
 
 class Frontier(object):
 
@@ -228,7 +337,7 @@ def get_frontiers(occupancy_grid):
 
 	return frontiers
 
-def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map):
+def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map, skeleton=None):
 	# When the perception info is 'Potential', we use gt_occupancy_grid to compute the area of the component.
 	
 	# Compute potential
@@ -240,10 +349,6 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 
 		labels, nb = scipy.ndimage.label(free_but_unobserved_flag)
 
-		if cfg.NAVI.D_type == 'Skeleton':
-			binary_gt_occupancy_grid = np.where(gt_occupancy_grid == cfg.FE.FREE_VAL, 1, 0)
-			skeleton = skeletonize(binary_gt_occupancy_grid)
-
 		for ii in range(nb):
 			component = (labels == (ii + 1))
 			for f in frontiers:
@@ -254,12 +359,14 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 						f.Din = f.D
 						f.Dout = f.D
 					elif cfg.NAVI.D_type == 'Skeleton':
-						try:
-							cost_dall, cost_din, cost_dout, skeleton_component = skeletonize_frontier(component, skeleton)
+						#try:
+						cost_dall, cost_din, cost_dout, component_G = skeletonize_frontier_graph(component, skeleton)
+						'''
 						except:
 							cost_dall = round(sqrt(f.R), 2)
 							cost_din = cost_dall
 							cost_dout = cost_dall
+						'''
 						f.D = cost_dall
 						f.Din = cost_din
 						f.Dout = cost_dout
@@ -286,15 +393,19 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 						ax[1].get_yaxis().set_visible(False)
 						ax[1].set_title('area potential')
 
-						cp_component = component.copy().astype('int16')
-						cp_component[skeleton_component] = 3	
-						ax[2].imshow(cp_component)
+						ax[2].imshow(component, cmap='gray')
+						# draw edges by pts
+						for (s,e) in component_G.edges():
+							ps = component_G[s][e]['pts']
+							plt.plot(ps[:,1], ps[:,0], 'green')
+							
+						# draw node by o
+						nodes = component_G.nodes()
+						ps = np.array([nodes[i]['o'] for i in nodes])
+						plt.plot(ps[:,1], ps[:,0], 'r.')
 						ax[2].get_xaxis().set_visible(False)
 						ax[2].get_yaxis().set_visible(False)
 						ax[2].set_title('skeleton')
-						ax[2].get_xaxis().set_visible(False)
-						ax[2].get_yaxis().set_visible(False)
-						ax[2].set_title('gt occupancy map')
 
 						fig.tight_layout()
 						plt.title(f'component {ii}')

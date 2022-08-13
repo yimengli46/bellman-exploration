@@ -25,7 +25,7 @@ def main():
 		allow_pickle=True).item()
 
 	for env_scene in cfg.MAIN.TEST_SCENE_NO_FLOOR_LIST:
-	#for env_scene in ['Vt2qJdWjCF2']:
+	#for env_scene in ['yqstnuAEVhm']:
 
 		#================================ load habitat env============================================
 		config = habitat.get_config(config_paths=cfg.GENERAL.DATALOADER_CONFIG_PATH)

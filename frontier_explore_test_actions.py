@@ -17,6 +17,8 @@ from core import cfg
 import modeling.utils.frontier_utils as fr_utils
 from timeit import default_timer as timer
 from modeling.localNavigator_slam import localNav_slam
+from skimage.morphology import skeletonize
+
 
 split = 'test' #'test' #'train'
 env_scene = 'yqstnuAEVhm' #'17DRP5sb8fy' #'yqstnuAEVhm'
@@ -25,7 +27,7 @@ scene_name = 'yqstnuAEVhm_0' #'17DRP5sb8fy_0' #'yqstnuAEVhm_0'
 
 scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
 
-cfg.merge_from_file('configs/exp_360degree_DP_NAVMESH_MAP_GT_Potential_SqrtD_1STEP_500STEPS.yaml')
+cfg.merge_from_file('configs/exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS_whole_skeleton_graph.yaml')
 cfg.freeze()
 
 act_dict = {-1: 'Done', 0: 'stop', 1: 'forward', 2: 'left', 3:'right'}
@@ -60,6 +62,10 @@ if cfg.NAVI.GT_OCC_MAP_TYPE == 'NAV_MESH':
 	occ_map_npy = np.load(f'output/semantic_map/{split}/{scene_name}/BEV_occupancy_map.npy', allow_pickle=True).item()
 gt_occ_map, pose_range, coords_range, WH = read_occ_map_npy(occ_map_npy)
 H, W = gt_occ_map.shape[:2]
+# for computing gt skeleton
+if cfg.NAVI.D_type == 'Skeleton':
+	skeleton = skeletonize(gt_occ_map)
+	#skeleton_G = fr_utils.create_dense_graph(skeleton)
 
 LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 
@@ -132,8 +138,12 @@ while step < cfg.NAVI.NUM_STEPS:
 		print(f'after filtering, num(frontiers) = {len(frontiers)}')
 		t4 = timer()
 		print(f'filter unreachable frontiers time = {t4 - t3}')
-		frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
-			observed_area_flag, built_semantic_map)
+		if cfg.NAVI.D_type == 'Skeleton':
+			frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
+				observed_area_flag, built_semantic_map, skeleton)
+		else:
+			frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
+				observed_area_flag, built_semantic_map, None)
 		t5 = timer()
 		print(f'compute frontier potential time = {t5 - t4}')
 		if cfg.NAVI.STRATEGY == 'Greedy':
