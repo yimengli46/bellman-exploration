@@ -9,7 +9,6 @@ import scipy.ndimage
 from .baseline_utils import pose_to_coords, apply_color_to_map
 from math import sqrt
 from operator import itemgetter
-from .UNet import UNet
 import torch
 import cv2
 from skimage.morphology import skeletonize
@@ -17,16 +16,7 @@ import sknw
 import networkx as nx
 from skimage.graph import MCP_Geometric as MCPG
 from skimage.graph import route_through_array
-
-'''
-if cfg.NAVI.PERCEPTION == 'UNet_Potential':
-	model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).to(cfg.PRED.PARTIAL_MAP.DEVICE)
-	if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
-		checkpoint = torch.load(f'run/MP3D/unet/experiment_3/checkpoint.pth.tar')
-	elif cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
-		checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar')
-	model.load_state_dict(checkpoint['state_dict'])
-'''
+import torch.nn.functional as F
 
 def skeletonize_map(occupancy_grid):
 	skeleton = skeletonize(occupancy_grid)
@@ -367,7 +357,7 @@ def get_frontiers(occupancy_grid):
 
 	return frontiers
 
-def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map, skeleton=None):
+def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map, skeleton=None, unet_model=None, device=None):
 	# When the perception info is 'Potential', we use gt_occupancy_grid to compute the area of the component.
 	
 	# Compute potential
@@ -442,19 +432,29 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 						plt.show()
 
 	elif cfg.NAVI.PERCEPTION == 'UNet_Potential':
+		#============================================ prepare input data ====================================
+		sem_map = np.where(sem_map >= cfg.SEM_MAP.GRID_CLASS_SIZE, 0, sem_map)
+
 		resized_Mp = np.zeros((2, cfg.PRED.PARTIAL_MAP.INPUT_WH[1], cfg.PRED.PARTIAL_MAP.INPUT_WH[0]), dtype=np.float32)
 		resized_Mp[0] = cv2.resize(occupancy_grid, cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
 		resized_Mp[1] = cv2.resize(sem_map, cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
 
-		tensor_Mp = torch.tensor(resized_Mp)
+		tensor_Mp = torch.tensor(resized_Mp, dtype=torch.long)
+
+		tensor_Mp_occ = tensor_Mp[0] # H x W
+		tensor_Mp_occ = F.one_hot(tensor_Mp_occ, num_classes=3).permute(2, 0, 1) # 3 x H x W
+		tensor_Mp_sem = tensor_Mp[1]
+		tensor_Mp_sem = F.one_hot(tensor_Mp_sem, num_classes=cfg.SEM_MAP.GRID_CLASS_SIZE).permute(2, 0, 1) # num_classes x H x W
+		tensor_Mp = torch.cat((tensor_Mp_occ, tensor_Mp_sem), 0).float()
 
 		if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
-			tensor_Mp = tensor_Mp[0].unsqueeze(0)
+			tensor_Mp = tensor_Mp[0:3]
 
-		tensor_Mp = tensor_Mp.unsqueeze(0).to(cfg.PRED.PARTIAL_MAP.DEVICE) # for batch
+		tensor_Mp = tensor_Mp.unsqueeze(0).to(device) # for batch
+		
 		with torch.no_grad():
-			outputs = model(tensor_Mp)
-			output = outputs.cpu().numpy()[0, 0]
+			outputs = unet_model(tensor_Mp)
+			output = outputs.cpu().numpy()[0].transpose((1, 2, 0))
 
 		#=========================== reshape output and mask out non zero points =============================== 
 		H, W = occupancy_grid.shape
@@ -462,32 +462,49 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 
 		for f in frontiers:
 			points = f.points.transpose()
-			points_vals = output[points[:, 0], points[:, 1]]
-			mask_points = (points_vals > 0)
+			points_vals = output[points[:, 0], points[:, 1]] # N, 4
+			#print(f'points_vals.shape = {points_vals.shape}')
+			mask_points = (points_vals[:, 0] > 0) # N
+			#print(f'mask_points.shape = {mask_points.shape}')
 			if mask_points.shape[0] > 0:
-				U_a = np.mean(points_vals[mask_points])
+				U_a = max(np.mean(points_vals[mask_points, 0]) * cfg.PRED.PARTIAL_MAP.DIVIDE_AREA, 1.)
+				U_dall = max(np.mean(points_vals[mask_points, 1]), 1.)
+				U_din = max(np.mean(points_vals[mask_points, 2]), 1.)
+				U_dout = max(np.mean(points_vals[mask_points, 3]), 1.)
 			else:
-				U_a = 0.0
+				U_a, U_dall, U_din, U_dout = 1.0, 1.0, 1.0, 1.0
 
-			f.R = U_a * cfg.PRED.PARTIAL_MAP.MAX_AREA
-			f.D = round(sqrt(f.R), 2)
+
+			if cfg.NAVI.D_type == 'Sqrt_R':
+				f.R = U_a
+				f.D = round(sqrt(f.R), 2)
+				f.Din = f.D
+				f.Dout = f.D
+			elif cfg.NAVI.D_type == 'Skeleton':
+				f.R = U_a
+				f.D = U_dall
+				f.Din = U_din
+				f.Dout = U_dout
 
 		if cfg.NAVI.FLAG_VISUALIZE_FRONTIER_POTENTIAL:
-			fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(30, 20))
-			ax[0].imshow(occupancy_grid, cmap='gray')
-			ax[0].get_xaxis().set_visible(False)
-			ax[0].get_yaxis().set_visible(False)
-			ax[0].set_title('input: occupancy_map_Mp')
+			fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(20, 20))
+			ax[0][0].imshow(occupancy_grid, cmap='gray')
+			ax[0][0].get_xaxis().set_visible(False)
+			ax[0][0].get_yaxis().set_visible(False)
+			ax[0][0].set_title('input: occupancy_map_Mp')
 			color_sem_map = apply_color_to_map(sem_map)
-			ax[1].imshow(color_sem_map)
-			ax[1].get_xaxis().set_visible(False)
-			ax[1].get_yaxis().set_visible(False)
-			ax[1].set_title('input: semantic_map_Mp')
-			ax[2].imshow(output, vmin=0.0, vmax=1.0)
-			ax[2].get_xaxis().set_visible(False)
-			ax[2].get_yaxis().set_visible(False)
-			ax[2].set_title('output: U_a')
-		
+			ax[0][1].imshow(color_sem_map)
+			ax[0][1].get_xaxis().set_visible(False)
+			ax[0][1].get_yaxis().set_visible(False)
+			ax[0][1].set_title('input: semantic_map_Mp')
+			ax[1][0].imshow(output[:, :, 0])
+			ax[1][0].get_xaxis().set_visible(False)
+			ax[1][0].get_yaxis().set_visible(False)
+			ax[1][0].set_title('output: U_a')
+			ax[1][1].imshow(output[:, :, 1])
+			ax[1][1].get_xaxis().set_visible(False)
+			ax[1][1].get_yaxis().set_visible(False)
+			ax[1][1].set_title('output: U_dall')
 			fig.tight_layout()
 			plt.show()
 

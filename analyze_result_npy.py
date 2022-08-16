@@ -12,7 +12,7 @@ result_folder = 'TESTING_RESULTS_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleto
 
 avg_percent_list = []
 avg_step_list = []
-thresh_percent = .5
+thresh_percent = .01
 
 
 df = pd.DataFrame(columns=['Scene', 'Run', 'Num_steps', 'Coverage', 'Scene_Area'])
@@ -20,7 +20,7 @@ df['Num_steps'] = df['Num_steps'].astype(int)
 df['Coverage'] = df['Coverage'].astype(float)
 
 for scene_name in scene_list:
-	#try:
+	try:
 		#========================== load the scene map===========================
 		sem_map_npy = np.load(
 			f'output/semantic_map/test/{scene_name}/BEV_semantic_map.npy',
@@ -65,7 +65,7 @@ for scene_name in scene_list:
 		if avg_percent > 0:
 			avg_percent_list.append(avg_percent)
 			avg_step_list.append(avg_step)
-	#except:
+	except:
 		print(f'failed to process scene {scene_name}.')
 
 print('=========================================================================================')

@@ -6,6 +6,7 @@ import habitat_sim
 from modeling.utils.navigation_utils import SimpleRLEnv, get_scene_name
 from core import cfg
 import argparse
+import torch
 
 def main():
 	parser = argparse.ArgumentParser()
@@ -37,6 +38,8 @@ def main():
 
 		env.reset()
 		scene_dict = scene_floor_dict[env_scene]
+
+		device = torch.device('cuda:0')
 
 		#=============================== traverse each floor ===========================
 		for floor_id in list(scene_dict.keys()):
@@ -75,7 +78,7 @@ def main():
 					steps = 0
 					covered_area_percent = 0
 					try:
-						flag, covered_area_percent, steps = nav(split, env, idx, scene_name, height, start_pose, saved_folder)
+						flag, covered_area_percent, steps = nav(split, env, idx, scene_name, height, start_pose, saved_folder, device)
 					except:
 						print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
 

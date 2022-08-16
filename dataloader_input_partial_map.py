@@ -36,6 +36,9 @@ class MP3DSceneDataset(data.Dataset):
 		U_a = npy_file['Ua']
 		U_d = npy_file['Ud']
 		frontiers = pk_file
+		#print(f'U_a.shape = {U_a[..., np.newaxis].shape}')
+		#print(f'U_d.shape = {U_d.shape}')
+		U_all = np.concatenate((U_a[..., np.newaxis], U_d), axis=2)
 
 		H, W = M_p.shape[1], M_p.shape[2]
 		# there are class 99 in the sem map
@@ -74,7 +77,7 @@ class MP3DSceneDataset(data.Dataset):
 			plt.show()
 
 		# resize M_p and U_a
-		num_channels = M_p.shape[0]
+		num_channels = M_p.shape[0] # 2 channels: occ and sem
 		resized_Mp = np.zeros((num_channels, cfg.PRED.PARTIAL_MAP.INPUT_WH[1], cfg.PRED.PARTIAL_MAP.INPUT_WH[0]), dtype=np.float32)
 		resized_Mp[0] = cv2.resize(M_p[0], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
 		resized_Mp[1] = cv2.resize(M_p[1], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
@@ -84,7 +87,6 @@ class MP3DSceneDataset(data.Dataset):
 		resized_U[1] = cv2.resize(U_d[:,:,0], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
 		resized_U[2] = cv2.resize(U_d[:,:,1], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
 		resized_U[3] = cv2.resize(U_d[:,:,2], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
-
 
 		#================= convert to tensor=================
 		tensor_Mp = torch.tensor(resized_Mp, dtype=torch.long)
@@ -102,7 +104,7 @@ class MP3DSceneDataset(data.Dataset):
 			tensor_Mp = tensor_Mp[0:3]
 
 		return {'input': tensor_Mp, 'output': tensor_U, 'shape': (H, W), 'frontiers': frontiers,
-			'original_target': U_a}
+			'original_target': U_all}
 
 
 def get_all_scene_dataset(split, scene_list, data_folder):

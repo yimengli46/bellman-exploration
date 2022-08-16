@@ -18,7 +18,8 @@ import modeling.utils.frontier_utils as fr_utils
 from timeit import default_timer as timer
 from modeling.localNavigator_slam import localNav_slam
 from skimage.morphology import skeletonize
-
+from modeling.utils.UNet import UNet
+import torch
 
 split = 'test' #'test' #'train'
 env_scene = 'yqstnuAEVhm' #'17DRP5sb8fy' #'yqstnuAEVhm'
@@ -27,7 +28,7 @@ scene_name = 'yqstnuAEVhm_0' #'17DRP5sb8fy_0' #'yqstnuAEVhm_0'
 
 scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
 
-cfg.merge_from_file('configs/exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS_whole_skeleton_graph_pruned.yaml')
+cfg.merge_from_file('configs/exp_360degree_Greedy_NAVMESH_MAP_UNet_OCCandSEM_Potential_1STEP_500STEPS.yaml')
 cfg.freeze()
 
 act_dict = {-1: 'Done', 0: 'stop', 1: 'forward', 2: 'left', 3:'right'}
@@ -68,6 +69,16 @@ if cfg.NAVI.D_type == 'Skeleton':
 	#skeleton_G = fr_utils.create_dense_graph(skeleton)
 	if cfg.NAVI.PRUNE_SKELETON:
 		skeleton = fr_utils.prune_skeleton(gt_occ_map, skeleton)
+
+#===================================== load modules ==========================================
+device = torch.device('cuda:0')
+if cfg.NAVI.PERCEPTION == 'UNet_Potential':
+	unet_model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).to(device)
+	if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
+		checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_5/checkpoint.pth.tar')
+	elif cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
+		checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar')
+	unet_model.load_state_dict(checkpoint['state_dict'])
 
 LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 
@@ -140,12 +151,16 @@ while step < cfg.NAVI.NUM_STEPS:
 		print(f'after filtering, num(frontiers) = {len(frontiers)}')
 		t4 = timer()
 		print(f'filter unreachable frontiers time = {t4 - t3}')
-		if cfg.NAVI.D_type == 'Skeleton':
+		if cfg.NAVI.PERCEPTION == 'UNet_Potential':
 			frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
-				observed_area_flag, built_semantic_map, skeleton)
-		else:
-			frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
-				observed_area_flag, built_semantic_map, None)
+				observed_area_flag, built_semantic_map, None, unet_model, device)
+		elif cfg.NAVI.PERCEPTION == 'Potential':
+			if cfg.NAVI.D_type == 'Skeleton':
+				frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
+					observed_area_flag, built_semantic_map, skeleton)
+			else:
+				frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
+					observed_area_flag, built_semantic_map, None)
 		t5 = timer()
 		print(f'compute frontier potential time = {t5 - t4}')
 		if cfg.NAVI.STRATEGY == 'Greedy':

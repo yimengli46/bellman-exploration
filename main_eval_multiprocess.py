@@ -8,6 +8,7 @@ from core import cfg
 import argparse
 import multiprocessing
 import os
+import torch
 
 def build_env(env_scene, device_id=0):
 	#================================ load habitat env============================================
@@ -39,6 +40,8 @@ def nav_test(env_scene, output_folder, scene_floor_dict):
 	scene_output_folder = f'{output_folder}/{scene_name}'
 	create_folder(scene_output_folder)
 
+	device = torch.device(f'cuda:{device_id}')
+
 	#================ load testing data ==================
 	testing_data = scene_dict[floor_id]['start_pose']
 	if not cfg.EVAL.USE_ALL_START_POINTS:
@@ -60,7 +63,7 @@ def nav_test(env_scene, output_folder, scene_floor_dict):
 		covered_area_percent = 0
 		#'''
 		try:
-			flag, covered_area_percent, steps = nav(split, env, idx, scene_name, height, start_pose, saved_folder)
+			flag, covered_area_percent, steps = nav(split, env, idx, scene_name, height, start_pose, saved_folder, device)
 		except:
 			print(f'CCCCCCCCCCCCCC failed {scene_name} EPS {idx} DDDDDDDDDDDDDDD')
 

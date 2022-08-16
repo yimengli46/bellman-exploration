@@ -17,8 +17,10 @@ from core import cfg
 from .utils import frontier_utils as fr_utils
 from modeling.localNavigator_slam import localNav_slam
 from skimage.morphology import skeletonize
+from modeling.utils.UNet import UNet
+import torch
 
-def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_folder):
+def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_folder, device):
 	"""Major function for navigation.
 	
 	Takes in initialized habitat environment and start location.
@@ -52,6 +54,16 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 		skeleton = skeletonize(gt_occ_map)
 		if cfg.NAVI.PRUNE_SKELETON:
 			skeleton = fr_utils.prune_skeleton(gt_occ_map, skeleton)
+
+	#===================================== load modules ==========================================
+	device = torch.device('cuda:0')
+	if cfg.NAVI.PERCEPTION == 'UNet_Potential':
+		unet_model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).to(device)
+		if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
+			checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_5/checkpoint.pth.tar')
+		elif cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
+			checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar')
+		unet_model.load_state_dict(checkpoint['state_dict'])
 
 	LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 
@@ -121,12 +133,16 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 			frontiers, dist_occupancy_map = LN.filter_unreachable_frontiers(
 				frontiers, agent_map_pose, observed_occupancy_map)
 
-			if cfg.NAVI.D_type == 'Skeleton':
+			if cfg.NAVI.PERCEPTION == 'UNet_Potential':
 				frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
-					observed_area_flag, built_semantic_map, skeleton)
-			else:
-				frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
-					observed_area_flag, built_semantic_map, None)
+					observed_area_flag, built_semantic_map, None, unet_model, device)
+			elif cfg.NAVI.PERCEPTION == 'Potential':
+				if cfg.NAVI.D_type == 'Skeleton':
+					frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
+						observed_area_flag, built_semantic_map, skeleton)
+				else:
+					frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
+						observed_area_flag, built_semantic_map, None)
 
 			if cfg.NAVI.STRATEGY == 'Greedy':
 				chosen_frontier = fr_utils.get_frontier_with_maximum_area(
