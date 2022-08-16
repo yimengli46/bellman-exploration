@@ -56,13 +56,12 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 			skeleton = fr_utils.prune_skeleton(gt_occ_map, skeleton)
 
 	#===================================== load modules ==========================================
-	device = torch.device('cuda:0')
 	if cfg.NAVI.PERCEPTION == 'UNet_Potential':
 		unet_model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).to(device)
 		if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
-			checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_5/checkpoint.pth.tar')
+			checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_5/checkpoint.pth.tar', map_location=device)
 		elif cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
-			checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar')
+			checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar', map_location=device)
 		unet_model.load_state_dict(checkpoint['state_dict'])
 
 	LN = localNav_Astar(pose_range, coords_range, WH, scene_name)

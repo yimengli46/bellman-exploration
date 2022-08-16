@@ -2,7 +2,7 @@
 
 ## Give your job a name to distinguish it from other jobs you run.
 ## SBATCH --job-name=main_eval_mp_Greedy_NAVMESH_GT_Potential
-## SBATCH --job-name=main_eval_mp_DP_NAVMESH_GT_Potential_SqrtD
+##SBATCH --job-name=main_eval_mp_DP_NAVMESH_GT_Potential_SqrtD
 #SBATCH --job-name=main_eval_mp_DP_NAVMESH_GT_Potential_Skeleton_Dall
 
 ## General partitions: all-HiPri, bigmem-HiPri   --   (12 hour limit)
@@ -26,8 +26,10 @@
 #SBATCH --time=5-00:00   # Total time needed for job: Days-Hours:Minutes
 
 #SBATCH --gres=gpu:4
-#SBATCH --nodelist=NODE056
+#SBATCH --nodelist=NODE080
 ##constraint=gpu-k80
+
+#SBATCH --cpus-per-task 18
 
 ## Load the relevant modules needed for the job
 module load cuda/11.2
@@ -39,4 +41,9 @@ source /scratch/yli44/habitat_env/bin/activate
 ## Run your program or script
 #python main_eval_multiprocess.py --config='exp_360degree_Greedy_NAVMESH_MAP_GT_Potential_1STEP_500STEPS.yaml'
 #python main_eval_multiprocess.py --config='exp_360degree_DP_NAVMESH_MAP_GT_Potential_SqrtD_1STEP_500STEPS.yaml'
-python main_eval_multiprocess.py --config='exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml'
+#python main_eval_multiprocess.py --config='exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml'
+#python main_eval_multiprocess.py --config='exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS_whole_skeleton_graph.yaml'
+#python main_eval_multiprocess.py --config='exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS_whole_skeleton_graph_pruned.yaml'
+#python main_eval_multiprocess.py --config='exp_360degree_Greedy_NAVMESH_MAP_UNet_OCCandSEM_Potential_1STEP_500STEPS.yaml'
+#python main_eval_multiprocess.py --config='exp_360degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_SqrtD_1STEP_500STEPS.yaml'
+python main_eval_multiprocess.py --config='exp_360degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml'
