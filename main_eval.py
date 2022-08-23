@@ -78,7 +78,7 @@ def main():
 					steps = 0
 					covered_area_percent = 0
 					try:
-						flag, covered_area_percent, steps = nav(split, env, idx, scene_name, height, start_pose, saved_folder, device)
+						covered_area_percent, steps, trajectory, action_lst = nav(split, env, idx, scene_name, height, start_pose, saved_folder, device)
 					except:
 						print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
 
@@ -86,7 +86,8 @@ def main():
 					result['eps_id'] = idx
 					result['steps'] = steps
 					result['covered_area'] = covered_area_percent
-					result['flag'] = flag
+					result['trajectory'] = trajectory
+					result['actions'] = action_lst
 
 					results[idx] = result
 

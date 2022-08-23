@@ -73,6 +73,7 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 	semMap_module = SemanticMap(split, scene_name, pose_range, coords_range, WH,
 								ins2cat_dict)  # build the observed sem map
 	traverse_lst = []
+	action_lst = []
 
 	#===================================== setup the start location ===============================#
 
@@ -225,6 +226,7 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 			observed_occupancy_map)
 		print(f'subgoal_coords = {subgoal_coords}')
 		print(f'action = {act_dict[act]}')
+		action_lst.append(act)
 		
 		if act == -1 or act == 0: # finished navigating to the subgoal
 			print(f'reached the subgoal')
@@ -324,4 +326,4 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 	percent = sum_explored_free_area * 1. / sum_gt_free_area
 	print(f'********percent = {percent}, step = {step}')
 
-	return True, percent, step
+	return percent, step, traverse_lst, action_lst
