@@ -21,9 +21,14 @@ def main():
 
 	#=============================== basic setup =======================================
 	split = 'test'
-	scene_floor_dict = np.load(
-		f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy',
-		allow_pickle=True).item()
+	if cfg.EVAL.SIZE == 'small':
+		scene_floor_dict = np.load(
+			f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy',
+			allow_pickle=True).item()
+	elif cfg.EVAL.SIZE == 'large':
+		scene_floor_dict = np.load(
+			f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/large_scale_{split}_scene_floor_dict.npy',
+			allow_pickle=True).item()
 
 	for env_scene in cfg.MAIN.TEST_SCENE_NO_FLOOR_LIST:
 	#for env_scene in ['yqstnuAEVhm']:
@@ -49,9 +54,9 @@ def main():
 			if scene_name in cfg.MAIN.TEST_SCENE_LIST:
 				print(f'**********scene_name = {scene_name}***********')
 
-				if cfg.EXPERIMENTS.SIZE == 'small':
+				if cfg.EVAL.SIZE == 'small':
 					output_folder = cfg.SAVE.TESTING_RESULTS_FOLDER
-				elif cfg.EXPERIMENTS.SIZE == 'large':
+				elif cfg.EVAL.SIZE == 'large':
 					output_folder = cfg.SAVE.LARGE_TESTING_RESULTS_FOLDER
 				create_folder(output_folder)
 				scene_output_folder = f'{output_folder}/{scene_name}'
@@ -78,7 +83,7 @@ def main():
 					steps = 0
 					covered_area_percent = 0
 					try:
-						covered_area_percent, steps, trajectory, action_lst = nav(split, env, idx, scene_name, height, start_pose, saved_folder, device)
+						covered_area_percent, steps, trajectory, action_lst, observed_area_flag = nav(split, env, idx, scene_name, height, start_pose, saved_folder, device)
 					except:
 						print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
 
@@ -88,6 +93,7 @@ def main():
 					result['covered_area'] = covered_area_percent
 					result['trajectory'] = trajectory
 					result['actions'] = action_lst
+					result['observed_area_flag'] = observed_area_flag
 
 					results[idx] = result
 

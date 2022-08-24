@@ -98,6 +98,7 @@ _C.FE.GROUP_INFLATION_RADIUS = 0
 #=============================== for Evaluation =====================================
 _C.EVAL = CN()
 _C.EVAL.USE_ALL_START_POINTS = False
+_C.EVAL.SIZE = 'small'
 
 #============================== for model prediction ===================================
 _C.PRED = CN()
@@ -161,13 +162,6 @@ _C.MP = CN()
 _C.MP.GPU_CAPACITY = 1
 # number of processes running on a GPU
 _C.MP.PROC_PER_GPU = 1
-
-
-#========================== experiments =============================
-_C.EXPERIMENTS = CN()
-# size of the experiments, 'small' means evaluating on 54 episodes
-# 'large' means evaluating on 1000 episodes 
-_C.EXPERIMENTS.SIZE = 'small'
 
 #================================ for visualization ============================
 _C.SEM_MAP.FLAG_VISUALIZE_EGO_OBS = True

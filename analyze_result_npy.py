@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 scene_list = cfg.MAIN.TEST_SCENE_LIST
 output_folder = 'output' #cfg.SAVE.TESTING_RESULTS_FOLDER
-result_folder = 'TESTING_RESULTS_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS'
+result_folder = 'TESTING_RESULTS_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS_whole_Skeleton_graph_pruned'
 #scene_list = ['2t7WUuJeko7_0', '5ZKStnWn8Zo_0', 'ARNzJeq3xxb_0', 'RPmz2sHmrrY_0', 'Vt2qJdWjCF2_0', 'WYY7iVyf5p8_0', 'YFuZgdQ5vWj_0', 'YVUC4YcDtcY_0', 'fzynW3qQPVF_0', 'gYvKGZ5eRqb_0', 'gxdoqLR6rwA_0', 'q9vSo1VnCiC_0', 'rqfALeAoiTq_0', 'wc2JMjhGNzB_0', 'yqstnuAEVhm_0']
 
 
@@ -37,20 +37,20 @@ for scene_name in scene_list:
 
 		for i in range(num_test):
 			result = results_npy[i]
-			print(f'result = {result}')
-			flag_suc = result['flag']
-			if flag_suc:
-				percent = result['covered_area']
-				step = result['steps']
-				if percent > thresh_percent: # to deal with the bad start points
-					percent_list.append(percent)
-					step_list.append(step)
+			#print(f'result = {result}')
+			#flag_suc = result['flag']
+			#if flag_suc:
+			percent = result['covered_area']
+			step = result['steps']
+			if percent > thresh_percent: # to deal with the bad start points
+				percent_list.append(percent)
+				step_list.append(step)
 
-				df = df.append({'Scene': scene_name, 'Run': i, 'Num_steps': step, 'Coverage': percent, 'Scene_Area': area}, 
-					ignore_index=True)
-			else:
-				df = df.append({'Scene': scene_name, 'Run': i, 'Num_steps': np.nan, 'Coverage': np.nan, 'Scene_Area': area}, 
-					ignore_index=True)
+			df = df.append({'Scene': scene_name, 'Run': i, 'Num_steps': step, 'Coverage': percent, 'Scene_Area': area}, 
+				ignore_index=True)
+			#else:
+			#	df = df.append({'Scene': scene_name, 'Run': i, 'Num_steps': np.nan, 'Coverage': np.nan, 'Scene_Area': area}, 
+			#		ignore_index=True)
 
 		percent_list = np.array(percent_list)
 		print(f'percent_list = {percent_list}')

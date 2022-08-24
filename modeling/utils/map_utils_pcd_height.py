@@ -62,7 +62,10 @@ class SemanticMap:
 		#===================================== load gt occupancy map =============================
 		# load occupancy map
 		if cfg.NAVI.GT_OCC_MAP_TYPE == 'NAV_MESH':
-			occ_map_path = f'output/semantic_map/{self.split}/{self.scene_name}'
+			if cfg.EVAL.SIZE == 'small':
+				occ_map_path = f'output/semantic_map/{self.split}/{self.scene_name}'
+			elif cfg.EVAL.SIZE == 'large':
+				occ_map_path = f'output/large_scale_semantic_map/{self.scene_name}'
 			gt_occupancy_map = np.load(f'{occ_map_path}/BEV_occupancy_map.npy',
 			                                                         allow_pickle=True).item()['occupancy']
 			gt_occupancy_map = np.where(gt_occupancy_map == 1, cfg.FE.FREE_VAL,

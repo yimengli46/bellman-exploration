@@ -44,9 +44,14 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 	random.seed(cfg.GENERAL.RANDOM_SEED)
 
 	if cfg.NAVI.GT_OCC_MAP_TYPE == 'NAV_MESH':
-		occ_map_npy = np.load(
-			f'output/semantic_map/{split}/{scene_name}/BEV_occupancy_map.npy',
-			allow_pickle=True).item()
+		if cfg.EVAL.SIZE == 'small':
+			occ_map_npy = np.load(
+				f'output/semantic_map/{split}/{scene_name}/BEV_occupancy_map.npy',
+				allow_pickle=True).item()
+		elif cfg.EVAL.SIZE == 'large':
+			occ_map_npy = np.load(
+				f'output/large_scale_semantic_map/{scene_name}/BEV_occupancy_map.npy',
+				allow_pickle=True).item()
 	gt_occ_map, pose_range, coords_range, WH = read_occ_map_npy(occ_map_npy)
 	H, W = gt_occ_map.shape[:2]
 	# for computing gt skeleton
@@ -326,4 +331,4 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 	percent = sum_explored_free_area * 1. / sum_gt_free_area
 	print(f'********percent = {percent}, step = {step}')
 
-	return percent, step, traverse_lst, action_lst
+	return percent, step, traverse_lst, action_lst, observed_area_flag
