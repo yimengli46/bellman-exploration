@@ -9,6 +9,7 @@ import multiprocessing
 import os
 import torch
 from build_semantic_BEV_map_large_scale import build_sem_map
+from build_occ_map_from_densely_checking_cells_large_scale import build_occ_map
 
 def build_env(env_scene, device_id=0):
 	#================================ load habitat env============================================
@@ -39,7 +40,10 @@ def build_floor(env_scene, output_folder, scene_floor_dict):
 		scene_output_folder = f'{output_folder}/{scene_name}'
 		create_folder(scene_output_folder)
 
-		build_sem_map(env, scene_output_folder, height)
+		#build_sem_map(env, scene_output_folder, height)
+		build_occ_map(env, scene_output_folder, height, scene_name)
+
+	env.close()
 
 	#================================ release the gpu============================
 	gpu_Q.put(device_id)
