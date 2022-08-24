@@ -4,7 +4,9 @@
 ## SBATCH --job-name=main_eval_mp_Greedy_NAVMESH_GT_Potential
 ## SBATCH --job-name=main_eval_mp_DP_NAVMESH_GT_Potential_SqrtD
 ## SBATCH --job-name=main_eval_mp_DP_NAVMESH_GT_Potential_Skeleton_Dall
-#SBATCH --job-name=build_map
+## SBATCH --job-name=build_map
+#SBATCH --job-name=C1_500steps
+## SBATCH --job-name=C4_2000steps
 
 ## General partitions: all-HiPri, bigmem-HiPri   --   (12 hour limit)
 ##                     all-LoPri, bigmem-LoPri, gpuq  (5 days limit)
@@ -26,8 +28,8 @@
 ## Specify how much time your job needs. (default: see partition above)
 #SBATCH --time=5-00:00   # Total time needed for job: Days-Hours:Minutes
 
-#SBATCH --gres=gpu:4
-#SBATCH --nodelist=NODE081
+#SBATCH --gres=gpu:8
+#SBATCH --nodelist=NODE040
 ##constraint=gpu-k80
 
 #SBATCH --cpus-per-task 18
@@ -48,4 +50,7 @@ source /scratch/yli44/habitat_env/bin/activate
 #python main_eval_multiprocess.py --config='exp_360degree_Greedy_NAVMESH_MAP_UNet_OCCandSEM_Potential_1STEP_500STEPS.yaml'
 #python main_eval_multiprocess.py --config='exp_360degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_SqrtD_1STEP_500STEPS.yaml'
 #python main_eval_multiprocess.py --config='exp_360degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml'
-python build_map_multiprocess.py --config='build_map.yaml'
+#python build_map_multiprocess.py --config='build_map.yaml'
+#python main_eval_multiprocess.py --config='large_exp_360degree_Greedy_NAVMESH_MAP_GT_Potential_1STEP_500STEPS.yaml'
+#python main_eval_multiprocess.py --config='large_exp_360degree_Greedy_NAVMESH_MAP_GT_Potential_1STEP_2000STEPS.yaml'
+python main_eval_multiprocess.py --config='large_exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml'
