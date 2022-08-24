@@ -566,6 +566,26 @@ def get_frontier_with_maximum_area(frontiers, gt_occupancy_grid):
 				max_fron = fron
 	return max_fron
 
+def get_the_nearest_frontier(frontiers, agent_pose, dist_occupancy_map, LN):
+	""" select nearest frontier to the robot.
+	used for the 'FME' strategy.
+	"""
+	agent_coord = LN.get_agent_coords(agent_pose)
+	min_L = 10000000
+	min_frontier = None
+
+	for fron in frontiers:
+		_, L = route_through_array(dist_occupancy_map, (agent_coord[1], agent_coord[0]), 
+			(int(fron.centroid[0]), int(fron.centroid[1])))
+
+		if L < min_L:
+			min_L = L
+			min_frontier = fron 
+		elif L == min_L and hash(fron) > hash(min_frontier):
+			min_L = L
+			min_frontier = fron
+	return min_frontier
+
 
 def count_free_space_at_frontiers(frontiers, gt_occupancy_grid, area=10):
 	""" compute the free space in the neighborhoadd of the frontier center.
@@ -600,7 +620,7 @@ def get_frontier_with_DP(frontiers, agent_pose, dist_occupancy_map, steps, LN):
 		visited_frontiers = set()
 		Q = compute_Q(agent_coord, fron, frontiers, visited_frontiers, steps,
 					  dist_occupancy_map)
-		if Q >= max_Q:
+		if Q > max_Q:
 			max_Q = Q
 			max_frontier = fron
 		elif Q == max_Q and hash(fron) > hash(max_frontier):

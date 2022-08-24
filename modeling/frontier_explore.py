@@ -157,6 +157,9 @@ def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_fold
 															  top_n=5)
 				chosen_frontier = fr_utils.get_frontier_with_DP(top_frontiers, agent_map_pose, dist_occupancy_map, \
 				 cfg.NAVI.NUM_STEPS-step, LN)
+			elif cfg.NAVI.STRATEGY == 'FME':
+				chosen_frontier = fr_utils.get_the_nearest_frontier(frontiers, agent_map_pose, dist_occupancy_map, LN)
+
 
 			#============================================= visualize semantic map ===========================================#
 			if cfg.NAVI.FLAG_VISUALIZE_MIDDLE_TRAJ:
