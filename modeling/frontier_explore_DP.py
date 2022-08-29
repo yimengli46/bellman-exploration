@@ -20,7 +20,7 @@ from skimage.morphology import skeletonize
 from modeling.utils.UNet import UNet
 import torch
 
-def nav(split, env, episode_id, scene_name, scene_height, start_pose, saved_folder, device):
+def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_folder, device):
 	"""Major function for navigation.
 	
 	Takes in initialized habitat environment and start location.

@@ -99,6 +99,7 @@ _C.FE.GROUP_INFLATION_RADIUS = 0
 _C.EVAL = CN()
 _C.EVAL.USE_ALL_START_POINTS = False
 _C.EVAL.SIZE = 'small'
+_C.EVAL.MIDDEL_STEP_SAVE = 500
 
 #============================== for model prediction ===================================
 _C.PRED = CN()

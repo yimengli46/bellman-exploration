@@ -1,5 +1,6 @@
 import numpy as np
-from modeling.frontier_explore import nav
+from modeling.frontier_explore_DP import nav_DP
+from modeling.frontier_explore_nonDP import nav_nonDP
 from modeling.utils.baseline_utils import create_folder
 import habitat
 import habitat_sim
@@ -46,7 +47,10 @@ def nav_test(env_scene, output_folder, scene_floor_dict):
 		device = torch.device(f'cuda:{device_id}')
 
 		#================ load testing data ==================
-		testing_data = scene_dict[floor_id]['start_pose']
+		try:
+			testing_data = scene_dict[floor_id]['start_pose']
+		except:
+			testing_data = []
 		if not cfg.EVAL.USE_ALL_START_POINTS:
 			if len(testing_data) > 3:
 				testing_data = testing_data[:3]
@@ -66,7 +70,10 @@ def nav_test(env_scene, output_folder, scene_floor_dict):
 			covered_area_percent = 0
 			#'''
 			try:
-				covered_area_percent, steps, trajectory, action_lst, observed_area_flag = nav(split, env, idx, scene_name, height, start_pose, saved_folder, device)
+				if cfg.NAVI.STRATEGY == 'DP':
+					covered_area_percent, steps, trajectory, action_lst, observed_area_flag = nav_DP(split, env, idx, scene_name, height, start_pose, saved_folder, device)
+				else:
+					covered_area_percent, steps, trajectory, action_lst, observed_area_flag = nav_nonDP(split, env, idx, scene_name, height, start_pose, saved_folder, device)
 			except:
 				print(f'CCCCCCCCCCCCCC failed {scene_name} EPS {idx} DDDDDDDDDDDDDDD')
 
