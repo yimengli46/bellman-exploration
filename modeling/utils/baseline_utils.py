@@ -14,7 +14,8 @@ import matplotlib.pyplot as plt
 from .constants import coco_categories_mapping, panopticSeg_mapping, d3_41_colors_rgb, COCO_74_COLORS
 import matplotlib as mpl
 from core import cfg
-
+import torch
+import torch.nn.functional as F
 
 def minus_theta_fn(previous_theta, current_theta):
 	""" compute angle current_theta minus angle previous theta."""
@@ -451,3 +452,111 @@ def planner_rot_to_map_rot(rot):
 	""" convert rotation on the environment 'rot' to rotation on the map 'rotate_rot'"""
 	rotate_rot = -(rot - .5 * pi)
 	return rotate_rot
+
+def crop_map(h, x, crop_size, mode="bilinear"):
+    """
+    Crops a tensor h centered around location x with size crop_size
+    Inputs:
+        h - (bs, F, H, W)
+        x - (bs, 2) --- (x, y) locations
+        crop_size - scalar integer
+    Conventions for x:
+        The origin is at the top-left, X is rightward, and Y is downward.
+    """
+
+    bs, _, H, W = h.size()
+    Hby2 = (H - 1) / 2 if H % 2 == 1 else H // 2
+    Wby2 = (W - 1) / 2 if W % 2 == 1 else W // 2
+    start = -(crop_size - 1) / 2 if crop_size % 2 == 1 else -(crop_size // 2)
+    end = start + crop_size - 1
+    x_grid = (
+        torch.arange(start, end + 1, step=1)
+        .unsqueeze(0)
+        .expand(crop_size, -1)
+        .contiguous()
+        .float()
+    )
+    y_grid = (
+        torch.arange(start, end + 1, step=1)
+        .unsqueeze(1)
+        .expand(-1, crop_size)
+        .contiguous()
+        .float()
+    )
+    center_grid = torch.stack([x_grid, y_grid], dim=2).to(
+        h.device
+    )  # (crop_size, crop_size, 2)
+
+    x_pos = x[:, 0] - Wby2  # (bs, )
+    y_pos = x[:, 1] - Hby2  # (bs, )
+
+    crop_grid = center_grid.unsqueeze(0).expand(
+        bs, -1, -1, -1
+    )  # (bs, crop_size, crop_size, 2)
+    crop_grid = crop_grid.contiguous()
+
+    # Convert the grid to (-1, 1) range
+    crop_grid[:, :, :, 0] = (
+        crop_grid[:, :, :, 0] + x_pos.unsqueeze(1).unsqueeze(2)
+    ) / Wby2
+    crop_grid[:, :, :, 1] = (
+        crop_grid[:, :, :, 1] + y_pos.unsqueeze(1).unsqueeze(2)
+    ) / Hby2
+
+    h_cropped = F.grid_sample(h, crop_grid, mode=mode, align_corners=False)
+
+    return h_cropped
+
+def spatial_transform_map(p, x, invert=True, mode="bilinear"):
+    """
+    Inputs:
+        p     - (bs, f, H, W) Tensor
+        x     - (bs, 3) Tensor (x, y, theta) transforms to perform
+    Outputs:
+        p_trans - (bs, f, H, W) Tensor
+    Conventions:
+        Shift in X is rightward, and shift in Y is downward. Rotation is clockwise.
+    Note: These denote transforms in an agent's position. Not the image directly.
+    For example, if an agent is moving upward, then the map will be moving downward.
+    To disable this behavior, set invert=False.
+    """
+    device = p.device
+    H, W = p.shape[2:]
+
+    trans_x = x[:, 0]
+    trans_y = x[:, 1]
+    # Convert translations to -1.0 to 1.0 range
+    Hby2 = (H - 1) / 2 if H % 2 == 1 else H / 2
+    Wby2 = (W - 1) / 2 if W % 2 == 1 else W / 2
+
+    trans_x = trans_x / Wby2
+    trans_y = trans_y / Hby2
+    rot_t = x[:, 2]
+
+    sin_t = torch.sin(rot_t)
+    cos_t = torch.cos(rot_t)
+
+    # This R convention means Y axis is downwards.
+    A = torch.zeros(p.size(0), 3, 3).to(device)
+    A[:, 0, 0] = cos_t
+    A[:, 0, 1] = -sin_t
+    A[:, 1, 0] = sin_t
+    A[:, 1, 1] = cos_t
+    A[:, 0, 2] = trans_x
+    A[:, 1, 2] = trans_y
+    A[:, 2, 2] = 1
+
+    # Since this is a source to target mapping, and F.affine_grid expects
+    # target to source mapping, we have to invert this for normal behavior.
+    Ainv = torch.inverse(A)
+
+    # If target to source mapping is required, invert is enabled and we invert
+    # it again.
+    if invert:
+        Ainv = torch.inverse(Ainv)
+
+    Ainv = Ainv[:, :2]
+    grid = F.affine_grid(Ainv, p.size(), align_corners=False)
+    p_trans = F.grid_sample(p, grid, mode=mode, align_corners=False)
+
+    return p_trans

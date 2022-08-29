@@ -109,6 +109,8 @@ _C.PRED.PARTIAL_MAP = CN()
 _C.PRED.PARTIAL_MAP.NEIGHBOR_SIZE = 10
 # devide the real area by a constant
 _C.PRED.PARTIAL_MAP.DIVIDE_AREA = 1000 
+# devide the real D by a constant
+_C.PRED.PARTIAL_MAP.DIVIDE_D = 10 
 # number of workers for the dataloader
 _C.PRED.PARTIAL_MAP.NUM_WORKERS = 1
 # batch size
@@ -151,6 +153,8 @@ _C.PRED.PARTIAL_MAP.NUM_PROCESS = 4
 _C.PRED.PARTIAL_MAP.multiprocessing = 'mp' # 'single', 'mp', 'mpi4py'
 # folder to save the generated data
 _C.PRED.PARTIAL_MAP.GEN_SAMPLES_SAVED_FOLDER = 'output/model_weights_UNet_input_partial_map'
+# coverage of the local map
+_C.PRED.PARTIAL_MAP.OUTPUT_MAP_SIZE = 24.0 # meters
 
 #========================= input partial map===============
 _C.PRED.VIEW = CN()

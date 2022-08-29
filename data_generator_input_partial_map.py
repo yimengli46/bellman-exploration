@@ -3,7 +3,7 @@ import numpy.linalg as LA
 import cv2
 import matplotlib.pyplot as plt
 import random
-from modeling.utils.baseline_utils import apply_color_to_map, pose_to_coords, gen_arrow_head_marker, read_map_npy, read_occ_map_npy, plus_theta_fn
+from modeling.utils.baseline_utils import apply_color_to_map, pose_to_coords, gen_arrow_head_marker, read_map_npy, read_occ_map_npy, plus_theta_fn, crop_map, spatial_transform_map
 from core import cfg
 import modeling.utils.frontier_utils as fr_utils
 from modeling.localNavigator_Astar import localNav_Astar
@@ -12,9 +12,11 @@ from random import Random
 from timeit import default_timer as timer
 from itertools import islice
 import os
-from timeit import default_timer as timer
 import multiprocessing
 import pickle
+from skimage.morphology import skeletonize
+import torch
+import math
 
 def get_region(robot_pos, H, W, size=2):
 	y, x = robot_pos
@@ -52,6 +54,9 @@ class Data_Gen_MP3D:
 		occ_map_npy = np.load(f'{cfg.SAVE.OCCUPANCY_MAP_PATH}/{self.split}/{scene_name}/BEV_occupancy_map.npy', allow_pickle=True).item()
 		gt_occ_map, _, _, _ = read_occ_map_npy(occ_map_npy)
 
+		if cfg.NAVI.D_type == 'Skeleton':
+			self.skeleton = skeletonize(gt_occ_map)
+
 		gt_occupancy_map = gt_occ_map.copy()
 		gt_occupancy_map = np.where(gt_occupancy_map == 1, cfg.FE.FREE_VAL, gt_occupancy_map)  # free cell
 		self.gt_occupancy_map = np.where(gt_occupancy_map == 0, cfg.FE.COLLISION_VAL, gt_occupancy_map)  # occupied cell
@@ -80,9 +85,11 @@ class Data_Gen_MP3D:
 
 			M_p = np.zeros(self.M_c.shape, dtype=np.int16)
 			observed_area_flag = np.zeros((self.H, self.W), dtype=bool)
-			i_loc = 0
+			#i_loc = 0
+			end_i_loc = self.random.choice(list(range(len(path)+1)))
 
-			while i_loc < len(path):
+			#while i_loc < len(path):
+			for i_loc in range(end_i_loc):
 				robot_loc = path[i_loc]
 
 				#t0 = timer()
@@ -93,81 +100,203 @@ class Data_Gen_MP3D:
 				#t1 = timer()
 				#print(f't1 - t0 = {t1 - t0}')
 
-				if i_loc % cfg.PRED.PARTIAL_MAP.STEP_GAP == 0:
-					#================================= compute area at frontier points ========================
-					U_a = np.zeros((self.H, self.W), dtype=np.float32)
-					U_d = np.zeros((self.H, self.W, 3), dtype=np.float32)
-					observed_occupancy_map = M_p[0]
-					frontiers = fr_utils.get_frontiers(observed_occupancy_map, self.gt_occupancy_map, observed_area_flag, None)
-					agent_map_pose = (robot_loc[1], robot_loc[0])
-					frontiers = self.LN.filter_unreachable_frontiers_temp(frontiers, agent_map_pose, observed_occupancy_map)
+			#t2 = timer()
+			#================================= compute area at frontier points ========================
+			U_a = np.zeros((self.H, self.W), dtype=np.float32)
+			U_d = np.zeros((self.H, self.W, 3), dtype=np.float32)
+			observed_occupancy_map = M_p[0]
+			frontiers = fr_utils.get_frontiers(observed_occupancy_map)
+			#t3 = timer()
+			#print(f'get frontier time = {t3 - t2}')
+			agent_map_pose = (robot_loc[1], robot_loc[0])
+			frontiers = self.LN.filter_unreachable_frontiers_temp(frontiers, agent_map_pose, observed_occupancy_map)
+			#t4 = timer()
+			#print(f'filter unreachable frontiers time = {t4 - t3}')
+			frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, self.gt_occupancy_map, 
+				observed_area_flag, None, self.skeleton)
+			#t5 = timer()
+			#print(f'compute frontier potential time = {t5 - t4}')
 
-					for fron in frontiers:
-						points = fron.points.transpose() # N x 2
-						R = 1. * fron.R / cfg.PRED.PARTIAL_MAP.DIVIDE_AREA
-						U_a[points[:, 0], points[:, 1]] = R
-						U_d[points[:, 0], points[:, 1], 0] = fron.D
-						U_d[points[:, 0], points[:, 1], 1] = fron.Din
-						U_d[points[:, 0], points[:, 1], 2] = fron.Dout
-					#t2 = timer()
-					#print(f't2 - t1 = {t2 - t1}')
+			for fron in frontiers:
+				points = fron.points.transpose() # N x 2
+				U_a[points[:, 0], points[:, 1]] = 1. * fron.R / cfg.PRED.PARTIAL_MAP.DIVIDE_AREA
+				U_d[points[:, 0], points[:, 1], 0] = 1. * fron.D / cfg.PRED.PARTIAL_MAP.DIVIDE_D
+				U_d[points[:, 0], points[:, 1], 1] = 1. * fron.Din / cfg.PRED.PARTIAL_MAP.DIVIDE_D
+				U_d[points[:, 0], points[:, 1], 2] = 1. * fron.Dout / cfg.PRED.PARTIAL_MAP.DIVIDE_D
 
-					#=================================== visualize M_p =========================================
-					if cfg.PRED.PARTIAL_MAP.FLAG_VISUALIZE_PRED_LABELS:
-						occ_map_Mp = M_p[0]
-						sem_map_Mp = M_p[1]
-						color_sem_map_Mp = apply_color_to_map(sem_map_Mp)
+			#=================================== visualize M_p =========================================
+			if cfg.PRED.PARTIAL_MAP.FLAG_VISUALIZE_PRED_LABELS:
+				occ_map_Mp = M_p[0]
+				sem_map_Mp = M_p[1]
+				color_sem_map_Mp = apply_color_to_map(sem_map_Mp)
 
-						fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(20, 20))
-						ax[0][0].imshow(occ_map_Mp, cmap='gray')
-						ax[0][0].get_xaxis().set_visible(False)
-						ax[0][0].get_yaxis().set_visible(False)
-						ax[0][0].set_title('input: occupancy_map_Mp')
-						ax[0][1].imshow(color_sem_map_Mp)
-						ax[0][1].get_xaxis().set_visible(False)
-						ax[0][1].get_yaxis().set_visible(False)
-						ax[0][1].set_title('input: semantic_map_Mp')
+				fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(20, 30))
+				ax[0][0].imshow(occ_map_Mp, cmap='gray')
+				ax[0][0].get_xaxis().set_visible(False)
+				ax[0][0].get_yaxis().set_visible(False)
+				ax[0][0].set_title('input: occupancy_map_Mp')
+				ax[0][1].imshow(color_sem_map_Mp)
+				ax[0][1].get_xaxis().set_visible(False)
+				ax[0][1].get_yaxis().set_visible(False)
+				ax[0][1].set_title('input: semantic_map_Mp')
 
-						ax[1][0].imshow(occ_map_Mp, cmap='gray')
-						x_coord_lst = [path[i][1] for i in range(i_loc+1)]
-						z_coord_lst = [path[i][0] for i in range(i_loc+1)]
-						ax[1][0].plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
-						for f in frontiers:
-							ax[1][0].scatter(f.points[1], f.points[0], c='yellow', zorder=2)
-							ax[1][0].scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
-						ax[1][0].get_xaxis().set_visible(False)
-						ax[1][0].get_yaxis().set_visible(False)
-						ax[1][0].set_title('observed_occ_map + frontiers')
+				ax[1][0].imshow(occ_map_Mp, cmap='gray')
+				x_coord_lst = [path[i][1] for i in range(i_loc+1)]
+				z_coord_lst = [path[i][0] for i in range(i_loc+1)]
+				ax[1][0].plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
+				for f in frontiers:
+					ax[1][0].scatter(f.points[1], f.points[0], c='yellow', zorder=2)
+					ax[1][0].scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
+				ax[1][0].get_xaxis().set_visible(False)
+				ax[1][0].get_yaxis().set_visible(False)
+				ax[1][0].set_title('observed_occ_map + frontiers')
 
-						ax[1][1].imshow(U_a, vmin=0.0)
-						ax[1][1].get_xaxis().set_visible(False)
-						ax[1][1].get_yaxis().set_visible(False)
-						ax[1][1].set_title('output: U_a')
+				ax[1][1].imshow(U_a, vmin=0.0)
+				ax[1][1].get_xaxis().set_visible(False)
+				ax[1][1].get_yaxis().set_visible(False)
+				ax[1][1].set_title('output: U_a')
 
-						fig.tight_layout()
-						plt.show()
+				ax[2][0].imshow(U_d[:,:,0], vmin=0.0)
+				ax[2][0].get_xaxis().set_visible(False)
+				ax[2][0].get_yaxis().set_visible(False)
+				ax[2][0].set_title('output: U_d_0')
 
-					# =========================== save data =========================
-					eps_data = {}
-					eps_data['Mp'] = M_p.copy()
-					eps_data['Ua'] = U_a.copy()
-					eps_data['Ud'] = U_d.copy()
+				ax[2][1].imshow(U_d[:,:,1], vmin=0.0)
+				ax[2][1].get_xaxis().set_visible(False)
+				ax[2][1].get_yaxis().set_visible(False)
+				ax[2][1].set_title('output: U_d_1')
 
-					sample_name = str(count_sample).zfill(len(str(num_samples)))
-					np.save(f'{self.scene_folder}/{sample_name}.npy', eps_data)
-					with open(f'{self.scene_folder}/{sample_name}.pkl', 'wb') as pk_file:
-						pickle.dump(obj=frontiers, file=pk_file)
-					
-					#===================================================================
-					count_sample += 1
+				fig.tight_layout()
+				plt.show()
 
-					if count_sample == num_samples:
-						return
+			#==========================crop the image =====================
+			#print(f'M_p.shape = {M_p.shape}')
+			#print(f'U_a.shape = {U_a.shape}')
+			#print(f'U_d.shape = {U_d.shape}')
+			#M_p = np.transpose(M_p, (1, 2, 0))
+			U_d = np.transpose(U_d, (2, 0, 1))
+			tensor_M_p = torch.tensor(M_p).float().unsqueeze(0)
+			tensor_U_a = torch.tensor(U_a).float().unsqueeze(0).unsqueeze(1)
+			tensor_U_d = torch.tensor(U_d).float().unsqueeze(0)
 
-					#t3 = timer()
-					#print(f't3 - t2 = {t3 - t2}')
+			if self.split == 'train':
+				_, H, W = M_p.shape
+				Wby2, Hby2 = W // 2, H // 2
+				tform_trans = torch.Tensor([[agent_map_pose[0] - Wby2, agent_map_pose[1] - Hby2, 0]])
+				crop_center = torch.Tensor([[W / 2.0, H / 2.0]]) + tform_trans[:, :2]
+				'''
+				# Crop a large-enough map around agent
+				_, N, H, W = tensor_M_p.shape
+				crop_center = torch.Tensor([[W / 2.0, H / 2.0]]) + tform_trans[:, :2]
+				map_size = int(2 * cfg.PRED.PARTIAL_MAP.OUTPUT_MAP_SIZE / cfg.SEM_MAP.CELL_SIZE)
+				tensor_M_p = crop_map(tensor_M_p, crop_center, map_size)
+				tensor_U_a = crop_map(tensor_U_a, crop_center, map_size)
+				tensor_U_d = crop_map(tensor_U_d, crop_center, map_size)
+				# Rotate the map
+				rot = random.uniform(-math.pi, math.pi)
+				tform_rot = torch.Tensor([[0, 0, rot]])
+				tensor_M_p = spatial_transform_map(tensor_M_p, tform_rot, 'nearest')
+				tensor_U_a = spatial_transform_map(tensor_U_a, tform_rot, 'nearest')
+				tensor_U_d = spatial_transform_map(tensor_U_d, tform_rot, 'nearest')
+				'''
+				# Crop out the appropriate size of the map
+				#_, N, H, W = tensor_M_p.shape
+				#map_center = torch.Tensor([[W / 2.0, H / 2.0]])
+				map_size = int(cfg.PRED.PARTIAL_MAP.OUTPUT_MAP_SIZE / cfg.SEM_MAP.CELL_SIZE)
+				tensor_M_p = crop_map(tensor_M_p, crop_center, map_size, 'nearest')
+				tensor_U_a = crop_map(tensor_U_a, crop_center, map_size, 'nearest')
+				tensor_U_d = crop_map(tensor_U_d, crop_center, map_size, 'nearest')
+			elif self.split == 'val':
+				_, H, W = M_p.shape
+				Wby2, Hby2 = W // 2, H // 2
+				tform_trans = torch.Tensor([[agent_map_pose[0] - Wby2, agent_map_pose[1] - Hby2, 0]])
+				crop_center = torch.Tensor([[W / 2.0, H / 2.0]]) + tform_trans[:, :2]
+				# Crop out the appropriate size of the map
+				#_, N, H, W = tensor_M_p.shape
+				#map_center = torch.Tensor([[W / 2.0, H / 2.0]])
+				map_size = int(cfg.PRED.PARTIAL_MAP.OUTPUT_MAP_SIZE / cfg.SEM_MAP.CELL_SIZE)
+				tensor_M_p = crop_map(tensor_M_p, crop_center, map_size, 'nearest')
+				tensor_U_a = crop_map(tensor_U_a, crop_center, map_size, 'nearest')
+				tensor_U_d = crop_map(tensor_U_d, crop_center, map_size, 'nearest')
 
-				i_loc += 1
+			# change back to numpy
+			M_p = tensor_M_p.squeeze(0).numpy()
+			U_a = tensor_U_a.squeeze(0).squeeze(0).numpy()
+			#print(f'tensor_U_d.shape = {tensor_U_d.shape}')
+			U_d = tensor_U_d.squeeze(0).numpy().transpose((1, 2, 0))
+
+			#print(f'end M_p.shape = {M_p.shape}')
+			#print(f'end U_a.shape = {U_a.shape}')
+			#print(f'end U_d.shape = {U_d.shape}')
+
+			#=================================== visualize M_p =========================================
+			if cfg.PRED.PARTIAL_MAP.FLAG_VISUALIZE_PRED_LABELS:
+				occ_map_Mp = M_p[0]
+				sem_map_Mp = M_p[1]
+				color_sem_map_Mp = apply_color_to_map(sem_map_Mp)
+
+				fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(20, 30))
+				ax[0][0].imshow(occ_map_Mp, cmap='gray')
+				ax[0][0].get_xaxis().set_visible(False)
+				ax[0][0].get_yaxis().set_visible(False)
+				ax[0][0].set_title('input: occupancy_map_Mp')
+				ax[0][1].imshow(color_sem_map_Mp)
+				ax[0][1].get_xaxis().set_visible(False)
+				ax[0][1].get_yaxis().set_visible(False)
+				ax[0][1].set_title('input: semantic_map_Mp')
+
+				ax[1][0].imshow(occ_map_Mp, cmap='gray')
+				'''
+				x_coord_lst = [path[i][1] for i in range(i_loc+1)]
+				z_coord_lst = [path[i][0] for i in range(i_loc+1)]
+				ax[1][0].plot(x_coord_lst, z_coord_lst, lw=5, c='blue', zorder=3)
+				for f in frontiers:
+					ax[1][0].scatter(f.points[1], f.points[0], c='yellow', zorder=2)
+					ax[1][0].scatter(f.centroid[1], f.centroid[0], c='red', zorder=2)
+				'''
+				ax[1][0].get_xaxis().set_visible(False)
+				ax[1][0].get_yaxis().set_visible(False)
+				ax[1][0].set_title('observed_occ_map + frontiers')
+
+				ax[1][1].imshow(U_a, vmin=0.0)
+				ax[1][1].get_xaxis().set_visible(False)
+				ax[1][1].get_yaxis().set_visible(False)
+				ax[1][1].set_title('output: U_a')
+
+				ax[2][0].imshow(U_d[:,:,0], vmin=0.0)
+				ax[2][0].get_xaxis().set_visible(False)
+				ax[2][0].get_yaxis().set_visible(False)
+				ax[2][0].set_title('output: U_d_0')
+
+				ax[2][1].imshow(U_d[:,:,1], vmin=0.0)
+				ax[2][1].get_xaxis().set_visible(False)
+				ax[2][1].get_yaxis().set_visible(False)
+				ax[2][1].set_title('output: U_d_1')
+
+				fig.tight_layout()
+				plt.show()
+
+			# =========================== save data =========================
+			eps_data = {}
+			eps_data['Mp'] = M_p.copy()
+			eps_data['Ua'] = U_a.copy()
+			eps_data['Ud'] = U_d.copy()
+
+			sample_name = str(count_sample).zfill(len(str(num_samples)))
+			np.save(f'{self.scene_folder}/{sample_name}.npy', eps_data)
+			with open(f'{self.scene_folder}/{sample_name}.pkl', 'wb') as pk_file:
+				pickle.dump(obj=frontiers, file=pk_file)
+			
+			#===================================================================
+			count_sample += 1
+
+			if count_sample == num_samples:
+				return
+
+			#t3 = timer()
+			#print(f't3 - t2 = {t3 - t2}')
+
+				
 
 def multi_run_wrapper(args):
 	""" wrapper for multiprocessor """
