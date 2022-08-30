@@ -68,6 +68,9 @@ def nav_test(env_scene, output_folder, scene_floor_dict):
 			flag = False
 			steps = 0
 			covered_area_percent = 0
+			trajectory = []
+			action_lst = []
+			observed_area_flag = None
 			#'''
 			try:
 				if cfg.NAVI.STRATEGY == 'DP':

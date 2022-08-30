@@ -112,6 +112,7 @@ def nav_nonDP(split, env, episode_id, scene_name, scene_height, start_pose, save
 	MODE_FIND_GOAL = False
 	visited_frontier = set()
 	chosen_frontier = None
+	middle_observed_area_flag = None
 
 	while step < cfg.NAVI.NUM_STEPS:
 		print(f'step = {step}')
