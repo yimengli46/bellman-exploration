@@ -17,6 +17,7 @@ import networkx as nx
 from skimage.graph import MCP_Geometric as MCPG
 from skimage.graph import route_through_array
 import torch.nn.functional as F
+import math
 
 def skeletonize_map(occupancy_grid):
 	skeleton = skeletonize(occupancy_grid)
@@ -210,17 +211,8 @@ class Frontier(object):
 		coordinates of all points on frontier boundary)."""
 		inds = np.lexsort((points[0, :], points[1, :]))
 		sorted_points = points[:, inds]
-		self.props_set = False
+		
 		self.is_from_last_chosen = False
-		self.is_obstructed = False
-		self.prob_feasible = 1.0
-		self.delta_success_cost = 0.0
-		self.exploration_cost = 0.0
-		self.negative_weighting = 0.0
-		self.positive_weighting = 0.0
-
-		self.counter = 0
-		self.last_observed_pose = None
 
 		# Any duplicate points should be eliminated (would interfere with
 		# equality checking).
@@ -237,27 +229,6 @@ class Frontier(object):
 		self.D = 1.
 		self.Din = 1.
 		self.Dout = 1.
-
-	def set_props(self,
-				  prob_feasible,
-				  is_obstructed=False,
-				  delta_success_cost=0,
-				  exploration_cost=0,
-				  positive_weighting=0,
-				  negative_weighting=0,
-				  counter=0,
-				  last_observed_pose=None,
-				  did_set=True):
-		self.props_set = did_set
-		self.just_set = did_set
-		self.prob_feasible = prob_feasible
-		self.is_obstructed = is_obstructed
-		self.delta_success_cost = delta_success_cost
-		self.exploration_cost = exploration_cost
-		self.positive_weighting = positive_weighting
-		self.negative_weighting = negative_weighting
-		self.counter = counter
-		self.last_observed_pose = last_observed_pose
 
 	@property
 	def centroid(self):
@@ -357,6 +328,61 @@ def get_frontiers(occupancy_grid):
 
 	return frontiers
 
+def _eucl_dist(p1, p2):
+    """Helper to compute Euclidean distance."""
+    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+
+
+def _get_nearest_feasible_frontier(frontier, reference_frontier_set):
+    """Returns the nearest 'feasible' frontier from a reference set."""
+    f_gen = [(of, _eucl_dist(of.get_centroid(), frontier.get_centroid()))
+             for of in reference_frontier_set]
+    if len(f_gen) == 0:
+        return None, 1e10
+    else:
+        return min(f_gen, key=lambda fd: fd[1])
+
+def update_frontier_set(old_set, new_set, max_dist=6, chosen_frontier=None):
+	for frontier in old_set:
+		frontier.is_from_last_chosen = False 
+
+	# shallow copy of the set
+	old_set = old_set.copy()
+
+	# These are the frontiers that will not appear in the new set
+	outgoing_frontier_set = old_set - new_set
+	# These will appear in the new set
+	added_frontier_set = new_set - old_set
+
+	if max_dist is not None:
+		# loop through the newly added frontier set and set properties based upon the outgoing frontier set
+		for af in added_frontier_set:
+			nearest_frontier, nearest_frontier_dist = _get_nearest_feasible_frontier(af, outgoing_frontier_set)
+			#print(f'nearest_frontier_dist = {nearest_frontier_dist}')
+			if nearest_frontier_dist < max_dist:
+				# this frontier R and D is not computed correctly
+				if af.R < 1.1 and af.D < 1.1:
+					af.R = nearest_frontier.R
+					af.D = nearest_frontier.D
+					af.Din = nearest_frontier.Din 
+					af.Dout = nearest_frontier.Dout 
+
+				if nearest_frontier == chosen_frontier:
+					af.is_from_last_chosen = True 
+
+	if len(added_frontier_set) == 0:
+		print(f'*** corner case, no new frontier.')
+		chosen_frontier.is_from_last_chosen = True
+
+	# Remove frontier_set that don't appear in the new set
+	old_set.difference_update(outgoing_frontier_set)
+
+	# Add the new frontier_set
+	old_set.update(added_frontier_set)
+
+	return old_set
+
+
 def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map, skeleton=None, unet_model=None, device=None):
 	# When the perception info is 'Potential', we use gt_occupancy_grid to compute the area of the component.
 	
@@ -413,6 +439,7 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 						ax[1].get_yaxis().set_visible(False)
 						ax[1].set_title('area potential')
 
+						'''
 						ax[2].imshow(component, cmap='gray')
 						# draw edges by pts
 						for (s,e) in component_G.edges():
@@ -426,6 +453,7 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 						ax[2].get_xaxis().set_visible(False)
 						ax[2].get_yaxis().set_visible(False)
 						ax[2].set_title('skeleton')
+						'''
 
 						fig.tight_layout()
 						plt.title(f'component {ii}')
@@ -555,14 +583,19 @@ def get_frontier_with_maximum_area(frontiers, gt_occupancy_grid):
 		max_area = 0
 		max_fron = None
 		for fron in frontiers:
+			if fron.is_from_last_chosen:
+				R = fron.R + 1
+			else:
+				R = fron.R
+			#print(f'R = {R}')
 			if max_fron is None:
-				max_area = fron.R
+				max_area = R
 				max_fron = fron
-			elif fron.R > max_area:
-				max_area = fron.R
+			elif R > max_area:
+				max_area = R
 				max_fron = fron
-			elif fron.R == max_area and hash(fron) > hash(max_fron):
-				max_area = fron.R
+			elif R == max_area and hash(fron) > hash(max_fron):
+				max_area = R
 				max_fron = fron
 	return max_fron
 

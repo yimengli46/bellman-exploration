@@ -112,6 +112,8 @@ def nav_nonDP(split, env, episode_id, scene_name, scene_height, start_pose, save
 	MODE_FIND_GOAL = False
 	visited_frontier = set()
 	chosen_frontier = None
+	old_frontiers = None
+	frontiers = None
 	middle_observed_area_flag = None
 
 	while step < cfg.NAVI.NUM_STEPS:
@@ -137,6 +139,9 @@ def nav_nonDP(split, env, episode_id, scene_name, scene_height, start_pose, save
 			observed_occupancy_map, gt_occupancy_map, observed_area_flag, built_semantic_map = semMap_module.get_observed_occupancy_map(agent_map_pose
 			)
 
+			if frontiers is not None:
+				old_frontiers = frontiers
+
 			frontiers = fr_utils.get_frontiers(observed_occupancy_map)
 			frontiers = frontiers - visited_frontier
 
@@ -153,6 +158,9 @@ def nav_nonDP(split, env, episode_id, scene_name, scene_height, start_pose, save
 				else:
 					frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
 						observed_area_flag, built_semantic_map, None)
+
+			if old_frontiers is not None:
+				frontiers = fr_utils.update_frontier_set(old_frontiers, frontiers, max_dist=25, chosen_frontier=chosen_frontier)
 
 			if cfg.NAVI.STRATEGY == 'Greedy':
 				chosen_frontier = fr_utils.get_frontier_with_maximum_area(
