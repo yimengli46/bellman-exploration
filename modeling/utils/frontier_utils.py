@@ -676,24 +676,24 @@ def compute_Q(agent_coord, target_frontier, frontiers, visited_frontiers,
 		(int(target_frontier.centroid[0]), int(target_frontier.centroid[1])))
 	# move forward 5 cells. every move forward is combined with 2 turnings.
 	L = L / 5. * cfg.NAVI.STEP_RATIO
-	target_frontier.D = target_frontier.D / 5. * cfg.NAVI.STEP_RATIO
-	target_frontier.Din = target_frontier.Din / 5. * cfg.NAVI.STEP_RATIO
-	target_frontier.Dout = target_frontier.Dout / 5. * cfg.NAVI.STEP_RATIO
+	D = target_frontier.D / 5. * cfg.NAVI.STEP_RATIO
+	Din = target_frontier.Din / 5. * cfg.NAVI.STEP_RATIO
+	Dout = target_frontier.Dout / 5. * cfg.NAVI.STEP_RATIO
 
 	# cond 1: agent has enough steps to reach target_frontier
 	if steps > L:
 		steps -= L
 
 		# cond 2: agent does not have enough steps to traverse target_frontier:
-		if steps <= target_frontier.Din:
-			Q += 1. * steps / target_frontier.Din * target_frontier.R
+		if steps <= Din:
+			Q += 1. * steps / Din * target_frontier.R
 			steps = 0
 		else:
-			steps -= target_frontier.Din
+			steps -= Din
 			Q += target_frontier.R
 			# cond 3: agent does have enough steps to get out of target_frontier
-			if steps >= target_frontier.Dout:
-				steps -= target_frontier.Dout
+			if steps >= Dout:
+				steps -= Dout
 				visited_frontiers.add(target_frontier)
 				rest_frontiers = frontiers - visited_frontiers
 
