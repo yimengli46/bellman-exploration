@@ -51,7 +51,7 @@ def build_graph(occupancy_map, flag_eight_neighs=True):
 
 class localNav_Astar:
 
-	def __init__(self, pose_range, coords_range, WH, scene_name):
+	def __init__(self, pose_range, coords_range, WH, scene_name=None):
 		self.pose_range = pose_range
 		self.coords_range = coords_range
 		self.WH = WH
