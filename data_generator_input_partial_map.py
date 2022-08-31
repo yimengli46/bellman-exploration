@@ -56,6 +56,8 @@ class Data_Gen_MP3D:
 
 		if cfg.NAVI.D_type == 'Skeleton':
 			self.skeleton = skeletonize(gt_occ_map)
+			if cfg.NAVI.PRUNE_SKELETON:
+				self.skeleton = fr_utils.prune_skeleton(gt_occ_map, self.skeleton)
 
 		gt_occupancy_map = gt_occ_map.copy()
 		gt_occupancy_map = np.where(gt_occupancy_map == 1, cfg.FE.FREE_VAL, gt_occupancy_map)  # free cell

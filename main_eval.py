@@ -31,8 +31,8 @@ def main():
 			f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/large_scale_{split}_scene_floor_dict.npy',
 			allow_pickle=True).item()
 
-	for env_scene in cfg.MAIN.TEST_SCENE_NO_FLOOR_LIST:
-	#for env_scene in ['yqstnuAEVhm']:
+	#for env_scene in cfg.MAIN.TEST_SCENE_NO_FLOOR_LIST:
+	for env_scene in ['yqstnuAEVhm']:
 
 		#================================ load habitat env============================================
 		config = habitat.get_config(config_paths=cfg.GENERAL.DATALOADER_CONFIG_PATH)
