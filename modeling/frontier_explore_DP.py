@@ -154,7 +154,7 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 					frontiers, gt_occupancy_map)
 			elif cfg.NAVI.STRATEGY == 'DP':
 				top_frontiers = fr_utils.select_top_frontiers(frontiers,
-															  top_n=5)
+															  top_n=6)
 				chosen_frontier = fr_utils.get_frontier_with_DP(top_frontiers, agent_map_pose, dist_occupancy_map, \
 				 cfg.NAVI.NUM_STEPS-step, LN)
 			elif cfg.NAVI.STRATEGY == 'FME':

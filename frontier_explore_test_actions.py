@@ -28,7 +28,7 @@ scene_name = 'yqstnuAEVhm_0' #'17DRP5sb8fy_0' #'yqstnuAEVhm_0'
 
 scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
 
-cfg.merge_from_file('configs/exp_360degree_Greedy_NAVMESH_MAP_GT_Potential_1STEP_500STEPS.yaml')
+cfg.merge_from_file('configs/exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS_whole_skeleton_graph.yaml')
 cfg.freeze()
 
 act_dict = {-1: 'Done', 0: 'stop', 1: 'forward', 2: 'left', 3:'right'}
@@ -177,7 +177,7 @@ while step < cfg.NAVI.NUM_STEPS:
 		if cfg.NAVI.STRATEGY == 'Greedy':
 			chosen_frontier = fr_utils.get_frontier_with_maximum_area(frontiers, gt_occupancy_map)
 		elif cfg.NAVI.STRATEGY == 'DP':
-			top_frontiers = fr_utils.select_top_frontiers(frontiers, top_n=5)
+			top_frontiers = fr_utils.select_top_frontiers(frontiers, top_n=6)
 			chosen_frontier = fr_utils.get_frontier_with_DP(top_frontiers, agent_map_pose, dist_occupancy_map, \
 				cfg.NAVI.NUM_STEPS-step, LN)
 		elif cfg.NAVI.STRATEGY == 'FME':

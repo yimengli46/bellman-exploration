@@ -644,6 +644,7 @@ def get_frontier_with_DP(frontiers, agent_pose, dist_occupancy_map, steps, LN):
 	from agent_pose and the observed_occupancy_map, compute D and L.
 	"""
 	max_Q = 0
+	max_steps = 0
 	max_frontier = None
 	#G = LN.get_G_from_map(observed_occupancy_map)
 	agent_coord = LN.get_agent_coords(agent_pose)
@@ -651,13 +652,16 @@ def get_frontier_with_DP(frontiers, agent_pose, dist_occupancy_map, steps, LN):
 	for fron in frontiers:
 		#print('-------------------------------------------------------------')
 		visited_frontiers = set()
-		Q = compute_Q(agent_coord, fron, frontiers, visited_frontiers, steps,
+		Q, rest_steps = compute_Q(agent_coord, fron, frontiers, visited_frontiers, steps,
 					  dist_occupancy_map)
+		#print(f'Q = {Q}, rest_steps = {rest_steps}')
 		if Q > max_Q:
 			max_Q = Q
+			max_steps = rest_steps
 			max_frontier = fron
-		elif Q == max_Q and hash(fron) > hash(max_frontier):
+		elif Q == max_Q and rest_steps > max_steps: #hash(fron) > hash(max_frontier):
 			max_Q = Q
+			max_steps = rest_steps
 			max_frontier = fron
 	return max_frontier
 
@@ -671,36 +675,43 @@ def compute_Q(agent_coord, target_frontier, frontiers, visited_frontiers,
 	_, L = route_through_array(dist_occupancy_map, (agent_coord[1], agent_coord[0]), 
 		(int(target_frontier.centroid[0]), int(target_frontier.centroid[1])))
 	# move forward 5 cells. every move forward is combined with 2 turnings.
-	L = L / 5. * 1.7
-	target_frontier.D = target_frontier.D / 5. * 1.7
+	L = L / 5. * 3.
+	target_frontier.D = target_frontier.D / 5. * 3.
 
 	# cond 1: agent has enough steps to reach target_frontier
 	if steps > L:
 		steps -= L
 
 		# cond 2: agent does not have enough steps to traverse target_frontier:
-		if steps <= target_frontier.D:
-			Q += 1. * steps / target_frontier.D * target_frontier.R
+		if steps <= target_frontier.Din:
+			Q += 1. * steps / target_frontier.Din * target_frontier.R
+			steps = 0
 		else:
-			steps -= target_frontier.D
+			steps -= target_frontier.Din
 			Q += target_frontier.R
-			# cond 3: agent does have enough steps to reach target_frontier
-			if steps >= target_frontier.D:
-				steps -= target_frontier.D
+			# cond 3: agent does have enough steps to get out of target_frontier
+			if steps >= target_frontier.Dout:
+				steps -= target_frontier.Dout
 				visited_frontiers.add(target_frontier)
 				rest_frontiers = frontiers - visited_frontiers
 
 				max_next_Q = 0
+				max_rest_steps = 0
 				for fron in rest_frontiers:
 					fron_centroid_coords = (int(target_frontier.centroid[1]),
 											int(target_frontier.centroid[0]))
-					next_Q = compute_Q(fron_centroid_coords, fron, frontiers,
-									   visited_frontiers.copy(), steps, dist_occupancy_map)
+					next_Q, rest_steps = compute_Q(fron_centroid_coords, fron, frontiers,
+									   visited_frontiers.copy(), steps.copy(), dist_occupancy_map)
 					if next_Q > max_next_Q:
 						max_next_Q = next_Q
+						max_rest_steps = rest_steps
+					if next_Q == max_next_Q and rest_steps > max_rest_steps:
+						max_next_Q = next_Q
+						max_rest_steps = rest_steps
 				Q += max_next_Q
+				steps = max_rest_steps
 	#print(f'Q = {Q}')
-	return Q
+	return Q, steps
 
 
 def select_top_frontiers(frontiers, top_n=5):
