@@ -79,6 +79,8 @@ _C.NAVI.D_type = 'Skeleton' # 'Sqrt_R', 'Skeleton'
 
 _C.NAVI.PRUNE_SKELETON = False # Prun skeleton or not
 
+_C.NAVI.STEP_RATIO = 3. # for DP, 1.7 or 3.
+
 #========================== for short-range nav ====================================
 _C.LN = CN()
 _C.LN.LOCAL_MAP_MARGIN = 30 

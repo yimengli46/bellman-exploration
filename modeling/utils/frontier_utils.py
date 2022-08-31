@@ -584,7 +584,7 @@ def get_frontier_with_maximum_area(frontiers, gt_occupancy_grid):
 		max_fron = None
 		for fron in frontiers:
 			if fron.is_from_last_chosen:
-				R = fron.R + 1
+				R = fron.R
 			else:
 				R = fron.R
 			#print(f'R = {R}')
@@ -675,8 +675,10 @@ def compute_Q(agent_coord, target_frontier, frontiers, visited_frontiers,
 	_, L = route_through_array(dist_occupancy_map, (agent_coord[1], agent_coord[0]), 
 		(int(target_frontier.centroid[0]), int(target_frontier.centroid[1])))
 	# move forward 5 cells. every move forward is combined with 2 turnings.
-	L = L / 5. * 3.
-	target_frontier.D = target_frontier.D / 5. * 3.
+	L = L / 5. * cfg.NAVI.STEP_RATIO
+	target_frontier.D = target_frontier.D / 5. * cfg.NAVI.STEP_RATIO
+	target_frontier.Din = target_frontier.Din / 5. * cfg.NAVI.STEP_RATIO
+	target_frontier.Dout = target_frontier.Dout / 5. * cfg.NAVI.STEP_RATIO
 
 	# cond 1: agent has enough steps to reach target_frontier
 	if steps > L:
