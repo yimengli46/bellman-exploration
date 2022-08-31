@@ -2,6 +2,7 @@
 
 ## Give your job a name to distinguish it from other jobs you run.
 #SBATCH --job-name=train_UNet
+#SBATCH --reservation=yli44_36
 
 ## General partitions: all-HiPri, bigmem-HiPri   --   (12 hour limit)
 ##                     all-LoPri, bigmem-LoPri, gpuq  (5 days limit)
@@ -18,13 +19,14 @@
 #SBATCH --mail-user=yli44@gmu.edu     # Put your GMU email address here
 
 ## Specify how much memory your job needs. (2G is the default)
-#SBATCH --mem=60G        # Total memory needed per task (units: K,M,G,T)
+#SBATCH --mem=100G        # Total memory needed per task (units: K,M,G,T)
 
 ## Specify how much time your job needs. (default: see partition above)
 #SBATCH --time=5-00:00   # Total time needed for job: Days-Hours:Minutes
 
 #SBATCH --gres=gpu:1
-#SBATCH --constraint=gpu-k80
+#SBATCH --nodelist=NODE076
+#SBATCH --cpus-per-task 8
 
 ## Load the relevant modules needed for the job
 module load cuda/11.2
