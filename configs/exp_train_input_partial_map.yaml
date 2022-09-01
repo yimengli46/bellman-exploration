@@ -14,8 +14,8 @@ PRED:
     CHECKNAME: unet
     DEVICE: cuda
     DIVIDE_AREA: 100
-    EPOCHS: 30
-    EVAL_INTERVAL: 2
+    EPOCHS: 6
+    EVAL_INTERVAL: 1
     FLAG_VISUALIZE_PRED_LABELS: False
     INPUT: occ_and_sem
     INPUT_CHANNEL: 45 # 42 + 3

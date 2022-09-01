@@ -78,7 +78,7 @@ model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PR
 import torch.optim as optim
 train_params = [{'params': model.parameters(), 'lr': cfg.PRED.PARTIAL_MAP.LR}]
 optimizer = optim.Adam(train_params, lr=cfg.PRED.PARTIAL_MAP.LR, betas=(0.9, 0.999))
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
 
 # Define Criterion
 # whether to use class balanced weights

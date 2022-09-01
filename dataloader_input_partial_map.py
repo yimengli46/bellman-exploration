@@ -78,18 +78,15 @@ class MP3DSceneDataset(data.Dataset):
 
 		# resize M_p and U_a
 		num_channels = M_p.shape[0] # 2 channels: occ and sem
-		resized_Mp = np.zeros((num_channels, cfg.PRED.PARTIAL_MAP.INPUT_WH[1], cfg.PRED.PARTIAL_MAP.INPUT_WH[0]), dtype=np.float32)
-		resized_Mp[0] = cv2.resize(M_p[0], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
-		resized_Mp[1] = cv2.resize(M_p[1], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
-
+		
 		resized_U = np.zeros((4, cfg.PRED.PARTIAL_MAP.INPUT_WH[1], cfg.PRED.PARTIAL_MAP.INPUT_WH[0]), dtype=np.float32)
-		resized_U[0] = cv2.resize(U_a, cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
-		resized_U[1] = cv2.resize(U_d[:,:,0], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
-		resized_U[2] = cv2.resize(U_d[:,:,1], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
-		resized_U[3] = cv2.resize(U_d[:,:,2], cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
+		resized_U[0] = U_a
+		resized_U[1] = U_d[:,:,0]
+		resized_U[2] = U_d[:,:,1]
+		resized_U[3] = U_d[:,:,2]
 
 		#================= convert to tensor=================
-		tensor_Mp = torch.tensor(resized_Mp, dtype=torch.long)
+		tensor_Mp = torch.tensor(M_p, dtype=torch.long)
 		tensor_U = torch.tensor(resized_U, dtype=torch.float32)
 
 		#print(f'tensor_Mp.max = {torch.max(tensor_Mp)}')
