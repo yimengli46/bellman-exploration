@@ -83,13 +83,13 @@ def main():
 					flag = False
 					steps = 0
 					covered_area_percent = 0
-					try:
-						if cfg.NAVI.STRATEGY == 'DP':
-							covered_area_percent, steps, trajectory, action_lst, observed_area_flag = nav_DP(split, env, idx, scene_name, height, start_pose, saved_folder, device)
-						else:
-							covered_area_percent, steps, trajectory, action_lst, observed_area_flag = nav_nonDP(split, env, idx, scene_name, height, start_pose, saved_folder, device)
-					except:
-						print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
+					#try:
+					if cfg.NAVI.STRATEGY == 'DP':
+						covered_area_percent, steps, trajectory, action_lst, observed_area_flag = nav_DP(split, env, idx, scene_name, height, start_pose, saved_folder, device)
+					else:
+						covered_area_percent, steps, trajectory, action_lst, observed_area_flag = nav_nonDP(split, env, idx, scene_name, height, start_pose, saved_folder, device)
+					#except:
+					#	print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
 
 					result = {}
 					result['eps_id'] = idx

@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from core import cfg
 import scipy.ndimage
-from .baseline_utils import pose_to_coords, apply_color_to_map
+from .baseline_utils import pose_to_coords, apply_color_to_map, crop_map, spatial_transform_map
 from math import sqrt
 from operator import itemgetter
 import torch
@@ -382,8 +382,38 @@ def update_frontier_set(old_set, new_set, max_dist=6, chosen_frontier=None):
 
 	return old_set
 
+def inter_local_map_global_map(local_map, global_map, robot_center):
+	H_local, W_local = local_map.shape
+	H_global, W_global = global_map.shape
 
-def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map, skeleton=None, unet_model=None, device=None):
+	left_corner_local = np.array((0, 0))
+	right_corner_local = np.array((W_local-1, H_local-1))
+	left_corner_global = np.array((0, 0))
+	right_corner_global = np.array((W_global-1, H_global-1))
+
+	# move local map whose center is now at robot center
+	robot_center = np.array(robot_center)
+	local_map_center = np.array((W_local//2, H_local//2))
+	trans = robot_center - local_map_center
+	left_corner_local += trans
+	right_corner_local += trans
+
+	#print(f'local: {left_corner_local}, {right_corner_local}')
+
+	# find intersection
+	x0_global = max(left_corner_local[0], left_corner_global[0])
+	x1_global = min(right_corner_local[0], right_corner_global[0])
+	y0_global = max(left_corner_local[1], left_corner_global[1])
+	y1_global = min(right_corner_local[1], right_corner_global[1])
+
+	# move bbox back to local map coords
+	x0_local, y0_local = np.array((x0_global, y0_global)) - trans
+	x1_local, y1_local = np.array((x1_global, y1_global)) - trans
+
+	return np.array((x0_local, y0_local, x1_local, y1_local)), np.array((x0_global, y0_global, x1_global, y1_global))
+
+
+def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, observed_area_flag, sem_map, skeleton=None, unet_model=None, device=None, LN=None, agent_map_pose=None):
 	# When the perception info is 'Potential', we use gt_occupancy_grid to compute the area of the component.
 	
 	# Compute potential
@@ -460,15 +490,26 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 						plt.show()
 
 	elif cfg.NAVI.PERCEPTION == 'UNet_Potential':
+		agent_coord = LN.get_agent_coords(agent_map_pose)
 		#============================================ prepare input data ====================================
 		sem_map = np.where(sem_map >= cfg.SEM_MAP.GRID_CLASS_SIZE, 0, sem_map)
 
-		resized_Mp = np.zeros((2, cfg.PRED.PARTIAL_MAP.INPUT_WH[1], cfg.PRED.PARTIAL_MAP.INPUT_WH[0]), dtype=np.float32)
-		resized_Mp[0] = cv2.resize(occupancy_grid, cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
-		resized_Mp[1] = cv2.resize(sem_map, cfg.PRED.PARTIAL_MAP.INPUT_WH, interpolation=cv2.INTER_NEAREST)
+		M_p = np.stack((occupancy_grid, sem_map), axis=0)
+		tensor_M_p = torch.tensor(M_p).float().unsqueeze(0)
+		print(f'tensor_M_p.shape = {tensor_M_p.shape}')
 
-		tensor_Mp = torch.tensor(resized_Mp, dtype=torch.long)
+		#================== crop out the map centered at the agent ==========================
+		_, H, W = M_p.shape
+		Wby2, Hby2 = W // 2, H // 2
+		tform_trans = torch.Tensor([[agent_coord[0] - Wby2, agent_coord[1] - Hby2, 0]])
+		crop_center = torch.Tensor([[W / 2.0, H / 2.0]]) + tform_trans[:, :2]
+		# Crop out the appropriate size of the map
+		map_size = int(cfg.PRED.PARTIAL_MAP.OUTPUT_MAP_SIZE / cfg.SEM_MAP.CELL_SIZE)
+		tensor_M_p = crop_map(tensor_M_p, crop_center, map_size, 'nearest')
 
+		tensor_Mp = tensor_M_p.long().squeeze(0)
+
+		#==================== convert into one hot vector ==================================
 		tensor_Mp_occ = tensor_Mp[0] # H x W
 		tensor_Mp_occ = F.one_hot(tensor_Mp_occ, num_classes=3).permute(2, 0, 1) # 3 x H x W
 		tensor_Mp_sem = tensor_Mp[1]
@@ -484,9 +525,14 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 			outputs = unet_model(tensor_Mp)
 			output = outputs.cpu().numpy()[0].transpose((1, 2, 0))
 
+		bbox_local, bbox_global = inter_local_map_global_map(output[:, :, 0], M_p[0], agent_coord)
+		results = np.zeros((H, W, 4))
+		results[bbox_global[1]:bbox_global[3]+1, bbox_global[0]:bbox_global[2]+1] = output[bbox_local[1]:bbox_local[3]+1, bbox_local[0]:bbox_local[2]+1]	
+		output = results
+
 		#=========================== reshape output and mask out non zero points =============================== 
 		H, W = occupancy_grid.shape
-		output = cv2.resize(output, (W, H), interpolation=cv2.INTER_NEAREST)
+		#output = cv2.resize(output, (W, H), interpolation=cv2.INTER_NEAREST)
 
 		for f in frontiers:
 			points = f.points.transpose()
@@ -496,12 +542,11 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 			#print(f'mask_points.shape = {mask_points.shape}')
 			if mask_points.shape[0] > 0:
 				U_a = max(np.mean(points_vals[mask_points, 0]) * cfg.PRED.PARTIAL_MAP.DIVIDE_AREA, 1.)
-				U_dall = max(np.mean(points_vals[mask_points, 1]), 1.)
-				U_din = max(np.mean(points_vals[mask_points, 2]), 1.)
-				U_dout = max(np.mean(points_vals[mask_points, 3]), 1.)
+				U_dall = max(np.mean(points_vals[mask_points, 1]) * cfg.PRED.PARTIAL_MAP.DIVIDE_D, 1.)
+				U_din = max(np.mean(points_vals[mask_points, 2]) * cfg.PRED.PARTIAL_MAP.DIVIDE_D, 1.)
+				U_dout = max(np.mean(points_vals[mask_points, 3]) * cfg.PRED.PARTIAL_MAP.DIVIDE_D, 1.)
 			else:
 				U_a, U_dall, U_din, U_dout = 1.0, 1.0, 1.0, 1.0
-
 
 			if cfg.NAVI.D_type == 'Sqrt_R':
 				f.R = U_a
