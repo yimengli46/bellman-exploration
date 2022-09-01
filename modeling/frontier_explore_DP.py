@@ -64,7 +64,7 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 	if cfg.NAVI.PERCEPTION == 'UNet_Potential':
 		unet_model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).to(device)
 		if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
-			checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_5/checkpoint.pth.tar', map_location=device)
+			checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_6/checkpoint.pth.tar', map_location=device)
 		elif cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
 			checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar', map_location=device)
 		unet_model.load_state_dict(checkpoint['state_dict'])
@@ -112,6 +112,8 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 	MODE_FIND_GOAL = False
 	visited_frontier = set()
 	chosen_frontier = None
+	old_frontiers = None
+	frontiers = None
 
 	while step < cfg.NAVI.NUM_STEPS:
 		print(f'step = {step}')
@@ -132,6 +134,9 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 			observed_occupancy_map, gt_occupancy_map, observed_area_flag, built_semantic_map = semMap_module.get_observed_occupancy_map(agent_map_pose
 			)
 
+			if frontiers is not None:
+				old_frontiers = frontiers
+
 			frontiers = fr_utils.get_frontiers(observed_occupancy_map)
 			frontiers = frontiers - visited_frontier
 
@@ -140,7 +145,7 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 
 			if cfg.NAVI.PERCEPTION == 'UNet_Potential':
 				frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
-					observed_area_flag, built_semantic_map, None, unet_model, device)
+					observed_area_flag, built_semantic_map, None, unet_model, device, LN, agent_map_pose)
 			elif cfg.NAVI.PERCEPTION == 'Potential':
 				if cfg.NAVI.D_type == 'Skeleton':
 					frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
@@ -148,6 +153,9 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 				else:
 					frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
 						observed_area_flag, built_semantic_map, None)
+
+			if old_frontiers is not None:
+				frontiers = fr_utils.update_frontier_set(old_frontiers, frontiers, max_dist=5, chosen_frontier=chosen_frontier)
 
 			if cfg.NAVI.STRATEGY == 'Greedy':
 				chosen_frontier = fr_utils.get_frontier_with_maximum_area(

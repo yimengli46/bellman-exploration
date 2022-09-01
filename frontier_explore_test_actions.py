@@ -28,7 +28,7 @@ scene_name = 'yqstnuAEVhm_0' #'17DRP5sb8fy_0' #'yqstnuAEVhm_0'
 
 scene_floor_dict = np.load(f'{cfg.GENERAL.SCENE_HEIGHTS_DICT_PATH}/{split}_scene_floor_dict.npy', allow_pickle=True).item()
 
-cfg.merge_from_file('configs/exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS_whole_skeleton_graph.yaml')
+cfg.merge_from_file('configs/exp_360degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml')
 cfg.freeze()
 
 act_dict = {-1: 'Done', 0: 'stop', 1: 'forward', 2: 'left', 3:'right'}
@@ -75,7 +75,7 @@ device = torch.device('cuda:0')
 if cfg.NAVI.PERCEPTION == 'UNet_Potential':
 	unet_model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).to(device)
 	if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
-		checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_5/checkpoint.pth.tar')
+		checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_6/checkpoint.pth.tar')
 	elif cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
 		checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar')
 	unet_model.load_state_dict(checkpoint['state_dict'])
@@ -158,7 +158,7 @@ while step < cfg.NAVI.NUM_STEPS:
 		print(f'filter unreachable frontiers time = {t4 - t3}')
 		if cfg.NAVI.PERCEPTION == 'UNet_Potential':
 			frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
-				observed_area_flag, built_semantic_map, None, unet_model, device)
+				observed_area_flag, built_semantic_map, None, unet_model, device, LN, agent_map_pose)
 		elif cfg.NAVI.PERCEPTION == 'Potential':
 			if cfg.NAVI.D_type == 'Skeleton':
 				frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
@@ -170,7 +170,7 @@ while step < cfg.NAVI.NUM_STEPS:
 		print(f'compute frontier potential time = {t5 - t4}')
 
 		if old_frontiers is not None:
-			frontiers = fr_utils.update_frontier_set(old_frontiers, frontiers, max_dist=25, chosen_frontier=chosen_frontier)
+			frontiers = fr_utils.update_frontier_set(old_frontiers, frontiers, max_dist=5, chosen_frontier=chosen_frontier)
 		t6 = timer()
 		print(f'update frontiers time = {t6 - t5}')
 
