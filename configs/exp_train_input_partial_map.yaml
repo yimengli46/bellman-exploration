@@ -24,7 +24,7 @@ PRED:
     LOSS_TYPE: L1
     NEIGHBOR_SIZE: 40
     NUM_GENERATED_SAMPLES_PER_SCENE: 1000
-    NUM_WORKERS: 16
+    NUM_WORKERS: 8
     RESUME: ''
     SAVED_FOLDER: 'output/model_weights_UNet_input_partial_map'
     STEP_GAP: 5

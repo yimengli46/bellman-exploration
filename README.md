@@ -52,6 +52,9 @@ torchvision==0.9.0
 matplotlib==3.3.4
 networkx==2.6.3
 scikit-fmm==2022.3.26
+scikit-image
+sknw
+tensorboardX
 ```
 
 ### Dataset Setup

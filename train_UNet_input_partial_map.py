@@ -84,6 +84,7 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
 # whether to use class balanced weights
 weight = None
 criterion = L1Loss
+best_test_loss = 1e10
 
 #===================================================== Resuming checkpoint ====================================================
 best_pred = 0.0
@@ -161,8 +162,8 @@ for epoch in range(cfg.PRED.PARTIAL_MAP.EPOCHS):
 		print('Loss: %.3f' % test_loss)
 
 		#new_pred = mIoU
-		if True: #new_pred > best_pred:
-			is_best = True
+		if test_loss < best_test_loss:
+			best_test_loss = test_loss
 
 			saver.save_checkpoint({
 				'epoch': epoch + 1,

@@ -41,7 +41,7 @@ module load cuda/11.2
 module load python/3.7.4
 module load gcc/7.5.0
 
-source /scratch/yli44/habitat_env/bin/activate
+source /scratch/yli44/habitat_env_argo/bin/activate
 
 ## Run your program or script
 #python main_eval_multiprocess.py --config='exp_360degree_Greedy_NAVMESH_MAP_GT_Potential_1STEP_500STEPS.yaml'
