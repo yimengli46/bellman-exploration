@@ -23,15 +23,15 @@
 ## Specify how much time your job needs. (default: see partition above)
 #SBATCH --time=5-00:00   # Total time needed for job: Days-Hours:Minutes
 #SBATCH --gres=gpu:1
-#SBATCH --nodelist=NODE050
-#SBATCH --cpus-per-task 18
+#SBATCH --nodelist=NODE040
+#SBATCH --cpus-per-task 22
 
 ## Load the relevant modules needed for the job
 module load cuda/11.2
 module load python/3.7.4
 module load gcc/7.5.0
 
-source /scratch/yli44/habitat_env/bin/activate
+source /scratch/yli44/habitat_env_argo/bin/activate
 
 ## Run your program or script
 python data_generator_input_partial_map.py

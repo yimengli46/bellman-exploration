@@ -20,6 +20,7 @@ from modeling.localNavigator_slam import localNav_slam
 from skimage.morphology import skeletonize
 from modeling.utils.UNet import UNet
 import torch
+from collections import OrderedDict
 
 split = 'test' #'test' #'train'
 env_scene = 'yqstnuAEVhm' #'17DRP5sb8fy' #'yqstnuAEVhm'
@@ -75,10 +76,15 @@ device = torch.device('cuda:0')
 if cfg.NAVI.PERCEPTION == 'UNet_Potential':
 	unet_model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).to(device)
 	if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
-		checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_6/checkpoint.pth.tar')
+		checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_25/best_checkpoint.pth.tar')
 	elif cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
 		checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar')
-	unet_model.load_state_dict(checkpoint['state_dict'])
+
+	new_state_dict = OrderedDict()
+	for k, v in checkpoint['state_dict'].items():
+		name = k[7:] #remove 'module'
+		new_state_dict[name] = v
+	unet_model.load_state_dict(new_state_dict)
 
 LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 

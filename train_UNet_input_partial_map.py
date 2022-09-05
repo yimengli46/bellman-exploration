@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from dataloader_input_partial_map import get_all_scene_dataset, my_collate
 import torch.utils.data as data
 import torch
+import torch.nn as nn
 from core import cfg
 from itertools import islice
 
@@ -72,7 +73,9 @@ dataloader_val = data.DataLoader(dataset_val,
 
 #================================================================================================================================
 # Define network
-model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).cuda()
+model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL)
+model = nn.DataParallel(model)
+model = model.cuda()
 
 #=========================================================== Define Optimizer ================================================
 import torch.optim as optim
@@ -161,6 +164,13 @@ for epoch in range(cfg.PRED.PARTIAL_MAP.EPOCHS):
 		print('[Epoch: %d, numImages: %5d]' % (epoch, iter_num * cfg.PRED.PARTIAL_MAP.BATCH_SIZE))
 		print('Loss: %.3f' % test_loss)
 
+		saver.save_checkpoint({
+				'epoch': epoch + 1,
+				'state_dict': model.state_dict(),
+				'optimizer': optimizer.state_dict(),
+				'loss': test_loss,
+			}, filename='checkpoint.pth.tar')
+
 		#new_pred = mIoU
 		if test_loss < best_test_loss:
 			best_test_loss = test_loss
@@ -170,7 +180,7 @@ for epoch in range(cfg.PRED.PARTIAL_MAP.EPOCHS):
 				'state_dict': model.state_dict(),
 				'optimizer': optimizer.state_dict(),
 				'loss': test_loss,
-			})
+			}, filename='best_checkpoint.pth.tar')
 
 	scheduler.step()
 

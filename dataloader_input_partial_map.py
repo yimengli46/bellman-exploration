@@ -12,6 +12,8 @@ import os
 import glob
 import pickle
 from modeling.utils.baseline_utils import apply_color_to_map
+import bz2
+import _pickle as cPickle
 
 class MP3DSceneDataset(data.Dataset):
 
@@ -21,21 +23,31 @@ class MP3DSceneDataset(data.Dataset):
 		
 		self.saved_folder = f'{data_folder}/{self.split}/{self.scene_name}'
 
-		self.sample_name_list = [os.path.splitext(os.path.basename(x))[0] for x in sorted(glob.glob(f'{self.saved_folder}/*.npy'))] 
-
+		if self.split == 'val':
+			self.sample_name_list = [os.path.splitext(os.path.basename(x))[0] for x in sorted(glob.glob(f'{self.saved_folder}/*.npy'))] 
+		elif self.split == 'train':
+			self.sample_name_list = [os.path.splitext(os.path.basename(x))[0] for x in sorted(glob.glob(f'{self.saved_folder}/*.pbz2'))] 
 
 	def __len__(self):
 		return len(self.sample_name_list)
 
 	def __getitem__(self, i):
-		#============================= load npy file and pickle file ===============================
-		npy_file = np.load(f'{self.saved_folder}/{self.sample_name_list[i]}.npy', allow_pickle=True).item()
-		pk_file = pickle.load(open(f'{self.saved_folder}/{self.sample_name_list[i]}.pkl', 'rb'))
+		if self.split == 'val':
+			#============================= load npy file and pickle file ===============================
+			npy_file = np.load(f'{self.saved_folder}/{self.sample_name_list[i]}.npy', allow_pickle=True).item()
+			pk_file = pickle.load(open(f'{self.saved_folder}/{self.sample_name_list[i]}.pkl', 'rb'))
 
-		M_p = npy_file['Mp']
-		U_a = npy_file['Ua']
-		U_d = npy_file['Ud']
-		frontiers = pk_file
+			M_p = npy_file['Mp']
+			U_a = npy_file['Ua']
+			U_d = npy_file['Ud']
+			frontiers = pk_file
+		elif self.split == 'train':
+			with bz2.BZ2File(f'{self.saved_folder}/{self.sample_name_list[i]}.pbz2', 'rb') as fp:
+				npy_file = cPickle.load(fp)
+				M_p = npy_file['Mp']
+				U_a = npy_file['Ua']
+				U_d = npy_file['Ud']
+				frontiers = None
 		#print(f'U_a.shape = {U_a[..., np.newaxis].shape}')
 		#print(f'U_d.shape = {U_d.shape}')
 		U_all = np.concatenate((U_a[..., np.newaxis], U_d), axis=2)

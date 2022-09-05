@@ -17,6 +17,9 @@ import pickle
 from skimage.morphology import skeletonize
 import torch
 import math
+from scipy import ndimage
+import bz2
+import _pickle as cPickle
 
 def get_region(robot_pos, H, W, size=2):
 	y, x = robot_pos
@@ -231,6 +234,17 @@ class Data_Gen_MP3D:
 			#print(f'end U_a.shape = {U_a.shape}')
 			#print(f'end U_d.shape = {U_d.shape}')
 
+			# rotate
+			rot = random.choice((0, 45, 90, 135, 180, -45, -90, -135))
+			for i in range(M_p.shape[0]):
+				M_p[i] = ndimage.rotate(M_p[i], rot, reshape=False)
+				M_p[i] = np.where(M_p[i] < 1, 0, M_p[i])
+			U_a = ndimage.rotate(U_a, rot, reshape=False)
+			U_a = np.where(U_a < 1, 0, U_a)
+			for i in range(U_d.shape[2]):
+				U_d[:, :, i] = ndimage.rotate(U_d[:, :, i], rot, reshape=False)
+				U_d[:, :, i] = np.where(U_d[:, :, i] < 1, 0, U_d[:, :, i])
+
 			#=================================== visualize M_p =========================================
 			if cfg.PRED.PARTIAL_MAP.FLAG_VISUALIZE_PRED_LABELS:
 				occ_map_Mp = M_p[0]
@@ -285,9 +299,14 @@ class Data_Gen_MP3D:
 			eps_data['Ud'] = U_d.copy()
 
 			sample_name = str(count_sample).zfill(len(str(num_samples)))
-			np.save(f'{self.scene_folder}/{sample_name}.npy', eps_data)
-			with open(f'{self.scene_folder}/{sample_name}.pkl', 'wb') as pk_file:
-				pickle.dump(obj=frontiers, file=pk_file)
+			#np.save(f'{self.scene_folder}/{sample_name}.npy', eps_data)
+			#with open(f'{self.scene_folder}/{sample_name}.pkl', 'wb') as pk_file:
+			#pickle.dump(obj=frontiers, file=pk_file)
+			with bz2.BZ2File(f'{self.scene_folder}/{sample_name}.pbz2', 'w') as fp:
+				cPickle.dump(
+					eps_data,
+					fp
+				)
 			
 			#===================================================================
 			count_sample += 1
