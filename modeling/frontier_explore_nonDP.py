@@ -19,6 +19,7 @@ from modeling.localNavigator_slam import localNav_slam
 from skimage.morphology import skeletonize
 from modeling.utils.UNet import UNet
 import torch
+from collections import OrderedDict
 
 def nav_nonDP(split, env, episode_id, scene_name, scene_height, start_pose, saved_folder, device):
 	"""Major function for navigation.
@@ -64,10 +65,15 @@ def nav_nonDP(split, env, episode_id, scene_name, scene_height, start_pose, save
 	if cfg.NAVI.PERCEPTION == 'UNet_Potential':
 		unet_model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).to(device)
 		if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
-			checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_7/checkpoint.pth.tar', map_location=device)
+			checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_25/best_checkpoint.pth.tar', map_location=device)
 		elif cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
 			checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar', map_location=device)
-		unet_model.load_state_dict(checkpoint['state_dict'])
+
+		new_state_dict = OrderedDict()
+		for k, v in checkpoint['state_dict'].items():
+			name = k[7:] #remove 'module'
+			new_state_dict[name] = v
+		unet_model.load_state_dict(new_state_dict)
 
 	LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 
@@ -150,7 +156,7 @@ def nav_nonDP(split, env, episode_id, scene_name, scene_height, start_pose, save
 
 			if cfg.NAVI.PERCEPTION == 'UNet_Potential':
 				frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
-					observed_area_flag, built_semantic_map, None, unet_model, device)
+					observed_area_flag, built_semantic_map, None, unet_model, device, LN, agent_map_pose)
 			elif cfg.NAVI.PERCEPTION == 'Potential':
 				if cfg.NAVI.D_type == 'Skeleton':
 					frontiers = fr_utils.compute_frontier_potential(frontiers, observed_occupancy_map, gt_occupancy_map, 
@@ -160,7 +166,7 @@ def nav_nonDP(split, env, episode_id, scene_name, scene_height, start_pose, save
 						observed_area_flag, built_semantic_map, None)
 
 			if old_frontiers is not None:
-				frontiers = fr_utils.update_frontier_set(old_frontiers, frontiers, max_dist=25, chosen_frontier=chosen_frontier)
+				frontiers = fr_utils.update_frontier_set(old_frontiers, frontiers, max_dist=5, chosen_frontier=chosen_frontier)
 
 			if cfg.NAVI.STRATEGY == 'Greedy':
 				chosen_frontier = fr_utils.get_frontier_with_maximum_area(
