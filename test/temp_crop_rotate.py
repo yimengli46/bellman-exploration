@@ -17,6 +17,7 @@ import torch.nn.functional as F
 from timeit import default_timer as timer
 import random
 import math
+from scipy import ndimage
 
 def crop_map(h, x, crop_size, mode="bilinear"):
     """
@@ -252,8 +253,8 @@ tensor_occupancy_map = tensor_occupancy_map.squeeze(0).squeeze(0).numpy()
 t2 = timer()
 print(f't2 - t1 = {t2-t1}')
 
-
-
+temp_map = np.stack((tensor_occupancy_map, tensor_occupancy_map), axis=2)
+rot_map = ndimage.rotate(temp_map, 45, reshape=False)
 
 '''
 # fill the boundary

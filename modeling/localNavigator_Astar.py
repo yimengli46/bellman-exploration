@@ -449,3 +449,16 @@ class localNav_Astar:
 
 		#print(f'path_idx = {self.path_idx}, path_pose_action = {self.path_pose_action}')
 		return pose_lst
+
+	def get_start_pose_connected_component(self, agent_pose, occupancy_map):
+		agent_coords = pose_to_coords(agent_pose, self.pose_range,
+									  self.coords_range, self.WH)
+
+		binary_occupancy_map = occupancy_map.copy()
+
+		labels, nb = scipy.ndimage.label(binary_occupancy_map, structure=np.ones((3,3)))
+		agent_label = labels[agent_coords[1], agent_coords[0]]
+		
+		result = (labels == agent_label)
+
+		return result
