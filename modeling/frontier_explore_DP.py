@@ -85,6 +85,7 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 								ins2cat_dict)  # build the observed sem map
 	traverse_lst = []
 	action_lst = []
+	step_cov_pairs = []
 
 	#===================================== setup the start location ===============================#
 
@@ -94,6 +95,9 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 	if not env.is_navigable(agent_pos):
 		print(f'start pose is not navigable ...')
 		assert 1 == 2
+
+	# ================= get the area connected with start pose ==============
+	gt_reached_area = LN.get_start_pose_connected_component((agent_pos[0], -agent_pos[2], 0), gt_occ_map)
 
 	if cfg.NAVI.HFOV == 90:
 		obs_list, pose_list = [], []
@@ -275,6 +279,16 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 					obs_list.append(obs)
 					pose_list.append(pose)
 
+		#=================== compute percent and explored area ===============================
+		# percent is computed on the free space
+		explored_free_space = np.logical_and(gt_reached_area, observed_area_flag)
+		percent = 1. * np.sum(explored_free_space) / np.sum(gt_reached_area)
+
+		# explored area
+		area = np.sum(observed_area_flag) * .0025
+		print(f'step = {step}, percent = {percent}, area = {area} meter^2')
+		step_cov_pairs.append((step, percent, area))
+
 		if explore_steps == cfg.NAVI.NUM_STEPS_EXPLORE:
 			explore_steps = 0
 			MODE_FIND_SUBGOAL = True
@@ -348,4 +362,6 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 	percent = sum_explored_free_area * 1. / sum_gt_free_area
 	print(f'********percent = {percent}, step = {step}')
 
-	return percent, step, traverse_lst, action_lst, observed_area_flag
+	step_cov_pairs = np.array(step_cov_pairs).astype('float32')
+
+	return percent, step, traverse_lst, action_lst, step_cov_pairs

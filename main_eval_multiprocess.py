@@ -1,6 +1,5 @@
 import numpy as np
 from modeling.frontier_explore_DP import nav_DP
-from modeling.frontier_explore_nonDP import nav_nonDP
 from modeling.utils.baseline_utils import create_folder
 import habitat
 import habitat_sim
@@ -70,13 +69,10 @@ def nav_test(env_scene, output_folder, scene_floor_dict):
 			covered_area_percent = 0
 			trajectory = []
 			action_lst = []
-			observed_area_flag = None
+			step_cov_pairs = None
 			#'''
 			try:
-				if cfg.NAVI.STRATEGY == 'DP':
-					covered_area_percent, steps, trajectory, action_lst, observed_area_flag = nav_DP(split, env, idx, scene_name, height, start_pose, saved_folder, device)
-				else:
-					covered_area_percent, steps, trajectory, action_lst, observed_area_flag = nav_nonDP(split, env, idx, scene_name, height, start_pose, saved_folder, device)
+				covered_area_percent, steps, trajectory, action_lst, step_cov_pairs = nav_DP(split, env, idx, scene_name, height, start_pose, saved_folder, device)
 			except:
 				print(f'CCCCCCCCCCCCCC failed {scene_name} EPS {idx} DDDDDDDDDDDDDDD')
 
@@ -86,7 +82,7 @@ def nav_test(env_scene, output_folder, scene_floor_dict):
 			result['covered_area'] = covered_area_percent
 			result['trajectory'] = trajectory
 			result['actions'] = action_lst
-			result['observed_area_flag'] = observed_area_flag
+			result['step_cov_pairs'] = step_cov_pairs
 
 			results[idx] = result
 			#'''
@@ -108,6 +104,10 @@ def main():
 						type=str,
 						required=False,
 						default='exp_360degree_Greedy_NAVMESH_MAP_GT_Potential_1STEP_500STEPS.yaml')
+	parser.add_argument('--j',
+						type=int,
+						required=False,
+						default=1)
 	args = parser.parse_args()
 
 	cfg.merge_from_file(f'configs/{args.config}')
@@ -118,7 +118,7 @@ def main():
 	devices = [int(dev) for dev in visible_devices]
 
 	for device_id in devices:
-		for _ in range(cfg.MP.PROC_PER_GPU):
+		for _ in range(args.j):
 			gpu_Q.put(device_id)
 
 	#=============================== basic setup =======================================

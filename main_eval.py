@@ -1,6 +1,5 @@
 import numpy as np
 from modeling.frontier_explore_DP import nav_DP
-from modeling.frontier_explore_nonDP import nav_nonDP
 from modeling.utils.baseline_utils import create_folder
 import habitat
 import habitat_sim
@@ -83,11 +82,11 @@ def main():
 					flag = False
 					steps = 0
 					covered_area_percent = 0
+					trajectory = []
+					action_lst = []
+					step_cov_pairs = None
 					#try:
-					if cfg.NAVI.STRATEGY == 'DP':
-						covered_area_percent, steps, trajectory, action_lst, observed_area_flag = nav_DP(split, env, idx, scene_name, height, start_pose, saved_folder, device)
-					else:
-						covered_area_percent, steps, trajectory, action_lst, observed_area_flag = nav_nonDP(split, env, idx, scene_name, height, start_pose, saved_folder, device)
+					covered_area_percent, steps, trajectory, action_lst, step_cov_pairs = nav_DP(split, env, idx, scene_name, height, start_pose, saved_folder, device)
 					#except:
 					#	print(f'CCCCCCCCCCCCCC failed EPS {idx} DDDDDDDDDDDDDDD')
 
@@ -97,7 +96,7 @@ def main():
 					result['covered_area'] = covered_area_percent
 					result['trajectory'] = trajectory
 					result['actions'] = action_lst
-					result['observed_area_flag'] = observed_area_flag
+					result['step_cov_pairs'] = step_cov_pairs
 
 					results[idx] = result
 

@@ -496,7 +496,7 @@ def compute_frontier_potential(frontiers, occupancy_grid, gt_occupancy_grid, obs
 
 		M_p = np.stack((occupancy_grid, sem_map), axis=0)
 		tensor_M_p = torch.tensor(M_p).float().unsqueeze(0)
-		print(f'tensor_M_p.shape = {tensor_M_p.shape}')
+		#print(f'tensor_M_p.shape = {tensor_M_p.shape}')
 
 		#================== crop out the map centered at the agent ==========================
 		_, H, W = M_p.shape
