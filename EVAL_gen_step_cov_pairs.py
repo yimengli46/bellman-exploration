@@ -132,8 +132,6 @@ def eval_scene(env_scene, output_folder, scene_floor_dict):
 	#================ initialize habitat env =================
 	env = build_env(env_scene, device_id=device_id)
 	env.reset()
-	cfg.merge_from_file(f'configs/exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml')
-	cfg.freeze()
 
 	scene_dict = scene_floor_dict[env_scene]
 
@@ -153,7 +151,7 @@ def eval_scene(env_scene, output_folder, scene_floor_dict):
 			result = results_npy[idx]
 			trajectory = result['trajectory']
 			eps_id = result['eps_id']
-			step_cov_pairs = compute_step_cov_pairs(split, env, scene_name, height, trajectory)
+			step_cov_pairs = compute_step_cov_pairs('test', env, scene_name, height, trajectory)
 			
 			new_result = {}
 			new_result['eps_id'] = eps_id
@@ -179,6 +177,10 @@ def main():
 						type=str,
 						required=False,
 						default='exp_360degree_Greedy_NAVMESH_MAP_GT_Potential_1STEP_500STEPS.yaml')
+	parser.add_argument('--j',
+						type=int,
+						required=False,
+						default=1)
 	args = parser.parse_args()
 
 	cfg.merge_from_file(f'configs/{args.config}')
@@ -189,7 +191,7 @@ def main():
 	devices = [int(dev) for dev in visible_devices]
 
 	for device_id in devices:
-		for _ in range(1):
+		for _ in range(args.j):
 			gpu_Q.put(device_id)
 
 	#=============================== basic setup =======================================
@@ -207,7 +209,6 @@ def main():
 		output_folder = cfg.SAVE.TESTING_RESULTS_FOLDER
 	elif cfg.EVAL.SIZE == 'large':
 		output_folder = cfg.SAVE.LARGE_TESTING_RESULTS_FOLDER
-	create_folder(output_folder)
 
 	args0 = cfg.MAIN.TEST_SCENE_NO_FLOOR_LIST
 	with multiprocessing.Pool(processes=len(args0)) as pool:
