@@ -23,7 +23,7 @@ PRED:
     INPUT_WH: (480, 480)
     LOSS_TYPE: L1
     NEIGHBOR_SIZE: 40
-    NUM_GENERATED_SAMPLES_PER_SCENE: 7500
+    NUM_GENERATED_SAMPLES_PER_SCENE: 5000
     NUM_WORKERS: 24
     RESUME: ''
     SAVED_FOLDER: 'output/model_weights_UNet_input_partial_map'
@@ -31,7 +31,7 @@ PRED:
     LR: 1e-3
     NUM_PROCESS: 24
     multiprocessing: 'mp'
-    GEN_SAMPLES_SAVED_FOLDER: 'output/training_data_input_partial_map_7500samples'
+    GEN_SAMPLES_SAVED_FOLDER: 'output/training_data_input_partial_map_5000samples'
 
 
 SAVE:
