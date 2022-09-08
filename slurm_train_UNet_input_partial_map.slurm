@@ -25,7 +25,7 @@
 #SBATCH --time=5-00:00   # Total time needed for job: Days-Hours:Minutes
 
 #SBATCH --gres=gpu:4
-#SBATCH --nodelist=NODE081
+#SBATCH --nodelist=NODE079
 #SBATCH --cpus-per-task 26
 
 ## Load the relevant modules needed for the job

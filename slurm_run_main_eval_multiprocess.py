@@ -1,13 +1,13 @@
 #!/bin/sh
 
 ## Give your job a name to distinguish it from other jobs you run.
-##SBATCH --job-name=main_eval_mp_Greedy_NAVMESH_GT_Potential
+## SBATCH --job-name=main_eval_mp_Greedy_NAVMESH_GT_Potential
 ## SBATCH --job-name=main_eval_mp_DP_NAVMESH_GT_Potential_SqrtD
-#SBATCH --job-name=main_eval_mp_DP_NAVMESH_GT_Potential_Skeleton_Dall
-## SBATCH --job-name=build_map
-## SBATCH --job-name=A2_1000steps
+## SBATCH --job-name=main_eval_mp_DP_NAVMESH_GT_Potential_Skeleton_Dall
+## BATCH --job-name=build_map
+#SBATCH --job-name=A3_500steps
 ## SBATCH --job-name=C1_500steps
-## SBATCH --job-name=C1_1000steps
+## SBATCH --job-name=C4_1000steps
 
 #SBATCH --reservation=yli44_36
 
@@ -31,10 +31,10 @@
 ## Specify how much time your job needs. (default: see partition above)
 #SBATCH --time=5-00:00   # Total time needed for job: Days-Hours:Minutes
 
-#SBATCH --gres=gpu:3
+#SBATCH --gres=gpu:1
 #SBATCH --nodelist=NODE076
 
-#SBATCH --cpus-per-task 12
+#SBATCH --cpus-per-task 6
 
 ## Load the relevant modules needed for the job
 module load cuda/11.2
@@ -61,4 +61,8 @@ source /scratch/yli44/habitat_env_argo/bin/activate
 #python main_eval_multiprocess.py --config='exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS_whole_skeleton_graph_ratio1dot7.yaml'
 #python main_eval_multiprocess.py --config='exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS_whole_skeleton_graph_pruned_ratio1dot7.yaml'
 #python main_eval_multiprocess.py --config='exp_360degree_DP_NAVMESH_MAP_GT_Potential_D_Skeleton_Dall_1STEP_1000STEPS.yaml'
-python main_eval_multiprocess.py --config='exp_360degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml'
+python main_eval_multiprocess.py --j=6 --config='exp_360degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml'
+#python main_eval_multiprocess.py --config='exp_360degree_FME_NAVMESH_MAP_1STEP_1000STEPS.yaml'
+#python main_eval_multiprocess.py --j=6 --config='exp_360degree_Greedy_NAVMESH_MAP_UNet_OCCandSEM_Potential_1STEP_1000STEPS.yaml'
+#python main_eval_multiprocess.py --j=6 --config='exp_360degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_D_Skeleton_Dall_1STEP_1000STEPS.yaml'
+#python main_eval_multiprocess.py --j=6 --config='exp_360degree_Greedy_NAVMESH_MAP_GT_Potential_1STEP_1000STEPS.yaml'

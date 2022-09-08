@@ -32,6 +32,7 @@ def main():
 
 	#for env_scene in cfg.MAIN.TEST_SCENE_NO_FLOOR_LIST:
 	for env_scene in ['yqstnuAEVhm']:
+	#for env_scene in ['5ZKStnWn8Zo']:
 
 		#================================ load habitat env============================================
 		config = habitat.get_config(config_paths=cfg.GENERAL.DATALOADER_CONFIG_PATH)
@@ -70,7 +71,7 @@ def main():
 				#'''
 				results = {}
 				for idx, data in enumerate(testing_data):
-					#for idx in range(1, 2):
+				#for idx in range(1, 2):
 					data = testing_data[idx]
 					print(
 						f'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA EPS {idx} BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'

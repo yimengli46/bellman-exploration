@@ -64,16 +64,21 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 	#===================================== load modules ==========================================
 	if cfg.NAVI.PERCEPTION == 'UNet_Potential':
 		unet_model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).to(device)
-		if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
-			checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_25/best_checkpoint.pth.tar', map_location=device)
-		elif cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
-			checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar', map_location=device)
+		if cfg.NAVI.STRATEGY == 'Greedy':
+			if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
+				checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_7/checkpoint.pth.tar', map_location=device)
+			unet_model.load_state_dict(checkpoint['state_dict'])
+		elif cfg.NAVI.STRATEGY == 'DP':
+			if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
+				checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_29/best_checkpoint.pth.tar', map_location=device)
+			elif cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
+				checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar', map_location=device)
 		
-		new_state_dict = OrderedDict()
-		for k, v in checkpoint['state_dict'].items():
-			name = k[7:] #remove 'module'
-			new_state_dict[name] = v
-		unet_model.load_state_dict(new_state_dict)
+			new_state_dict = OrderedDict()
+			for k, v in checkpoint['state_dict'].items():
+				name = k[7:] #remove 'module'
+				new_state_dict[name] = v
+			unet_model.load_state_dict(new_state_dict)
 
 	LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 
