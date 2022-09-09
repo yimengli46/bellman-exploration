@@ -103,7 +103,7 @@ def get_obs_and_pose(env, agent_pos, heading_angle, keep=True):
 	return obs, pose
 
 def get_obs_and_pose_by_action(env, act):
-	obs, _, _ = env.step(act)
+	obs = env.step(act)
 
 	agent_pos = env.get_agent_state().position
 	agent_rot = env.get_agent_state().rotation
