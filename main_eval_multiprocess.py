@@ -139,7 +139,7 @@ def main():
 	create_folder(output_folder)
 
 	args0 = cfg.MAIN.TEST_SCENE_NO_FLOOR_LIST
-	with multiprocessing.Pool(processes=len(args0)) as pool:
+	with multiprocessing.Pool(processes=len(args0), maxtasksperchild=1) as pool:
 		args1 = [output_folder for _ in range(len(args0))]
 		args2 = [scene_floor_dict for _ in range(len(args0))]
 		pool.map(multi_run_wrapper, list(zip(args0, args1, args2)))

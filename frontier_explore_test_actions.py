@@ -320,3 +320,9 @@ while step < cfg.NAVI.NUM_STEPS:
 		explore_steps = 0
 		MODE_FIND_SUBGOAL = True
 
+if cfg.NAVI.PERCEPTION == 'UNet_Potential':
+	del unet_model
+	del checkpoint
+
+env.close()
+

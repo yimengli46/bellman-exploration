@@ -14,7 +14,8 @@ from core import cfg
 from itertools import islice
 
 #======================================================================================
-cfg.merge_from_file('configs/exp_train_input_partial_map.yaml')
+#cfg.merge_from_file('configs/exp_train_input_partial_map_occ_and_sem.yaml')
+cfg.merge_from_file('configs/exp_train_input_partial_map_occ_only.yaml')
 cfg.freeze()
 
 output_folder = cfg.PRED.PARTIAL_MAP.SAVED_FOLDER
@@ -81,7 +82,7 @@ model = model.cuda()
 import torch.optim as optim
 train_params = [{'params': model.parameters(), 'lr': cfg.PRED.PARTIAL_MAP.LR}]
 optimizer = optim.Adam(train_params, lr=cfg.PRED.PARTIAL_MAP.LR, betas=(0.9, 0.999))
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1)
 
 # Define Criterion
 # whether to use class balanced weights

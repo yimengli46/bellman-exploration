@@ -79,6 +79,8 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 				name = k[7:] #remove 'module'
 				new_state_dict[name] = v
 			unet_model.load_state_dict(new_state_dict)
+		
+		unet_model.eval()
 
 	LN = localNav_Astar(pose_range, coords_range, WH, scene_name)
 
@@ -359,6 +361,10 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 		#'''
 
 	#====================================== compute statistics =================================
+	if cfg.NAVI.PERCEPTION == 'UNet_Potential':
+		del unet_model
+		del checkpoint
+
 	_, observed_area_flag, _ = semMap_module.get_semantic_map()
 	explored_free_area_flag = np.logical_and(gt_occ_map, observed_area_flag)
 

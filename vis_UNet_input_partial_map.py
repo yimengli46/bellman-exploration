@@ -32,6 +32,7 @@ device = torch.device('cuda')
 model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).cuda()
 checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_6/checkpoint.pth.tar')
 model.load_state_dict(checkpoint['state_dict'])
+model.eval()
 
 #assert 1==2
 
