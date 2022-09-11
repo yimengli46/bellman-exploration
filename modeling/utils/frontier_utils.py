@@ -664,6 +664,26 @@ def get_the_nearest_frontier(frontiers, agent_pose, dist_occupancy_map, LN):
 			min_frontier = fron
 	return min_frontier
 
+def get_the_nearest_frontier_to_the_long_term_goal(frontiers, long_term_goal_coords):
+	""" select nearest frontier to the robot.
+	used for the 'FME' strategy.
+	"""
+	min_L = 10000000
+	min_frontier = None
+
+	for fron in frontiers:
+		fron_centroid_coords = (int(fron.centroid[1]),
+								int(fron.centroid[0]))
+		L = _eucl_dist(fron_centroid_coords, long_term_goal_coords)
+
+		if L < min_L:
+			min_L = L
+			min_frontier = fron 
+		elif L == min_L and hash(fron) > hash(min_frontier):
+			min_L = L
+			min_frontier = fron
+	return min_frontier
+
 
 def count_free_space_at_frontiers(frontiers, gt_occupancy_grid, area=10):
 	""" compute the free space in the neighborhoadd of the frontier center.
