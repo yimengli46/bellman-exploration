@@ -382,6 +382,46 @@ def update_frontier_set(old_set, new_set, max_dist=6, chosen_frontier=None):
 
 	return old_set
 
+def update_frontier_set_data_gen(old_set, new_set, max_dist=6, chosen_frontier=None):
+	for frontier in old_set:
+		frontier.is_from_last_chosen = False 
+
+	# shallow copy of the set
+	old_set = old_set.copy()
+
+	# These are the frontiers that will not appear in the new set
+	outgoing_frontier_set = old_set - new_set
+	# These will appear in the new set
+	added_frontier_set = new_set - old_set
+
+	if max_dist is not None:
+		# loop through the newly added frontier set and set properties based upon the outgoing frontier set
+		for af in added_frontier_set:
+			nearest_frontier, nearest_frontier_dist = _get_nearest_feasible_frontier(af, outgoing_frontier_set)
+			#print(f'nearest_frontier_dist = {nearest_frontier_dist}')
+			if nearest_frontier_dist < max_dist:
+				# this frontier R and D is not computed correctly
+				if af.R < 1.1 and af.D < 1.1:
+					af.R = nearest_frontier.R
+					af.D = nearest_frontier.D
+					af.Din = nearest_frontier.Din 
+					af.Dout = nearest_frontier.Dout 
+
+				if nearest_frontier == chosen_frontier:
+					af.is_from_last_chosen = True 
+
+	if len(added_frontier_set) == 0:
+		print(f'*** corner case, no new frontier.')
+		chosen_frontier.is_from_last_chosen = True
+
+	# Remove frontier_set that don't appear in the new set
+	old_set.difference_update(outgoing_frontier_set)
+
+	# Add the new frontier_set
+	old_set.update(added_frontier_set)
+
+	return old_set, added_frontier_set
+
 def inter_local_map_global_map(local_map, global_map, robot_center):
 	H_local, W_local = local_map.shape
 	H_global, W_global = global_map.shape
