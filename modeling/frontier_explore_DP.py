@@ -70,7 +70,7 @@ def nav_DP(split, env, episode_id, scene_name, scene_height, start_pose, saved_f
 			unet_model.load_state_dict(checkpoint['state_dict'])
 		elif cfg.NAVI.STRATEGY == 'DP':
 			if cfg.PRED.PARTIAL_MAP.INPUT == 'occ_and_sem':
-				checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_29/best_checkpoint.pth.tar', map_location=device)
+				checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_25/best_checkpoint.pth.tar', map_location=device)
 			elif cfg.PRED.PARTIAL_MAP.INPUT == 'occ_only':
 				checkpoint = torch.load(f'run/MP3D/unet/experiment_5/checkpoint.pth.tar', map_location=device)
 		
