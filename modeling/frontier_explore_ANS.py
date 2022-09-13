@@ -223,6 +223,7 @@ def nav_ANS(split, env, episode_id, scene_name, scene_height, start_pose, saved_
 		action_lst.append(act)
 		
 		if act == -1 or act == 0: # finished navigating to the subgoal
+			step += 1
 			print(f'reached the subgoal')
 			MODE_FIND_SUBGOAL = True
 		else:
