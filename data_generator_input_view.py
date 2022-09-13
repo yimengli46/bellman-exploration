@@ -53,7 +53,7 @@ class Data_Gen_View:
 		
 	def init_scene(self):
 		#============================ get a gpu
-		device_id = gpu_Q.get()
+		self.device_id = gpu_Q.get()
 
 		scene_name = self.scene_name
 		print(f'init new scene: {scene_name}')
@@ -66,7 +66,7 @@ class Data_Gen_View:
 		self.height = self.scene_floor_dict[env_scene][0]['y']
 
 		#================================ load habitat env============================================
-		self.env = build_env(env_scene, device_id=device_id)
+		self.env = build_env(env_scene, device_id=self.device_id)
 		self.env.reset()
 
 		scene = self.env.semantic_annotations()
@@ -106,29 +106,31 @@ class Data_Gen_View:
 		#for idx_epi in range(num_samples):
 		while True:
 			#print(f'idx_epi = {idx_epi}')
+			while True:
+				#====================================== generate (start, goal) locs, compute path P==========================
+				start_loc = self.random.choices(self.largest_cc, k=1)[0]
+				start_loc = (start_loc[1], start_loc[0])
+				print(f'===============> start_loc = {start_loc}')
 
-			#====================================== generate (start, goal) locs, compute path P==========================
-			start_loc = self.random.choices(self.largest_cc, k=1)[0]
-			print(f'===============> start_loc = {start_loc}')
-
-			semMap_module = SemanticMap(self.split, self.scene_name, self.pose_range, self.coords_range, self.WH,
-								self.ins2cat_dict)  # build the observed sem map
+				semMap_module = SemanticMap(self.split, self.scene_name, self.pose_range, self.coords_range, self.WH,
+									self.ins2cat_dict)  # build the observed sem map
 
 
-			#=====================================start exploration ===============================
-			traverse_lst = []
-			action_lst = []
+				#=====================================start exploration ===============================
+				traverse_lst = []
+				action_lst = []
 
-			#===================================== setup the start location ===============================#
-			start_pose = pxl_coords_to_pose(start_loc, self.pose_range,
-								  self.coords_range, self.WH)
-			start_pose = (start_pose[0], -start_pose[1])
-			agent_pos = np.array([start_pose[0], self.height,
-								  start_pose[1]])  # (6.6, -6.9), (3.6, -4.5)
-			# check if the start point is navigable
-			if not self.env.is_navigable(agent_pos):
-				print(f'start pose is not navigable ...')
-				assert 1 == 2
+				#===================================== setup the start location ===============================#
+				start_pose = pxl_coords_to_pose(start_loc, self.pose_range,
+									  self.coords_range, self.WH)
+				start_pose = (start_pose[0], -start_pose[1])
+				agent_pos = np.array([start_pose[0], self.height,
+									  start_pose[1]])  # (6.6, -6.9), (3.6, -4.5)
+				# check if the start point is navigable
+				if not self.env.is_navigable(agent_pos):
+					print(f'start pose is not navigable ...')
+				else:
+					break
 
 			if cfg.NAVI.HFOV == 90:
 				obs_list, pose_list = [], []
@@ -328,7 +330,7 @@ class Data_Gen_View:
 						if count_sample == num_samples:
 							self.env.close()
 							#================================ release the gpu============================
-							gpu_Q.put(device_id)
+							gpu_Q.put(self.device_id)
 							return
 
 					#============================ delete the added frontiers set images ======================
