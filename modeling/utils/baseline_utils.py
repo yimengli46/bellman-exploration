@@ -348,8 +348,8 @@ def pxl_coords_to_pose(coords,
 	min_x, min_z, max_x, max_z = coords_range
 
 	if flag_cropped:
-		X = (x + cell_size/2 + min_x) * cell_size + min_X
-		Z = (WH[0] - (y + cell_size/2 + min_z)) * cell_size + min_Z
+		X = (x + 0.5 + min_x) * cell_size + min_X
+		Z = (WH[0] - (y + 0.5 + min_z)) * cell_size + min_Z
 	else:
 		X = (x + cell_size/2) * cell_size + min_X
 		Z = (WH[0] - (y + cell_size/2)) * cell_size + min_Z
