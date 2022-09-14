@@ -104,6 +104,7 @@ _C.EVAL.SIZE = 'small'
 
 #============================== for model prediction ===================================
 _C.PRED = CN()
+_C.PRED.TYPE = 'MAP' # 'MAP' or 'VIEW'
 
 #========================= input partial map===============
 _C.PRED.PARTIAL_MAP = CN()
@@ -222,5 +223,6 @@ _C.NAVI.FLAG_VISUALIZE_FINAL_TRAJ = True
 _C.NAVI.FLAG_VISUALIZE_MIDDLE_TRAJ = True
 _C.NAVI.FLAG_VISUALIZE_FRONTIER_POTENTIAL = False
 _C.PRED.PARTIAL_MAP.FLAG_VISUALIZE_PRED_LABELS = False
+_C.PRED.VIEW.FLAG_VISUALIZE_PRED_LABELS = False
 
 

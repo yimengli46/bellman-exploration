@@ -21,8 +21,8 @@ PRED:
     EPOCHS: 6
     EVAL_INTERVAL: 1
     FLAG_VISUALIZE_PRED_LABELS: False
-    INPUT: depth_and_sem
-    INPUT_CHANNEL: 43 # 42 + 1
+    INPUT: depth_only
+    INPUT_CHANNEL: 1 # 42 + 1
     OUTPUT_CHANNEL: 4
     INPUT_WH: (256, 256)
     LOSS_TYPE: L1

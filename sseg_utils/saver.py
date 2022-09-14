@@ -8,7 +8,10 @@ from core import cfg
 class Saver(object):
 
     def __init__(self, output_folder):
-        self.directory = os.path.join(output_folder, cfg.PRED.PARTIAL_MAP.INPUT)
+        if cfg.PRED.TYPE == 'MAP':
+            self.directory = os.path.join(output_folder, cfg.PRED.PARTIAL_MAP.INPUT)
+        elif cfg.PRED.TYPE == 'VIEW':
+            self.directory = os.path.join(output_folder, cfg.PRED.VIEW.INPUT)
         self.runs = sorted(glob.glob(os.path.join(self.directory, 'experiment_*')))
         run_id = len(self.runs) if self.runs else 0
 
