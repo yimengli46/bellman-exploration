@@ -1,8 +1,8 @@
 #!/bin/sh
 
 ## Give your job a name to distinguish it from other jobs you run.
-#SBATCH --job-name=train_UNet
-##SBATCH --reservation=yli44_36
+## SBATCH --job-name=train_UNet_occ_only
+#SBATCH --job-name=train_ResNet_sseg_and_depth
 
 ## General partitions: all-HiPri, bigmem-HiPri   --   (12 hour limit)
 ##                     all-LoPri, bigmem-LoPri, gpuq  (5 days limit)
@@ -19,14 +19,14 @@
 #SBATCH --mail-user=yli44@gmu.edu     # Put your GMU email address here
 
 ## Specify how much memory your job needs. (2G is the default)
-#SBATCH --mem=300G        # Total memory needed per task (units: K,M,G,T)
+#SBATCH --mem=50G        # Total memory needed per task (units: K,M,G,T)
 
 ## Specify how much time your job needs. (default: see partition above)
 #SBATCH --time=5-00:00   # Total time needed for job: Days-Hours:Minutes
 
-#SBATCH --gres=gpu:4
-#SBATCH --nodelist=NODE079
-#SBATCH --cpus-per-task 26
+#SBATCH --gres=gpu:2
+#SBATCH --nodelist=NODE040
+#SBATCH --cpus-per-task 15
 
 ## Load the relevant modules needed for the job
 module load cuda/11.2
@@ -36,4 +36,5 @@ module load gcc/7.5.0
 source /scratch/yli44/habitat_env_argo/bin/activate
 
 ## Run your program or script
-python train_UNet_input_partial_map.py
+#python train_UNet_input_partial_map.py
+python train_ResNet_input_view.py

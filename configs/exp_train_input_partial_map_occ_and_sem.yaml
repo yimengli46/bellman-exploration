@@ -10,7 +10,7 @@ NAVI:
 
 PRED:
   PARTIAL_MAP:
-    BATCH_SIZE: 64
+    BATCH_SIZE: 12
     CHECKNAME: unet
     DEVICE: cuda
     DIVIDE_AREA: 100
@@ -24,7 +24,7 @@ PRED:
     LOSS_TYPE: L1
     NEIGHBOR_SIZE: 40
     NUM_GENERATED_SAMPLES_PER_SCENE: 5000
-    NUM_WORKERS: 24
+    NUM_WORKERS: 8
     RESUME: ''
     SAVED_FOLDER: 'output/model_weights_UNet_input_partial_map'
     STEP_GAP: 5

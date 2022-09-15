@@ -77,13 +77,14 @@ class MP3DViewDataset(data.Dataset):
 
 		#================= convert to tensor=================
 		tensor_depth = torch.tensor(depth_obs, dtype=torch.float32)
-		tensor_sseg = torch.tensor(sseg_obs, dtype=torch.long)
+		tensor_sseg = torch.tensor(sseg_obs, dtype=torch.float32)
 		#print(f'tensor_depth.shape = {tensor_depth.shape}')
 		#print(f'tensor_sseg.shape = {tensor_sseg.shape}')
 
 		#================= convert input tensor into one-hot vector===========================
 		tensor_depth = tensor_depth.unsqueeze(0)
-		tensor_sseg = F.one_hot(tensor_sseg, num_classes=cfg.SEM_MAP.GRID_CLASS_SIZE).permute(2, 0, 1) # num_classes x H x W
+		tensor_sseg = tensor_sseg.unsqueeze(0)
+		#tensor_sseg = F.one_hot(tensor_sseg, num_classes=cfg.SEM_MAP.GRID_CLASS_SIZE).permute(2, 0, 1) # num_classes x H x W
 		#print(f'tensor_sseg.shape = {tensor_sseg.shape}')
 		tensor_input = torch.cat((tensor_depth, tensor_sseg), 0).float()
 		tensor_output = torch.tensor([R, D, Din, Dout]).float()

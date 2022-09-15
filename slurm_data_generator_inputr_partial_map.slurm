@@ -1,12 +1,14 @@
 #!/bin/sh
 
 ## Give your job a name to distinguish it from other jobs you run.
-#SBATCH --job-name=data_gen
+#SBATCH --job-name=gen_train
 
 ## General partitions: all-HiPri, bigmem-HiPri   --   (12 hour limit)
 ##                     all-LoPri, bigmem-LoPri, gpuq  (5 days limit)
 ## Restricted: CDS_q, CS_q, STATS_q, HH_q, GA_q, ES_q, COS_q  (10 day limit)
 #SBATCH --partition=gpuq
+
+#SBATCH --reservation=yli44_40
 
 ## Separate output and error messages into 2 files.
 ## NOTE: %u=userID, %x=jobName, %N=nodeID, %j=jobID, %A=arrayID, %a=arrayTaskID
@@ -18,12 +20,12 @@
 #SBATCH --mail-user=yli44@gmu.edu     # Put your GMU email address here
 
 ## Specify how much memory your job needs. (2G is the default)
-#SBATCH --mem=100G        # Total memory needed per task (units: K,M,G,T)
+#SBATCH --mem=300G        # Total memory needed per task (units: K,M,G,T)
 
 ## Specify how much time your job needs. (default: see partition above)
 #SBATCH --time=5-00:00   # Total time needed for job: Days-Hours:Minutes
-#SBATCH --gres=gpu:1
-#SBATCH --nodelist=NODE040
+#SBATCH --gres=gpu:4
+#SBATCH --nodelist=NODE078
 #SBATCH --cpus-per-task 22
 
 ## Load the relevant modules needed for the job
@@ -34,4 +36,5 @@ module load gcc/7.5.0
 source /scratch/yli44/habitat_env_argo/bin/activate
 
 ## Run your program or script
-python data_generator_input_partial_map.py
+#python data_generator_input_partial_map.py
+python data_generator_input_view.py --j=6

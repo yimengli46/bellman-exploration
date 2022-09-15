@@ -10,7 +10,7 @@ NAVI:
 
 PRED:
   PARTIAL_MAP:
-    BATCH_SIZE: 42
+    BATCH_SIZE: 12
     CHECKNAME: unet
     DEVICE: cuda
     DIVIDE_AREA: 100

@@ -13,7 +13,7 @@ from core import cfg
 
 #======================================================================================
 cfg.merge_from_file('configs/exp_train_input_view_depth_and_sem.yaml')
-#cfg.merge_from_file('configs/exp_train_input_partial_map_occ_only.yaml')
+#cfg.merge_from_file('configs/exp_train_input_view_depth_only.yaml')
 cfg.freeze()
 
 output_folder = cfg.PRED.VIEW.SAVED_FOLDER
@@ -54,7 +54,7 @@ model = model.cuda()
 import torch.optim as optim
 train_params = [{'params': model.parameters(), 'lr': cfg.PRED.VIEW.LR}]
 optimizer = optim.Adam(train_params, lr=cfg.PRED.VIEW.LR, betas=(0.9, 0.999))
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
 
 # Define Criterion
 # whether to use class balanced weights
@@ -82,14 +82,14 @@ for epoch in range(cfg.PRED.VIEW.EPOCHS):
 	for batch in dataloader_train:
 		print('epoch = {}, iter_num = {}'.format(epoch, iter_num))
 		images, targets = batch['input'], batch['output']
-		print('images = {}'.format(images.shape))
-		print('targets = {}'.format(targets.shape))
+		#print('images = {}'.format(images.shape))
+		#print('targets = {}'.format(targets.shape))
 		
 		images, targets = images.cuda(), targets.cuda()
 		
 		#================================================ compute loss =============================================
 		output = model(images) # batchsize x 1 x H x W
-		print(f'output.shape = {output.shape}')
+		#print(f'output.shape = {output.shape}')
 		loss = criterion(output, targets)
 
 		#================================================= compute gradient =================================================

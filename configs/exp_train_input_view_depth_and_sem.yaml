@@ -14,7 +14,7 @@ NAVI:
 PRED:
   TYPE: 'VIEW'
   VIEW:
-    BATCH_SIZE: 3
+    BATCH_SIZE: 64
     CHECKNAME: resnet
     DEVICE: cuda
     DIVIDE_AREA: 100
@@ -22,12 +22,12 @@ PRED:
     EVAL_INTERVAL: 1
     FLAG_VISUALIZE_PRED_LABELS: False
     INPUT: depth_and_sem
-    INPUT_CHANNEL: 43 # 42 + 1
+    INPUT_CHANNEL: 2 # 42 + 1
     OUTPUT_CHANNEL: 4
     INPUT_WH: (256, 256)
     LOSS_TYPE: L1
     NUM_GENERATED_SAMPLES_PER_SCENE: 1000
-    NUM_WORKERS: 2
+    NUM_WORKERS: 10
     RESUME: ''
     SAVED_FOLDER: 'output/model_weights_RESNET_input_view'
     STEP_GAP: 5
