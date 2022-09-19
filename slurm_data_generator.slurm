@@ -8,8 +8,6 @@
 ## Restricted: CDS_q, CS_q, STATS_q, HH_q, GA_q, ES_q, COS_q  (10 day limit)
 #SBATCH --partition=gpuq
 
-#SBATCH --reservation=yli44_40
-
 ## Separate output and error messages into 2 files.
 ## NOTE: %u=userID, %x=jobName, %N=nodeID, %j=jobID, %A=arrayID, %a=arrayTaskID
 #SBATCH --output=/scratch/yli44/logs/%x-%N-%j.out  # Output file
@@ -24,9 +22,9 @@
 
 ## Specify how much time your job needs. (default: see partition above)
 #SBATCH --time=5-00:00   # Total time needed for job: Days-Hours:Minutes
-#SBATCH --gres=gpu:4
-#SBATCH --nodelist=NODE078
-#SBATCH --cpus-per-task 22
+#SBATCH --gres=gpu:3
+#SBATCH --nodelist=NODE079
+#SBATCH --cpus-per-task 18
 
 ## Load the relevant modules needed for the job
 module load cuda/11.2

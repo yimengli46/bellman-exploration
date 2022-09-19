@@ -26,15 +26,15 @@ PRED:
     OUTPUT_CHANNEL: 4
     INPUT_WH: (256, 256)
     LOSS_TYPE: L1
-    NUM_GENERATED_SAMPLES_PER_SCENE: 1000
+    NUM_GENERATED_SAMPLES_PER_SCENE: 5000
     NUM_WORKERS: 10
     RESUME: ''
     SAVED_FOLDER: 'output/model_weights_RESNET_input_view'
     STEP_GAP: 5
     LR: 1e-3
-    NUM_PROCESS: 8
+    NUM_PROCESS: 18
     multiprocessing: 'mp'
-    GEN_SAMPLES_SAVED_FOLDER: 'output/training_data_input_view_1000samples'
+    GEN_SAMPLES_SAVED_FOLDER: 'output/training_data_input_view_5000samples'
 
 
 SAVE:
