@@ -208,6 +208,125 @@ class localNav_slam(object):
 
 		act = self.act_trans_dict[a]
 		return act, act_seq, subgoal_coords, subgoal_pose
+
+	def plan_to_reach_frontier_for_fig(self, agent_map_pose, chosen_frontier, occ_map):
+		'''
+		# check collision
+		if self.current_loc is not None and self.last_act == 0: # last action is moving forward
+			if self.check_drift(agent_map_pose) and len(self.recovery_actions) == 0:
+				if self.num_resets == 6:
+					print(f'!! collision detected, entering recovery actions ...')
+					num_rots = int(np.round(180 / self.dt))
+					self.recovery_actions = [1]*num_rots + [0]*6
+					self.flag_collision = True
+					self.num_resets = 0
+				else:
+					print(f'!! collision detected, do nothing ...')
+					self.num_resets += 1
+		'''
+
+		#===========================================================================
+		self.current_loc = agent_map_pose
+		fron_centroid_coords = (int(chosen_frontier.centroid[1]),
+								int(chosen_frontier.centroid[0]))
+
+		subgoal_coords = fron_centroid_coords
+		subgoal_pose = pxl_coords_to_pose(subgoal_coords, self.pose_range,
+										  self.coords_range, self.WH)
+
+		agent_coords = pose_to_coords(agent_map_pose, self.pose_range, self.coords_range, self.WH)
+		#self.mark_on_map(agent_coords)
+		theta = agent_map_pose[2]
+		theta = (theta - .5 * pi)
+		state = np.array([agent_coords[0], agent_coords[1], theta])
+		
+		#=========================== update traversible map =========================
+
+		## dilate the obstacle in the configuration space 
+		obstacle = (occ_map == cfg.FE.COLLISION_VAL)
+		if cfg.NAVI.GT_OCC_MAP_TYPE == 'PCD_HEIGHT':
+			traversible = skimage.morphology.binary_dilation(obstacle, self.selem) != True
+		else:
+			traversible = (obstacle != True)
+		traversible_original = traversible.copy()
+
+		## add the collision map
+		traversible[self.collision_map == 1] = 0
+
+		## add visited map
+		traversible[self.visited == 1] = 1
+
+		## add current loc
+		traversible[agent_coords[1]-1:agent_coords[1]+2, 
+					agent_coords[0]-1:agent_coords[0]+2] = 1
+
+		## add goal loc
+		traversible[subgoal_coords[1]-1:subgoal_coords[1]+2, 
+					subgoal_coords[0]-1:subgoal_coords[0]+2] = 1
+
+		#traversible_locs = skimage.morphology.binary_dilation(self.visited, self.selem) == True
+		#traversible = np.logical_or(traversible_locs, traversible)
+
+		#'''
+		if self.flag_collision:
+			if False:
+				fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(25, 10))
+				ax[0].imshow(traversible_original, cmap='gray')
+				marker, scale = gen_arrow_head_marker(agent_map_pose[2])
+				ax[0].scatter(agent_coords[0], agent_coords[1], marker=marker, s=(30*scale)**2, c='red', zorder=5)
+				ax[1].imshow(traversible, cmap='gray')
+				ax[2].imshow(self.collision_map)
+				ax[2].scatter(agent_coords[0], agent_coords[1], marker=marker, s=(10*scale)**2, c='red', zorder=5)
+				fig.tight_layout()
+				plt.title('observed area')
+				plt.show()
+			self.flag_collision = False
+		#'''
+
+		#================================== planning =================================		
+		planner = FMMPlanner(traversible, 360//self.dt)
+		goal_loc_int = np.array(subgoal_coords).astype(np.int32)
+		reachable = planner.set_goal(goal_loc_int)
+
+		self.fmm_dist = planner.fmm_dist * 1
+		a, state, act_seq = planner.get_action(state)
+		for i in range(len(act_seq)):
+			if act_seq[i] == 3:
+				act_seq[i] = 0
+			elif act_seq[i] == 0:
+				act_seq[i] = 3
+		if a == 3:
+			a = 0
+		elif a == 0:
+			a = 3
+
+		'''
+		if a == 3:
+			fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(25, 10))
+			ax[0].imshow(traversible_original, cmap='gray')
+			marker, scale = gen_arrow_head_marker(agent_map_pose[2])
+			ax[0].scatter(agent_coords[0], agent_coords[1], marker=marker, s=(30*scale)**2, c='red', zorder=5)
+			ax[1].imshow(traversible, cmap='gray')
+			ax[2].imshow(self.collision_map)
+			ax[2].scatter(agent_coords[0], agent_coords[1], marker=marker, s=(10*scale)**2, c='red', zorder=5)
+			fig.tight_layout()
+			plt.title('observed area')
+			plt.show()
+		'''
+
+		'''
+		# still in the recovery process
+		if len(self.recovery_actions) > 0:
+			a = self.recovery_actions[0]
+			self.recovery_actions = self.recovery_actions[1:]
+			print(f'--execute recovery action {a}')
+		'''
+
+		self.act_seq = act_seq
+		self.last_act = a
+
+		act = self.act_trans_dict[a]
+		return act, act_seq, subgoal_coords, subgoal_pose
 	
 	def mark_on_map(self, loc):
 		# input is the coordinates on the map

@@ -8,12 +8,17 @@ import matplotlib.pyplot as plt
 #yaml_file = 'exp_360degree_Greedy_NAVMESH_MAP_UNet_OCCandSEM_Potential_1STEP_1000STEPS.yaml'
 #yaml_file = 'exp_360degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml'
 yaml_file = 'exp_360degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_D_Skeleton_Dall_1STEP_1000STEPS.yaml'
+#yaml_file = 'exp_90degree_FME_NAVMESH_MAP_1STEP_1000STEPS.yaml'
+#yaml_file = 'exp_90degree_Greedy_NAVMESH_MAP_UNet_OCCandSEM_Potential_1STEP_1000STEPS.yaml'
+#yaml_file = 'exp_90degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml'
+#yaml_file = 'exp_90degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_D_Skeleton_Dall_1STEP_1000STEPS.yaml'
 cfg.merge_from_file(f'configs/{yaml_file}')
 cfg.freeze()
 
 avg_percent_list = []
 avg_step_list = []
-thresh_percent = .01
+thresh_percent = .0
+thresh_steps = 0
 
 df = pd.DataFrame(columns=['Scene', 'Run', 'Num_steps', 'Coverage_500steps', 'Coverage_1000steps', 'MaxSteps', 'Scene_Area'])
 df['Num_steps'] = df['Num_steps'].astype(int)
@@ -93,10 +98,10 @@ for env_scene in cfg.MAIN.TEST_SCENE_NO_FLOOR_LIST:
 					entire_area = last_area * 1. / last_percent
 					'''
 
-					if num_steps < 1000 and cov_final < 0.95:
-						pass
-					else:
-						df = df.append({'Scene': scene_name, 'Run': i, 'Num_steps': num_steps, 'Coverage_500steps': cov, 'Coverage_1000steps': cov_final, 'MaxSteps': max_steps, 'Scene_Area': entire_area}, 
+					#if num_steps < 1000 and cov_final < 0.95:
+					#	pass
+					#else:
+					df = df.append({'Scene': scene_name, 'Run': i, 'Num_steps': num_steps, 'Coverage_500steps': cov, 'Coverage_1000steps': cov_final, 'MaxSteps': max_steps, 'Scene_Area': entire_area}, 
 							ignore_index=True)
 				#else:
 				#	df = df.append({'Scene': scene_name, 'Run': i, 'Num_steps': np.nan, 'Coverage': np.nan, 'Scene_Area': area}, 
@@ -126,8 +131,10 @@ html_f.write(html)
 #==================================== clean up df ===========================
 df2 = df.dropna()
 # ignore coverage lower than 0.2
-filt = df2['Coverage_500steps'] >= thresh_percent
-df2 = df2[filt]
+filt1 = df2['Coverage_500steps'] >= thresh_percent
+df2 = df2[filt1]
+filt2 = df2['Num_steps'] >= thresh_steps
+df2 = df2[filt2]
 
 #============================= compute data by scene ===============================
 scene_grp = df2.groupby(['Scene'])

@@ -12,14 +12,14 @@ from itertools import islice
 import cv2
 from dataloader_input_partial_map import get_all_scene_dataset, my_collate
 
-cfg.merge_from_file('configs/exp_train_input_partial_map.yaml')
+cfg.merge_from_file('configs/exp_train_input_partial_map_occ_and_sem.yaml')
 cfg.freeze()
 
 Total_Samples = 100
 BATCH_SIZE = 4
 
 data_folder = cfg.PRED.PARTIAL_MAP.GEN_SAMPLES_SAVED_FOLDER
-dataset_val = get_all_scene_dataset('val', ['pLe4wQe7qrG_0'], data_folder)
+dataset_val = get_all_scene_dataset('val', ['2azQ1b91cZZ_0'], data_folder)
 dataloader_val = data.DataLoader(dataset_val, 
 	batch_size=BATCH_SIZE, 
 	num_workers=2,
@@ -29,10 +29,12 @@ dataloader_val = data.DataLoader(dataset_val,
 
 device = torch.device('cuda')
 
+'''
 model = UNet(n_channel_in=cfg.PRED.PARTIAL_MAP.INPUT_CHANNEL, n_class_out=cfg.PRED.PARTIAL_MAP.OUTPUT_CHANNEL).cuda()
 checkpoint = torch.load(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/{cfg.PRED.PARTIAL_MAP.INPUT}/experiment_6/checkpoint.pth.tar')
 model.load_state_dict(checkpoint['state_dict'])
 model.eval()
+'''
 
 #assert 1==2
 
@@ -43,13 +45,13 @@ with torch.no_grad():
 		original_targets = batch['original_target']
 		#print('images = {}'.format(images))
 		#print('targets = {}'.format(targets))
-		images, targets = images.cuda(), targets.cuda()
+		#images, targets = images.cuda(), targets.cuda()
 
-		outputs = model(images)
+		#outputs = model(images)
 
-		images = images.cpu().numpy()
-		targets = targets.cpu().numpy()
-		outputs = outputs.cpu().numpy() # batch_size, 4, H, W
+		#images = images.cpu().numpy()
+		#targets = targets.cpu().numpy()
+		#outputs = outputs.cpu().numpy() # batch_size, 4, H, W
 
 		for idx in range(BATCH_SIZE):
 			print(f'count = {count}')
@@ -70,7 +72,7 @@ with torch.no_grad():
 			#assert 1==2
 			
 			#======================= show the whole prediction ======================
-			'''
+			#'''
 			fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(20, 30))
 			ax[0][0].imshow(occ_map_Mp, cmap='gray')
 			ax[0][0].get_xaxis().set_visible(False)
@@ -100,10 +102,10 @@ with torch.no_grad():
 			plt.show()
 			#fig.savefig(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/img_{count}.jpg')
 			#plt.close()
-			'''
+			#'''
 
 			#===================== show the prediction on the frontiers ===================
-			#'''
+			'''
 			mask_zero = (target == 0)
 			output[mask_zero] = 0
 
@@ -134,9 +136,10 @@ with torch.no_grad():
 			ax[2][1].get_xaxis().set_visible(False)
 			ax[2][1].get_yaxis().set_visible(False)
 			ax[2][1].set_title('predict: U_dall')
+			'''
 
 			#==================== compare each frontier prediction ===============
-			#'''
+			'''
 			for fron in frons:
 				points = fron.points.transpose()
 				centroid_y, centroid_x = fron.centroid
@@ -157,10 +160,10 @@ with torch.no_grad():
 
 					output_val = np.mean(output[mask_points[:, 0], mask_points[:, 1], 1])
 					ax[2][1].text(centroid_x, centroid_y, f'{output_val:.2f}', fontsize=20, color='white')
-			#'''
+			'''
 
-			fig.tight_layout()
-			plt.show()
+			#fig.tight_layout()
+			#plt.show()
 			#fig.savefig(f'{cfg.PRED.PARTIAL_MAP.SAVED_FOLDER}/img_{count}_zeroout_occmap_only.jpg')
 			#plt.close()
 			#'''

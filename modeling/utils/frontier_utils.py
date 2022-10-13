@@ -759,7 +759,7 @@ def get_frontier_with_DP(frontiers, agent_pose, dist_occupancy_map, steps, LN):
 		visited_frontiers = set()
 		Q, rest_steps = compute_Q(agent_coord, fron, frontiers, visited_frontiers, steps,
 					  dist_occupancy_map)
-		#print(f'Q = {Q}, rest_steps = {rest_steps}')
+		#print(f'Q = {Q}, rest_steps = {rest_steps}, R_A = {fron.R}')
 		if Q > max_Q:
 			max_Q = Q
 			max_steps = rest_steps
