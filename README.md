@@ -1,11 +1,11 @@
-# Bellman-Equation-2022
+# Bellman-Equation
 Detect frontiers between explored and unknown areas as subgoals.  
 Select subgoals with maximum values computed from a Bellman Equation designed for exploration.  
 <img src='Figs/example_traj.jpg'>
 ### Installation
 ```
-git clone --branch yimeng https://github.com/RAIL-group/bellman-exploration-2022.git
-cd  bellman-exploration-2022
+git clone --branch yimeng https://github.com/RAIL-group/bellman-exploration.git
+cd  bellman-exploration
 mkdir output
 ```
 
@@ -65,7 +65,7 @@ You also need to download self-generated task episode data from [here](https://d
 Unzip the episode data and put it under `habitat-lab/data/datasets/pointnav/mp3d`.  
 Create softlinks to the data.  
 ```
-cd  bellman-exploration-2022
+cd  bellman-exploration
 ln -s habitat-lab/data data
 ```
 The code requires the datasets in data folder in the following format:
@@ -90,7 +90,7 @@ All the parameters are controlled by the configuration file `core/config.py`.
 Please create a new configuration file when you initialize a new task and saved in folder `configs`.
 ##### Exploring the environment
 To run the large-scale evaluation, you need to download pre-generated 'scene maps' and 'scene floor heights' from [here](https://drive.google.com/drive/folders/10ApKQzaIPDvEAvbcVXQkaGBjxnvUIpND?usp=sharing "here").  
-Download it and put it under ` bellman-exploration-2022/output`.  
+Download it and put it under ` bellman-exploration/output`.  
 Then you can start the evaluation.  
 For example, if you want to evaluate the baseline Greedy approach, use the following command.  
 ```
