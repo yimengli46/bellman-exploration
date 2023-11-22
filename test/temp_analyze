@@ -1,0 +1,653 @@
+There are 61 scenes in the training episodes data.
+filename is ur6pFq6Qu1A.json.gz.
+filename is pRbA3pwrgk9.json.gz.
+filename is 8WUmhLawc2A.json.gz.
+filename is sKLMLpTHeUy.json.gz.
+filename is 82sE5b5pLXE.json.gz.
+filename is PX4nDJXEHrG.json.gz.
+filename is 5q7pvUzZiYa.json.gz.
+filename is EDJbREhghzL.json.gz.
+filename is ac26ZMwG7aT.json.gz.
+filename is b8cTxDM8gDG.json.gz.
+filename is 5LpN3gDmAk7.json.gz.
+filename is XcA2TqTSSAj.json.gz.
+filename is VLzqgDo317F.json.gz.
+filename is S9hNv5qa7GM.json.gz.
+filename is qoiz87JEwZ2.json.gz.
+filename is 2n8kARJN3HM.json.gz.
+filename is V2XKFyX4ASd.json.gz.
+filename is GdvgFV5R1Z5.json.gz.
+filename is rPc6DW4iMge.json.gz.
+filename is 1pXnuDYAj8r.json.gz.
+filename is VVfe2KiqLaN.json.gz.
+filename is gZ6f7yhEvPG.json.gz.
+filename is VzqfbhrpDEA.json.gz.
+filename is cV4RVeZvu5T.json.gz.
+filename is JeFG25nYj2p.json.gz.
+filename is Vvot9Ly1tCj.json.gz.
+filename is 759xd9YjKW5.json.gz.
+filename is ZMojNkEp431.json.gz.
+filename is Uxmj2M2itWa.json.gz.
+filename is PuKPg4mmafe.json.gz.
+filename is e9zR4mvMWw7.json.gz.
+filename is vyrNrziPKCB.json.gz.
+filename is aayBHfsNo7d.json.gz.
+filename is dhjEzFoUFzH.json.gz.
+filename is sT4fr6TAbpF.json.gz.
+filename is Pm6F8kyY3z2.json.gz.
+filename is 1LXtFkjw3qL.json.gz.
+filename is r47D5H71a5s.json.gz.
+filename is JF19kD82Mey.json.gz.
+filename is uNb9QFRL6hY.json.gz.
+filename is p5wJjkQkbXX.json.gz.
+filename is JmbYfDe2QKZ.json.gz.
+filename is SN83YJsR3w2.json.gz.
+filename is ULsKaCPVFJR.json.gz.
+filename is HxpKQynjfin.json.gz.
+filename is D7N2EKCX4Sj.json.gz.
+filename is VFuaQ6m2Qom.json.gz.
+filename is jh4fc5c5qoQ.json.gz.
+filename is s8pcmisQ38h.json.gz.
+filename is kEZ7cmS4wCh.json.gz.
+filename is i5noydFURQK.json.gz.
+filename is 29hnd4uzFmX.json.gz.
+filename is r1Q1Z4BcV1o.json.gz.
+filename is B6ByNegPMKs.json.gz.
+filename is mJXqzFtmKg4.json.gz.
+filename is D7G3Y4RVNrH.json.gz.
+filename is E9uDoFAP3SH.json.gz.
+filename is YmJkqBEsHnH.json.gz.
+filename is 17DRP5sb8fy.json.gz.
+filename is gTV8FGcVJC9.json.gz.
+filename is 7y3sRwLe3Va.json.gz.
+filename is ur6pFq6Qu1A.
+max_nC = 3
+num_floors = 3
+values = [0.12697899 0.12701249 0.12702797 ... 0.72692269 0.72697592 0.72697902], counts = [71265     1     1 ...     1     1   322]
+mode_heights = ModeResult(mode=array([0.12697899]), count=array([71265])), mode_height = 0.12697899341583252
+mode_heights = ModeResult(mode=array([0.32697901]), count=array([182])), mode_height = 0.32697901129722595
+mode_heights = ModeResult(mode=array([0.72697902]), count=array([322])), mode_height = 0.7269790172576904
+{0: {'y': 0.12697899341583252}}
+------------------------------------------------
+filename is pRbA3pwrgk9.
+max_nC = 3
+num_floors = 3
+values = [-5.7661953  -5.7612009  -5.75812769 ...  6.86554384  6.89799738
+  7.02420712], counts = [11  1  1 ...  1  1  1]
+mode_heights = ModeResult(mode=array([-0.76619482]), count=array([15911])), mode_height = -0.7661948204040527
+mode_heights = ModeResult(mode=array([2.83380508]), count=array([16344])), mode_height = 2.8338050842285156
+mode_heights = ModeResult(mode=array([6.83380508]), count=array([7192])), mode_height = 6.833805084228516
+{0: {'y': -0.7661948204040527}, 1: {'y': 2.8338050842285156}, 2: {'y': 6.833805084228516}}
+------------------------------------------------
+filename is 8WUmhLawc2A.
+max_nC = 3
+num_floors = 3
+values = [0.100657   0.10072067 0.10077586 ... 1.29731572 1.29850459 1.30065703], counts = [77472     1     1 ...     1     1    11]
+mode_heights = ModeResult(mode=array([0.100657]), count=array([77472])), mode_height = 0.10065700113773346
+mode_heights = ModeResult(mode=array([0.50065702]), count=array([920])), mode_height = 0.5006570219993591
+mode_heights = ModeResult(mode=array([0.900657]), count=array([344])), mode_height = 0.9006569981575012
+{0: {'y': 0.10065700113773346}}
+------------------------------------------------
+filename is sKLMLpTHeUy.
+max_nC = 3
+num_floors = 3
+values = [-2.85034084 -2.85033226 -2.85031319 ...  3.5190208   3.5277741
+  3.54965901], counts = [8225    1    1 ...    1    1    4]
+mode_heights = ModeResult(mode=array([2.94965911]), count=array([21524])), mode_height = 2.9496591091156006
+mode_heights = ModeResult(mode=array([0.14965916]), count=array([22061])), mode_height = 0.1496591567993164
+mode_heights = ModeResult(mode=array([-2.85034084]), count=array([8225])), mode_height = -2.8503408432006836
+{0: {'y': 2.9496591091156006}, 1: {'y': 0.1496591567993164}, 2: {'y': -2.8503408432006836}}
+------------------------------------------------
+filename is 82sE5b5pLXE.
+max_nC = 3
+num_floors = 3
+values = [-0.66220599 -0.66220272 -0.66209745 ...  2.68892312  2.69522524
+  2.72779775], counts = [5815    1    1 ...    1    1    1]
+mode_heights = ModeResult(mode=array([0.13779402]), count=array([27593])), mode_height = 0.13779401779174805
+mode_heights = ModeResult(mode=array([-0.46220598]), count=array([12799])), mode_height = -0.4622059762477875
+mode_heights = ModeResult(mode=array([2.53779411]), count=array([623])), mode_height = 2.5377941131591797
+{0: {'y': 0.13779401779174805}, 1: {'y': 2.5377941131591797}}
+------------------------------------------------
+filename is PX4nDJXEHrG.
+max_nC = 3
+num_floors = 3
+values = [-5.08445406 -4.90564823 -4.238904   ...  3.31515837  3.31536198
+  3.31554651], counts = [ 1  1  1 ...  1  1 36]
+mode_heights = ModeResult(mode=array([0.11554623]), count=array([25171])), mode_height = 0.11554622650146484
+mode_heights = ModeResult(mode=array([-3.88445377]), count=array([6199])), mode_height = -3.884453773498535
+mode_heights = ModeResult(mode=array([3.1155467]), count=array([12885])), mode_height = 3.115546703338623
+{0: {'y': 0.11554622650146484}, 1: {'y': -3.884453773498535}, 2: {'y': 3.115546703338623}}
+------------------------------------------------
+filename is 5q7pvUzZiYa.
+max_nC = 3
+num_floors = 3
+values = [-3.79657483 -3.79562521 -3.79398274 ...  4.17082739  4.1749444
+  4.20342493], counts = [3506    1    1 ...    1    1    1]
+mode_heights = ModeResult(mode=array([-3.39657497]), count=array([24442])), mode_height = -3.3965749740600586
+mode_heights = ModeResult(mode=array([0.00342512]), count=array([9132])), mode_height = 0.003425121307373047
+mode_heights = ModeResult(mode=array([3.20342541]), count=array([17039])), mode_height = 3.203425407409668
+{0: {'y': -3.3965749740600586}, 1: {'y': 0.003425121307373047}, 2: {'y': 3.203425407409668}}
+------------------------------------------------
+filename is EDJbREhghzL.
+max_nC = 3
+num_floors = 3
+values = [0.103333   0.10335467 0.10343503 ... 3.88024664 3.88361049 3.88697815], counts = [32674     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([0.103333]), count=array([32674])), mode_height = 0.1033330038189888
+mode_heights = ModeResult(mode=array([3.30333304]), count=array([17042])), mode_height = 3.303333044052124
+mode_heights = ModeResult(mode=array([3.103333]), count=array([16082])), mode_height = 3.103332996368408
+{0: {'y': 0.1033330038189888}, 1: {'y': 3.303333044052124}}
+------------------------------------------------
+filename is ac26ZMwG7aT.
+max_nC = 3
+num_floors = 3
+values = [-0.06077801 -0.06071576 -0.06071109 ...  0.93723774  0.93844342
+  0.93922204], counts = [11042     1     1 ...     1     1    52]
+mode_heights = ModeResult(mode=array([0.139222]), count=array([61256])), mode_height = 0.13922199606895447
+mode_heights = ModeResult(mode=array([-0.06077801]), count=array([11042])), mode_height = -0.06077800691127777
+mode_heights = ModeResult(mode=array([0.539222]), count=array([171])), mode_height = 0.539222002029419
+{0: {'y': 0.13922199606895447}}
+------------------------------------------------
+filename is b8cTxDM8gDG.
+max_nC = 3
+num_floors = 3
+values = [-3.54672503 -3.54528522 -3.54497719 ...  4.05327511  4.08279133
+  4.20109367], counts = [2033    1    1 ...   15    1    1]
+mode_heights = ModeResult(mode=array([-2.94672513]), count=array([17530])), mode_height = -2.9467251300811768
+mode_heights = ModeResult(mode=array([0.4532752]), count=array([19564])), mode_height = 0.453275203704834
+mode_heights = ModeResult(mode=array([3.85327482]), count=array([7636])), mode_height = 3.8532748222351074
+{0: {'y': -2.9467251300811768}, 1: {'y': 0.453275203704834}, 2: {'y': 3.8532748222351074}}
+------------------------------------------------
+filename is 5LpN3gDmAk7.
+max_nC = 3
+num_floors = 3
+values = [-1.28434992 -1.28434157 -1.28433597 ...  4.13337994  4.18588877
+  4.19900227], counts = [3566    1    1 ...    1    1    1]
+mode_heights = ModeResult(mode=array([-1.08434999]), count=array([31926])), mode_height = -1.0843499898910522
+mode_heights = ModeResult(mode=array([3.11564994]), count=array([20643])), mode_height = 3.115649938583374
+mode_heights = ModeResult(mode=array([-1.28434992]), count=array([3566])), mode_height = -1.2843499183654785
+{0: {'y': -1.0843499898910522}, 1: {'y': 3.115649938583374}}
+------------------------------------------------
+filename is XcA2TqTSSAj.
+max_nC = 3
+num_floors = 3
+values = [-4.94555426 -4.94549561 -4.94546843 ...  6.94346189  6.97399807
+  6.9929657 ], counts = [6315    1    1 ...    1    1    1]
+mode_heights = ModeResult(mode=array([2.05444622]), count=array([13991])), mode_height = 2.054446220397949
+mode_heights = ModeResult(mode=array([-4.94555426]), count=array([6315])), mode_height = -4.945554256439209
+mode_heights = ModeResult(mode=array([6.45444632]), count=array([2911])), mode_height = 6.454446315765381
+{0: {'y': 2.054446220397949}, 1: {'y': -4.945554256439209}, 2: {'y': 6.454446315765381}}
+------------------------------------------------
+filename is VLzqgDo317F.
+max_nC = 3
+num_floors = 3
+values = [-3.19205093 -3.161726   -3.16170621 ...  3.67460179  3.68141317
+  3.69694781], counts = [   1 7230    1 ...    1    1    1]
+mode_heights = ModeResult(mode=array([3.2382741]), count=array([15450])), mode_height = 3.238274097442627
+mode_heights = ModeResult(mode=array([-2.96172619]), count=array([14892])), mode_height = -2.961726188659668
+mode_heights = ModeResult(mode=array([-2.56172609]), count=array([187])), mode_height = -2.5617260932922363
+{0: {'y': 3.238274097442627}, 1: {'y': -2.961726188659668}}
+------------------------------------------------
+filename is S9hNv5qa7GM.
+max_nC = 3
+num_floors = 3
+values = [0.116278   0.11629989 0.11651891 ... 3.28531289 3.29424882 3.31161427], counts = [51714     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([0.116278]), count=array([51714])), mode_height = 0.11627800017595291
+mode_heights = ModeResult(mode=array([2.91627789]), count=array([26994])), mode_height = 2.9162778854370117
+mode_heights = ModeResult(mode=array([0.13841841]), count=array([2])), mode_height = 0.13841840624809265
+{0: {'y': 0.11627800017595291}, 1: {'y': 2.9162778854370117}}
+------------------------------------------------
+filename is qoiz87JEwZ2.
+max_nC = 3
+num_floors = 3
+values = [-3.28400779 -3.28354955 -3.28313327 ...  1.1402427   1.14713645
+  1.17460918], counts = [1 1 1 ... 1 1 1]
+mode_heights = ModeResult(mode=array([-3.09999514]), count=array([42528])), mode_height = -3.0999951362609863
+mode_heights = ModeResult(mode=array([0.3000052]), count=array([19352])), mode_height = 0.3000051975250244
+mode_heights = ModeResult(mode=array([-2.89999509]), count=array([400])), mode_height = -2.8999950885772705
+{0: {'y': -3.0999951362609863}, 1: {'y': 0.3000051975250244}}
+------------------------------------------------
+filename is 2n8kARJN3HM.
+max_nC = 3
+num_floors = 3
+values = [-3.46876192 -3.4686501  -3.46863294 ...  0.97229844  0.99306625
+  1.06342673], counts = [26833     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([0.13123798]), count=array([43835])), mode_height = 0.13123798370361328
+mode_heights = ModeResult(mode=array([-3.46876192]), count=array([26833])), mode_height = -3.468761920928955
+mode_heights = ModeResult(mode=array([-3.06876183]), count=array([2182])), mode_height = -3.0687618255615234
+{0: {'y': 0.13123798370361328}, 1: {'y': -3.468761920928955}}
+------------------------------------------------
+filename is V2XKFyX4ASd.
+max_nC = 3
+num_floors = 3
+values = [-2.89690399 -2.89675736 -2.89661026 ...  5.90209484  5.9030962
+  6.70309639], counts = [25395     1     1 ...     1  5447     1]
+mode_heights = ModeResult(mode=array([2.90309596]), count=array([14146])), mode_height = 2.9030959606170654
+mode_heights = ModeResult(mode=array([-2.89690399]), count=array([25395])), mode_height = -2.8969039916992188
+mode_heights = ModeResult(mode=array([0.10309601]), count=array([23033])), mode_height = 0.10309600830078125
+{0: {'y': 2.9030959606170654}, 1: {'y': -2.8969039916992188}, 2: {'y': 0.10309600830078125}}
+------------------------------------------------
+filename is GdvgFV5R1Z5.
+max_nC = 3
+num_floors = 3
+values = [0.16665459 0.166666   0.16666877 ... 0.56632674 0.56661332 0.56666601], counts = [    1 68962     1 ...     1     1    48]
+mode_heights = ModeResult(mode=array([0.166666]), count=array([68962])), mode_height = 0.16666600108146667
+mode_heights = ModeResult(mode=array([0.36666602]), count=array([2507])), mode_height = 0.3666660189628601
+mode_heights = ModeResult(mode=array([0.18867961]), count=array([2])), mode_height = 0.18867960572242737
+{0: {'y': 0.16666600108146667}}
+------------------------------------------------
+filename is rPc6DW4iMge.
+max_nC = 3
+num_floors = 3
+values = [-3.24057198 -3.24055696 -3.24047875 ...  4.42341709  4.4373498
+  4.4800148 ], counts = [43834     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([-3.24057198]), count=array([43834])), mode_height = -3.240571975708008
+mode_heights = ModeResult(mode=array([0.15942812]), count=array([30710])), mode_height = 0.15942811965942383
+mode_heights = ModeResult(mode=array([-0.04057193]), count=array([1335])), mode_height = -0.04057192802429199
+{0: {'y': -3.240571975708008}, 1: {'y': 0.15942811965942383}}
+------------------------------------------------
+filename is 1pXnuDYAj8r.
+max_nC = 3
+num_floors = 3
+values = [-0.08586554 -0.08586021 -0.08585401 ...  4.0942564   4.11414623
+  4.31414604], counts = [   1    1 2576 ...    1   31    1]
+mode_heights = ModeResult(mode=array([0.11414599]), count=array([41202])), mode_height = 0.11414599418640137
+mode_heights = ModeResult(mode=array([3.51414585]), count=array([30728])), mode_height = 3.514145851135254
+mode_heights = ModeResult(mode=array([-0.08585401]), count=array([2576])), mode_height = -0.08585400879383087
+{0: {'y': 0.11414599418640137}, 1: {'y': 3.514145851135254}}
+------------------------------------------------
+filename is VVfe2KiqLaN.
+max_nC = 3
+num_floors = 3
+values = [-0.047694   -0.04768659 -0.04768035 ...  0.77866191  0.83363008
+  3.35230613], counts = [ 9422     1     1 ...     1     1 22229]
+mode_heights = ModeResult(mode=array([0.15230601]), count=array([33126])), mode_height = 0.15230600535869598
+mode_heights = ModeResult(mode=array([3.35230613]), count=array([22229])), mode_height = 3.3523061275482178
+mode_heights = ModeResult(mode=array([-0.047694]), count=array([9422])), mode_height = -0.047693997621536255
+{0: {'y': 0.15230600535869598}, 1: {'y': 3.3523061275482178}}
+------------------------------------------------
+filename is gZ6f7yhEvPG.
+max_nC = 3
+num_floors = 3
+values = [0.180654   0.18065421 0.18065493 ... 0.38064474 0.38065046 0.38065401], counts = [42333     1     1 ...     1     1  1592]
+mode_heights = ModeResult(mode=array([0.180654]), count=array([42333])), mode_height = 0.18065400421619415
+mode_heights = ModeResult(mode=array([0.18491744]), count=array([2])), mode_height = 0.18491743505001068
+mode_heights = ModeResult(mode=array([0.38065401]), count=array([1592])), mode_height = 0.3806540071964264
+{0: {'y': 0.18065400421619415}}
+------------------------------------------------
+filename is VzqfbhrpDEA.
+max_nC = 3
+num_floors = 3
+values = [-0.10899098 -0.10896776 -0.10891738 ...  3.86312723  3.86843896
+  4.69100904], counts = [10440     1     1 ...     1     1     4]
+mode_heights = ModeResult(mode=array([0.09100902]), count=array([38293])), mode_height = 0.09100902080535889
+mode_heights = ModeResult(mode=array([3.491009]), count=array([20275])), mode_height = 3.491008996963501
+mode_heights = ModeResult(mode=array([1.89100909]), count=array([82])), mode_height = 1.8910090923309326
+{0: {'y': 0.09100902080535889}, 1: {'y': 3.491008996963501}, 2: {'y': 1.8910090923309326}}
+------------------------------------------------
+filename is cV4RVeZvu5T.
+max_nC = 3
+num_floors = 3
+values = [-0.88153201 -0.88141781 -0.88129127 ...  3.47570229  3.4931643
+  3.51439309], counts = [11521     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([0.918468]), count=array([28775])), mode_height = 0.9184679985046387
+mode_heights = ModeResult(mode=array([-0.68153203]), count=array([12619])), mode_height = -0.6815320253372192
+mode_heights = ModeResult(mode=array([3.31846809]), count=array([10824])), mode_height = 3.3184680938720703
+{0: {'y': 0.9184679985046387}, 1: {'y': -0.6815320253372192}, 2: {'y': 3.3184680938720703}}
+------------------------------------------------
+filename is JeFG25nYj2p.
+max_nC = 3
+num_floors = 3
+values = [0.093584   0.09364042 0.09370825 ... 0.87685335 0.88940889 0.89358401], counts = [74784     1     1 ...     1     1    11]
+mode_heights = ModeResult(mode=array([0.093584]), count=array([74784])), mode_height = 0.09358400106430054
+mode_heights = ModeResult(mode=array([0.29358399]), count=array([389])), mode_height = 0.2935839891433716
+mode_heights = ModeResult(mode=array([0.49358404]), count=array([253])), mode_height = 0.4935840368270874
+{0: {'y': 0.09358400106430054}}
+------------------------------------------------
+filename is Vvot9Ly1tCj.
+max_nC = 3
+num_floors = 3
+values = [-1.55716407 -1.55598915 -1.55353153 ...  0.53321457  0.8428359
+  1.04283595], counts = [50  1  1 ...  1  2  1]
+mode_heights = ModeResult(mode=array([0.04283595]), count=array([63767])), mode_height = 0.04283595085144043
+mode_heights = ModeResult(mode=array([0.242836]), count=array([2266])), mode_height = 0.24283599853515625
+mode_heights = ModeResult(mode=array([-1.35716403]), count=array([1491])), mode_height = -1.3571640253067017
+{0: {'y': 0.04283595085144043}}
+------------------------------------------------
+filename is 759xd9YjKW5.
+max_nC = 3
+num_floors = 3
+values = [0.096665   0.09679586 0.09685957 ... 4.05559301 4.14683485 4.29666519], counts = [53550     1     1 ...     1     1    12]
+mode_heights = ModeResult(mode=array([0.096665]), count=array([53550])), mode_height = 0.09666500240564346
+mode_heights = ModeResult(mode=array([3.29666519]), count=array([22692])), mode_height = 3.2966651916503906
+mode_heights = ModeResult(mode=array([3.09666514]), count=array([235])), mode_height = 3.096665143966675
+{0: {'y': 0.09666500240564346}, 1: {'y': 3.2966651916503906}}
+------------------------------------------------
+filename is ZMojNkEp431.
+max_nC = 3
+num_floors = 3
+values = [-0.70642799 -0.7064091  -0.70632905 ...  0.91391122  0.92396736
+  1.02485895], counts = [15869     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([0.09357202]), count=array([61105])), mode_height = 0.09357202053070068
+mode_heights = ModeResult(mode=array([-0.70642799]), count=array([15869])), mode_height = -0.7064279913902283
+mode_heights = ModeResult(mode=array([0.89357209]), count=array([192])), mode_height = 0.8935720920562744
+{0: {'y': 0.09357202053070068}}
+------------------------------------------------
+filename is Uxmj2M2itWa.
+max_nC = 3
+num_floors = 2
+values = [-0.59427094 -0.59132195 -0.59013212 ...  2.65187383  2.69509363
+  2.80572891], counts = [32  1  1 ...  1  1  5]
+mode_heights = ModeResult(mode=array([0.00572902]), count=array([20822])), mode_height = 0.005729019641876221
+mode_heights = ModeResult(mode=array([0.80572909]), count=array([2656])), mode_height = 0.80572909116745
+{0: {'y': 0.005729019641876221}}
+------------------------------------------------
+filename is PuKPg4mmafe.
+max_nC = 3
+num_floors = 3
+values = [-0.15571451 -0.12313204 -0.11268549 ...  1.26748657  1.26932073
+  3.38396597], counts = [1 1 1 ... 1 1 1]
+mode_heights = ModeResult(mode=array([0.18396604]), count=array([49669])), mode_height = 0.1839660406112671
+mode_heights = ModeResult(mode=array([-0.01603401]), count=array([16052])), mode_height = -0.01603400707244873
+mode_heights = ModeResult(mode=array([-0.11268549]), count=array([1])), mode_height = -0.11268548667430878
+{0: {'y': 0.1839660406112671}}
+------------------------------------------------
+filename is e9zR4mvMWw7.
+max_nC = 3
+num_floors = 2
+values = [-2.5133059  -2.51293826 -2.5112288  ...  3.26226234  3.2625246
+  3.28669405], counts = [3484    1    1 ...    1    1    1]
+mode_heights = ModeResult(mode=array([0.086694]), count=array([43461])), mode_height = 0.08669400215148926
+mode_heights = ModeResult(mode=array([2.88669395]), count=array([25982])), mode_height = 2.8866939544677734
+{0: {'y': 0.08669400215148926}, 1: {'y': 2.8866939544677734}}
+------------------------------------------------
+filename is vyrNrziPKCB.
+max_nC = 3
+num_floors = 3
+values = [-0.801431   -0.78790057 -0.78074676 ...  4.09739542  4.1985693
+  4.39856911], counts = [337   1   1 ...   1   1   2]
+mode_heights = ModeResult(mode=array([-0.00143099]), count=array([20421])), mode_height = -0.0014309883117675781
+mode_heights = ModeResult(mode=array([3.59856892]), count=array([7760])), mode_height = 3.598568916320801
+mode_heights = ModeResult(mode=array([0.59856904]), count=array([1397])), mode_height = 0.5985690355300903
+{0: {'y': -0.0014309883117675781}, 1: {'y': 3.598568916320801}}
+------------------------------------------------
+filename is aayBHfsNo7d.
+max_nC = 3
+num_floors = 3
+values = [0.028256   0.02843658 0.02846057 ... 4.38770628 4.39401007 4.40052366], counts = [42711     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([0.028256]), count=array([42711])), mode_height = 0.028255999088287354
+mode_heights = ModeResult(mode=array([3.62825584]), count=array([28087])), mode_height = 3.628255844116211
+mode_heights = ModeResult(mode=array([3.42825603]), count=array([3284])), mode_height = 3.428256034851074
+{0: {'y': 0.028255999088287354}, 1: {'y': 3.628255844116211}}
+------------------------------------------------
+filename is dhjEzFoUFzH.
+max_nC = 3
+num_floors = 2
+values = [-0.35115004 -0.3511422  -0.35112891 ...  1.8235811   1.83279824
+  2.44884992], counts = [3291    1    1 ...    1    1    1]
+mode_heights = ModeResult(mode=array([-0.15115002]), count=array([21298])), mode_height = -0.15115001797676086
+mode_heights = ModeResult(mode=array([0.24884999]), count=array([7325])), mode_height = 0.2488499879837036
+{0: {'y': -0.15115001797676086}}
+------------------------------------------------
+filename is sT4fr6TAbpF.
+max_nC = 3
+num_floors = 3
+values = [-0.143685   -0.14268857 -0.14258    ...  1.24178481  1.24193883
+  1.24836373], counts = [8440    1    1 ...    1    1    1]
+mode_heights = ModeResult(mode=array([0.056315]), count=array([69160])), mode_height = 0.05631500482559204
+mode_heights = ModeResult(mode=array([-0.143685]), count=array([8440])), mode_height = -0.1436849981546402
+mode_heights = ModeResult(mode=array([1.05631495]), count=array([155])), mode_height = 1.0563149452209473
+{0: {'y': 0.05631500482559204}}
+------------------------------------------------
+filename is Pm6F8kyY3z2.
+max_nC = 3
+num_floors = 3
+values = [-0.51087999 -0.51082575 -0.5107398  ...  0.28883386  0.28887352
+  0.28902459], counts = [15743     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([0.08912015]), count=array([52825])), mode_height = 0.08912014961242676
+mode_heights = ModeResult(mode=array([-0.51087999]), count=array([15743])), mode_height = -0.5108799934387207
+mode_heights = ModeResult(mode=array([-0.1108799]), count=array([59])), mode_height = -0.11087989807128906
+{0: {'y': 0.08912014961242676}}
+------------------------------------------------
+filename is 1LXtFkjw3qL.
+max_nC = 3
+num_floors = 3
+values = [-2.91558886 -2.91558528 -2.91558194 ...  3.95809412  3.98754287
+  4.28441143], counts = [15536     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([0.08441114]), count=array([29613])), mode_height = 0.0844111442565918
+mode_heights = ModeResult(mode=array([-2.91558886]), count=array([15536])), mode_height = -2.915588855743408
+mode_heights = ModeResult(mode=array([3.484411]), count=array([7029])), mode_height = 3.4844110012054443
+{0: {'y': 0.0844111442565918}, 1: {'y': -2.915588855743408}, 2: {'y': 3.4844110012054443}}
+------------------------------------------------
+filename is r47D5H71a5s.
+max_nC = 3
+num_floors = 3
+values = [0.09863299 0.09863742 0.09866652 ... 0.82844228 2.07517505 2.12214112], counts = [74094     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([0.09863299]), count=array([74094])), mode_height = 0.09863299131393433
+mode_heights = ModeResult(mode=array([0.29863304]), count=array([327])), mode_height = 0.29863303899765015
+mode_heights = ModeResult(mode=array([0.49863297]), count=array([270])), mode_height = 0.4986329674720764
+{0: {'y': 0.09863299131393433}}
+------------------------------------------------
+filename is JF19kD82Mey.
+max_nC = 3
+num_floors = 3
+values = [-0.28109801 -0.27990919 -0.27982086 ...  3.82778287  3.90436769
+  3.91890192], counts = [6 1 1 ... 1 1 3]
+mode_heights = ModeResult(mode=array([3.31890202]), count=array([38603])), mode_height = 3.318902015686035
+mode_heights = ModeResult(mode=array([0.11890209]), count=array([30747])), mode_height = 0.11890208721160889
+mode_heights = ModeResult(mode=array([-0.08109796]), count=array([533])), mode_height = -0.08109796047210693
+{0: {'y': 3.318902015686035}, 1: {'y': 0.11890208721160889}}
+------------------------------------------------
+filename is uNb9QFRL6hY.
+max_nC = 3
+num_floors = 3
+values = [-1.63845491 -1.63790858 -1.63750267 ...  4.29975367  4.30285501
+  4.33532763], counts = [300   1   1 ...   1   1   1]
+mode_heights = ModeResult(mode=array([2.56154513]), count=array([8818])), mode_height = 2.5615451335906982
+mode_heights = ModeResult(mode=array([0.16154504]), count=array([9635])), mode_height = 0.1615450382232666
+mode_heights = ModeResult(mode=array([-1.03845489]), count=array([4606])), mode_height = -1.0384548902511597
+{0: {'y': 2.5615451335906982}, 1: {'y': 0.1615450382232666}}
+------------------------------------------------
+filename is p5wJjkQkbXX.
+max_nC = 3
+num_floors = 3
+values = [-2.98873186 -2.98864222 -2.98861408 ...  0.81126809  0.92962056
+  1.01126838], counts = [12669     1     1 ...    36     1    23]
+mode_heights = ModeResult(mode=array([0.21126819]), count=array([14276])), mode_height = 0.21126818656921387
+mode_heights = ModeResult(mode=array([-2.98873186]), count=array([12669])), mode_height = -2.988731861114502
+mode_heights = ModeResult(mode=array([0.01126814]), count=array([20263])), mode_height = 0.011268138885498047
+{0: {'y': 0.21126818656921387}, 1: {'y': -2.988731861114502}}
+------------------------------------------------
+filename is JmbYfDe2QKZ.
+max_nC = 3
+num_floors = 3
+values = [0.074847   0.07487996 0.07494054 ... 3.4290266  3.43953109 3.45000172], counts = [53408     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([0.074847]), count=array([53408])), mode_height = 0.07484699785709381
+mode_heights = ModeResult(mode=array([2.67484689]), count=array([20541])), mode_height = 2.674846887588501
+mode_heights = ModeResult(mode=array([0.274847]), count=array([1938])), mode_height = 0.27484700083732605
+{0: {'y': 0.07484699785709381}, 1: {'y': 2.674846887588501}}
+------------------------------------------------
+filename is SN83YJsR3w2.
+max_nC = 3
+num_floors = 3
+values = [-3.50854993 -3.50844049 -3.50837684 ...  4.28217316  4.28355408
+  4.57935667], counts = [27338     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([-3.50854993]), count=array([27338])), mode_height = -3.508549928665161
+mode_heights = ModeResult(mode=array([0.09144998]), count=array([23759])), mode_height = 0.09144997596740723
+mode_heights = ModeResult(mode=array([3.89144993]), count=array([23939])), mode_height = 3.8914499282836914
+{0: {'y': -3.508549928665161}, 1: {'y': 0.09144997596740723}, 2: {'y': 3.8914499282836914}}
+------------------------------------------------
+filename is ULsKaCPVFJR.
+max_nC = 3
+num_floors = 3
+values = [0.083562   0.08359207 0.08370293 ... 3.3718996  3.38015819 3.38234282], counts = [52642     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([0.083562]), count=array([52642])), mode_height = 0.08356200158596039
+mode_heights = ModeResult(mode=array([2.88356209]), count=array([26128])), mode_height = 2.8835620880126953
+mode_heights = ModeResult(mode=array([3.28356218]), count=array([444])), mode_height = 3.283562183380127
+{0: {'y': 0.08356200158596039}, 1: {'y': 2.8835620880126953}}
+------------------------------------------------
+filename is HxpKQynjfin.
+max_nC = 3
+num_floors = 3
+values = [0.00981885 0.00982499 0.00986473 ... 0.37485215 0.38006881 0.38523519], counts = [    1 59686     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([0.00982499]), count=array([59686])), mode_height = 0.009824991226196289
+mode_heights = ModeResult(mode=array([0.20982501]), count=array([16581])), mode_height = 0.20982500910758972
+mode_heights = ModeResult(mode=array([0.10466296]), count=array([2])), mode_height = 0.10466296225786209
+{0: {'y': 0.009824991226196289}}
+------------------------------------------------
+filename is D7N2EKCX4Sj.
+max_nC = 3
+num_floors = 2
+values = [-3.39207792 -3.39188051 -3.39181805 ...  3.80792212  4.00792217
+  4.84943533], counts = [1635    1    1 ...    4    4    1]
+mode_heights = ModeResult(mode=array([-3.19207788]), count=array([48351])), mode_height = -3.192077875137329
+mode_heights = ModeResult(mode=array([3.00792193]), count=array([14197])), mode_height = 3.0079219341278076
+{0: {'y': -3.192077875137329}, 1: {'y': 3.0079219341278076}}
+------------------------------------------------
+filename is VFuaQ6m2Qom.
+max_nC = 3
+num_floors = 3
+values = [-3.74218106 -3.7418654  -3.74182773 ...  5.46775723  5.46959448
+  5.4905448 ], counts = [1808    1    1 ...    1    1    1]
+mode_heights = ModeResult(mode=array([0.05781889]), count=array([37964])), mode_height = 0.05781888961791992
+mode_heights = ModeResult(mode=array([4.45781946]), count=array([11858])), mode_height = 4.45781946182251
+mode_heights = ModeResult(mode=array([-3.54218102]), count=array([2503])), mode_height = -3.5421810150146484
+{0: {'y': 0.05781888961791992}, 1: {'y': 4.45781946182251}, 2: {'y': -3.5421810150146484}}
+------------------------------------------------
+filename is jh4fc5c5qoQ.
+max_nC = 3
+num_floors = 3
+values = [0.005573   0.00558819 0.00559199 ... 1.19781947 1.20112181 1.20557296], counts = [30667     1     1 ...     1     1    21]
+mode_heights = ModeResult(mode=array([0.005573]), count=array([30667])), mode_height = 0.005573004484176636
+mode_heights = ModeResult(mode=array([0.80557299]), count=array([21381])), mode_height = 0.8055729866027832
+mode_heights = ModeResult(mode=array([0.20557301]), count=array([2356])), mode_height = 0.20557300746440887
+{0: {'y': 0.005573004484176636}}
+------------------------------------------------
+filename is s8pcmisQ38h.
+max_nC = 3
+num_floors = 2
+values = [-3.16167402 -3.16129804 -3.16116095 ...  4.0016675   4.00652599
+  4.03346109], counts = [38385     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([3.03832603]), count=array([20166])), mode_height = 3.0383260250091553
+mode_heights = ModeResult(mode=array([-3.16167402]), count=array([38385])), mode_height = -3.1616740226745605
+{0: {'y': 3.0383260250091553}, 1: {'y': -3.1616740226745605}}
+------------------------------------------------
+filename is kEZ7cmS4wCh.
+max_nC = 3
+num_floors = 3
+values = [-0.91367298 -0.91347945 -0.91343558 ...  7.27715111  7.2824955
+  7.28632736], counts = [121   1   1 ...   1   1  93]
+mode_heights = ModeResult(mode=array([-0.31367296]), count=array([29296])), mode_height = -0.3136729598045349
+mode_heights = ModeResult(mode=array([3.48632693]), count=array([11092])), mode_height = 3.4863269329071045
+mode_heights = ModeResult(mode=array([6.68632698]), count=array([8160])), mode_height = 6.68632698059082
+{0: {'y': -0.3136729598045349}, 1: {'y': 3.4863269329071045}, 2: {'y': 6.68632698059082}}
+------------------------------------------------
+filename is i5noydFURQK.
+max_nC = 3
+num_floors = 3
+values = [-3.21317697 -3.21254945 -3.2119298  ...  0.18679605  0.18682313
+  0.18684255], counts = [29129     1     1 ...     1 41848     1]
+mode_heights = ModeResult(mode=array([0.18682313]), count=array([41848])), mode_height = 0.18682312965393066
+mode_heights = ModeResult(mode=array([-3.21317697]), count=array([29129])), mode_height = -3.213176965713501
+mode_heights = ModeResult(mode=array([-0.01317692]), count=array([660])), mode_height = -0.013176918029785156
+{0: {'y': 0.18682312965393066}, 1: {'y': -3.213176965713501}}
+------------------------------------------------
+filename is 29hnd4uzFmX.
+max_nC = 3
+num_floors = 3
+values = [-0.20895799 -0.20895077 -0.20873937 ...  2.98387909  2.98406506
+  2.985708  ], counts = [45244     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([-0.20895799]), count=array([45244])), mode_height = -0.2089579850435257
+mode_heights = ModeResult(mode=array([2.79104209]), count=array([28019])), mode_height = 2.7910420894622803
+mode_heights = ModeResult(mode=array([0.19104204]), count=array([500])), mode_height = 0.19104203581809998
+{0: {'y': -0.2089579850435257}, 1: {'y': 2.7910420894622803}}
+------------------------------------------------
+filename is r1Q1Z4BcV1o.
+max_nC = 3
+num_floors = 3
+values = [-0.3218627  -0.31996953 -0.31986719 ...  0.96463734  0.97784036
+  1.02739418], counts = [1 1 1 ... 1 1 1]
+mode_heights = ModeResult(mode=array([0.07537198]), count=array([73049])), mode_height = 0.07537198066711426
+mode_heights = ModeResult(mode=array([0.27537203]), count=array([54])), mode_height = 0.2753720283508301
+mode_heights = ModeResult(mode=array([0.87537193]), count=array([59])), mode_height = 0.8753719329833984
+{0: {'y': 0.07537198066711426}}
+------------------------------------------------
+filename is B6ByNegPMKs.
+max_nC = 3
+num_floors = 3
+values = [0.080204   0.08022976 0.08023056 ... 0.68020403 0.72644854 0.88020402], counts = [76118     1     1 ...     2     1     3]
+mode_heights = ModeResult(mode=array([0.080204]), count=array([76118])), mode_height = 0.08020400255918503
+mode_heights = ModeResult(mode=array([0.13487583]), count=array([2])), mode_height = 0.1348758339881897
+mode_heights = ModeResult(mode=array([0.280204]), count=array([211])), mode_height = 0.28020399808883667
+{0: {'y': 0.08020400255918503}}
+------------------------------------------------
+filename is mJXqzFtmKg4.
+max_nC = 3
+num_floors = 3
+values = [-0.19667897 -0.19597687 -0.19566524 ...  1.36327934  1.37078547
+  1.40332103], counts = [3899    1    1 ...    1    1    8]
+mode_heights = ModeResult(mode=array([0.20332104]), count=array([30625])), mode_height = 0.20332103967666626
+mode_heights = ModeResult(mode=array([0.00332105]), count=array([34088])), mode_height = 0.003321051597595215
+mode_heights = ModeResult(mode=array([-0.19667897]), count=array([3899])), mode_height = -0.19667896628379822
+{0: {'y': 0.20332103967666626}}
+------------------------------------------------
+filename is D7G3Y4RVNrH.
+max_nC = 3
+num_floors = 3
+values = [-3.35928702 -1.49095869 -0.54438043 ...  2.78834486  2.80239058
+  2.80351067], counts = [40  1  1 ...  1  1  1]
+mode_heights = ModeResult(mode=array([0.04071307]), count=array([54427])), mode_height = 0.04071307182312012
+mode_heights = ModeResult(mode=array([0.84071302]), count=array([1902])), mode_height = 0.8407130241394043
+mode_heights = ModeResult(mode=array([2.44071293]), count=array([4190])), mode_height = 2.4407129287719727
+{0: {'y': 0.04071307182312012}, 1: {'y': 2.4407129287719727}}
+------------------------------------------------
+filename is E9uDoFAP3SH.
+max_nC = 3
+num_floors = 3
+values = [-6.15561914 -6.14638186 -6.14474344 ...  0.60019839  0.60666895
+  0.84438086], counts = [7 1 1 ... 1 1 1]
+mode_heights = ModeResult(mode=array([-5.95561886]), count=array([39987])), mode_height = -5.955618858337402
+mode_heights = ModeResult(mode=array([0.24438095]), count=array([31188])), mode_height = 0.24438095092773438
+mode_heights = ModeResult(mode=array([0.04438114]), count=array([1017])), mode_height = 0.044381141662597656
+{0: {'y': -5.955618858337402}, 1: {'y': 0.24438095092773438}}
+------------------------------------------------
+filename is YmJkqBEsHnH.
+max_nC = 3
+num_floors = 3
+values = [-0.76966101 -0.76923633 -0.76911777 ...  0.72835112  0.72929192
+  0.72971952], counts = [288   1   1 ...   1   1   1]
+mode_heights = ModeResult(mode=array([0.23033905]), count=array([23778])), mode_height = 0.23033905029296875
+mode_heights = ModeResult(mode=array([0.030339]), count=array([13583])), mode_height = 0.03033900260925293
+mode_heights = ModeResult(mode=array([-0.76966101]), count=array([288])), mode_height = -0.769661009311676
+{0: {'y': 0.23033905029296875}}
+------------------------------------------------
+filename is 17DRP5sb8fy.
+max_nC = 3
+num_floors = 3
+values = [0.072447   0.07246637 0.07247041 ... 0.2718313  0.27185604 0.27209517], counts = [76976     1     1 ...     1     1     1]
+mode_heights = ModeResult(mode=array([0.072447]), count=array([76976])), mode_height = 0.07244700193405151
+mode_heights = ModeResult(mode=array([0.07845771]), count=array([2])), mode_height = 0.07845770567655563
+mode_heights = ModeResult(mode=array([0.25198001]), count=array([2])), mode_height = 0.2519800066947937
+{0: {'y': 0.07244700193405151}}
+------------------------------------------------
+filename is gTV8FGcVJC9.
+max_nC = 3
+num_floors = 3
+values = [-6.5433569  -6.54310226 -6.54296923 ...  7.62415075  8.02935219
+  8.05664253], counts = [934   1   1 ...   1   1   1]
+mode_heights = ModeResult(mode=array([3.45664358]), count=array([21339])), mode_height = 3.456643581390381
+mode_heights = ModeResult(mode=array([-1.34335709]), count=array([12061])), mode_height = -1.3433570861816406
+mode_heights = ModeResult(mode=array([-6.34335709]), count=array([4638])), mode_height = -6.343357086181641
+{0: {'y': 3.456643581390381}, 1: {'y': -1.3433570861816406}, 2: {'y': -6.343357086181641}}
+------------------------------------------------
+filename is 7y3sRwLe3Va.
+max_nC = 3
+num_floors = 3
+values = [-2.64815903 -2.6481061  -2.64803839 ...  3.95184112  4.00755072
+  4.01128006], counts = [28807     1     1 ...    15     1     1]
+mode_heights = ModeResult(mode=array([-2.64815903]), count=array([28807])), mode_height = -2.6481590270996094
+mode_heights = ModeResult(mode=array([0.15184093]), count=array([24644])), mode_height = 0.1518409252166748
+mode_heights = ModeResult(mode=array([3.15184093]), count=array([22829])), mode_height = 3.151840925216675
+{0: {'y': -2.6481590270996094}, 1: {'y': 0.1518409252166748}, 2: {'y': 3.151840925216675}}
+------------------------------------------------
+filename is ur6pFq6Qu1A.
+filename is pRbA3pwrgk9.
