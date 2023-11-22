@@ -1,10 +1,10 @@
-# Bellman-Equation
+# Bellman-Exploration
 Detect frontiers between explored and unknown areas as subgoals.  
 Select subgoals with maximum values computed from a Bellman Equation designed for exploration.  
 <img src='Figs/example_traj.jpg'>
 ### Installation
 ```
-git clone --branch yimeng https://github.com/RAIL-group/bellman-exploration.git
+git clone --branch main https://github.com/yimengli46/bellman-exploration.git
 cd  bellman-exploration
 mkdir output
 ```
