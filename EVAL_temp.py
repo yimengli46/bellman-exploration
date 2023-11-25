@@ -4,7 +4,7 @@ import pandas as pd
 from modeling.utils.baseline_utils import read_map_npy
 import matplotlib.pyplot as plt
 
-output_folder = 'output/TESTING_RESULTS_360degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_D_Skeleton_Dall_1STEP_1000STEPS'
+output_folder = 'output/TESTING_RESULTS_360degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_D_Skeleton_Dall_1STEP_1000STEPS_new_new'
 
 avg_percent_list = []
 avg_step_list = []

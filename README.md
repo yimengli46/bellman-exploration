@@ -1,11 +1,27 @@
-# Bellman-Equation-2022
-Detect frontiers between explored and unknown areas as subgoals.  
-Select subgoals with maximum values computed from a Bellman Equation designed for exploration.  
-<img src='Figs/example_traj.jpg'>
+# Bellman-Exploration
+This is the code release for our IROS 2023 paper:
+
+[Learning-Augmented Model-Based Planning for Visual Exploration](https://arxiv.org/pdf/2211.07898.pdf)<br/>
+Yimeng Li*, Arnab Debnath*, Gregory J. Stein, Jana Kosecka<br/>
+George Mason University
+
+[Project website](https://yimengli46.github.io/Projects/IROS2023Exploration/index.html)
+
+<img src='Figs/iros2023_dp.gif'/>
+
+```bibtex
+@article{Li2022LearningAugmentedMP,
+  title={Learning-Augmented Model-Based Planning for Visual Exploration},
+  author={Yimeng Li and Arnab Debnath and Gregory J. Stein and Jana Kosecka},
+  booktitle={IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  year={2023}
+}
+```
+
 ### Installation
 ```
-git clone --branch yimeng https://github.com/RAIL-group/bellman-exploration-2022.git
-cd  bellman-exploration-2022
+git clone --branch main https://github.com/yimengli46/bellman-exploration.git
+cd  bellman-exploration
 mkdir output
 ```
 
@@ -16,19 +32,16 @@ We recommend using a conda environment.
 conda create --name bellman_explore python=3.7.4
 source activate bellman_explore
 ```
-Install the following dependencies before you run the code:  
-```
-pip install -r requirements.txt
-```
+
 You can install Habitat-Lab and Habitat-Sim following guidance from [here](https://github.com/facebookresearch/habitat-lab "here").  
-We recommend to install Habitat-Lab and Habitat-Sim from the source code.  
+We recommend installing Habitat-Lab and Habitat-Sim from the source code.  
 We use `habitat==0.2.1` and `habitat_sim==0.2.1`.  
 Use the following commands to set it up:  
 ```
 # install habitat-lab
 git clone --branch stable https://github.com/facebookresearch/habitat-lab.git
 cd habitat-lab
-git checkout tags/stable
+git checkout tags/v0.2.1
 pip install -e .
 
 # install habitat-sim
@@ -40,10 +53,10 @@ sudo apt-get update || true
 # but if not, let's get the essentials for EGL support:
 sudo apt-get install -y --no-install-recommends \
      libjpeg-dev libglm-dev libgl1-mesa-glx libegl1-mesa-dev mesa-utils xorg-dev freeglut3-dev
-git checkout tags/stable
+git checkout tags/v0.2.1
 python setup.py install --with-cuda
 ```
-If you don't want to install all the requirements, the necessary dependencies are:  
+You also need to install the dependencies:
 ```
 habitat==0.2.1
 habitat-sim==0.2.1
@@ -58,27 +71,26 @@ tensorboardX
 ```
 
 ### Dataset Setup
-Download Habitat MP3D scene data from [here](https://github.com/facebookresearch/habitat-lab "here").    
-Or you can download it from [google drive](https://drive.google.com/drive/folders/180gcW5xq6ZWM4f7yHK_kPc-iAVpGGNfl?usp=sharing "google drive").  
+Download *scene* dataset of **Matterport3D(MP3D)** from [here](https://github.com/facebookresearch/habitat-lab/blob/main/DATASETS.md "here").      
 Upzip the scene data and put it under `habitat-lab/data/scene_datasets/mp3d`.  
 You also need to download self-generated task episode data from [here](https://drive.google.com/drive/folders/1raUypuI9Zgig3dfFgWINv40bnKfvUadW?usp=sharing "here")  
 Unzip the episode data and put it under `habitat-lab/data/datasets/pointnav/mp3d`.  
-Create softlinks to the data.  
+Create a soft link to the data.  
 ```
-cd  bellman-exploration-2022
+cd  bellman-exploration
 ln -s habitat-lab/data data
 ```
 The code requires the datasets in data folder in the following format:
 ```
 habitat-lab/data
-                /datasets/pointnav/mp3d
-                                        /temp_train
-                                        /temp_val
-                                        /temp_test
-                scene_datasets/mp3d
-                                    /1LXtFkjw3qL
-                                    /1pXnuDYAj8r
-                                    /....
+  └── datasets/pointnav/mp3d/v1
+       └── temp_train
+       └── temp_val
+       └── temp_test
+  └── scene_datasets/mp3d
+        └── 1LXtFkjw3qL
+        └── 1pXnuDYAj8r
+        └── ....
 ```
 
 ### How to Run?
@@ -90,7 +102,7 @@ All the parameters are controlled by the configuration file `core/config.py`.
 Please create a new configuration file when you initialize a new task and saved in folder `configs`.
 ##### Exploring the environment
 To run the large-scale evaluation, you need to download pre-generated 'scene maps' and 'scene floor heights' from [here](https://drive.google.com/drive/folders/10ApKQzaIPDvEAvbcVXQkaGBjxnvUIpND?usp=sharing "here").  
-Download it and put it under ` bellman-exploration-2022/output`.  
+Download it and put it under ` bellman-exploration/output`.  
 Then you can start the evaluation.  
 For example, if you want to evaluate the baseline Greedy approach, use the following command.  
 ```
