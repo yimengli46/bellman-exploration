@@ -1,5 +1,5 @@
 MAIN:
-  SPLIT: 'val'
+  SPLIT: 'train'
 
 NAVI:
   GT_OCC_MAP_TYPE: 'NAV_MESH'
@@ -29,8 +29,8 @@ PRED:
     SAVED_FOLDER: 'output/model_weights_UNet_input_partial_map'
     STEP_GAP: 5
     LR: 1e-3
-    NUM_PROCESS: 24
-    multiprocessing: 'single'
+    NUM_PROCESS: 20
+    multiprocessing: 'mp'
     GEN_SAMPLES_SAVED_FOLDER: 'output/training_data_input_partial_map_5000samples'
 
 
