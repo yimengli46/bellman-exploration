@@ -94,29 +94,62 @@ habitat-lab/data
 ```
 
 ### How to Run?
-The code can do  
-(a) exploring scenes  
-(b) building top-down view semantic maps of MP3D scenes   
-(c) building occupancy maps of MP3D scenes.   
-All the parameters are controlled by the configuration file `core/config.py`.   
-Please create a new configuration file when you initialize a new task and saved in folder `configs`.
-##### Exploring the environment
-To run the large-scale evaluation, you need to download pre-generated 'scene maps' and 'scene floor heights' from [here](https://drive.google.com/drive/folders/10ApKQzaIPDvEAvbcVXQkaGBjxnvUIpND?usp=sharing "here").  
-Download it and put it under ` bellman-exploration/output`.  
-Then you can start the evaluation.  
-For example, if you want to evaluate the baseline Greedy approach, use the following command.  
+The code supports       
+(a) **Exploration on MP3D test episodes.**     
+All parameters are managed through the configuration file `core/config.py`.     
+When initiating a new task, create a new configuration file and save it in the `configs` folder.     
+
+##### Running the Demo
+Before executing the demo, download the pre-generated `scene_maps`, `scene_floor_heights` from [here](https://drive.google.com/file/d/1P0AtKn5k2xm5rm2YP1kABuulsSTAU_X7/view?usp=sharing "here").    
+Unzip the file and place the folders under `bellman-exploration/output`.
+
+The trained learning module is available for download [here](https://drive.google.com/file/d/1uABj4F0KAvKsUC2mzgpA_ahpYxdayL9B/view?usp=sharing).    
+Unzip it and place the folders under `bellman-exploration/output`.
+
+(b) **Large-Scale Evaluation**     
+Initiating the evaluation is a straightforward process. Follow these steps:    
+
+1. For desktop evaluation of the Greedy planner, use the following command:
 ```
 python main_eval.py --config='exp_360degree_Greedy_GT_Potential_1STEP_500STEPS.yaml'
 ```
-If you want to evaluate the proposed Bellman Equation approach, use this command.
+Use the following command for the proposed Bellman planner:
 ```
 python main_eval.py --config='exp_360degree_DP_GT_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml'
 ```
-##### Build top-down view semantic maps
+2. If you're working with a server equipped with multiple GPUs, choose an alternative configuration file:
 ```
-python -m scripts.build_semantic_BEV_map.py
+python main_eval_multiprocess.py --config='large_exp_360degree_DP_NAVMESH_MAP_UNet_OCCandSEM_Potential_D_Skeleton_Dall_1STEP_500STEPS.yaml'
 ```
-##### Build top-down view occupancy maps
+Feel free to customize configurations to meet your evaluation requirements.      
+Configuration files are provided in the `configs` folder, following this naming convention:
+* Files starting with `large_exp` run complete exploration testing episodes.
+* Files with only `exp` run the first three episodes of each test scene.
+* `Greedy` in the title signifies running the greedy planner and `FME` signifies running frontier-based exploration while `DP` signifies running the Bellman Equation formulated exploration.
+* `NAVMESH` uses an oracle mapper, and `PCDHEIGHT` builds the map on the fly.
+* `UNet_OCCandSEM_Potential` means the potential is computed by UNet with inputs of both occupancy and semantic maps.
+* `GT_Potential` means using ground-truth potential values.
+* `500STEPS` signifies a maximum of 500 allowed steps.
+
+
+### Train the learning modules
+##### Generate training data
+To generate training data, run the following command:   
 ```
-python -m scripts.build_occupancy_map_from_continuous_habitat.py
+python data_generator_input_partial_map.py
 ```
+You can customize the training hyperparameters using the configuration file `exp_train_input_partial_map_occ_and_sem.yaml`.        
+Here are a few key options:     
+* Set the `SPLIT` parameter to either `train` or `val` to generate data for training or validation scenes.
+* Adjust `PRED.PARTIAL_MAP.multiprocessing` to `single` or `mp` for single-threaded or multithreaded generation, respectively.
+
+
+##### Train the learning module
+Run the following command to initiate training:
+```
+python train_UNet_input_partial_map.py
+```
+Customize training hyperparameters using the same `exp_train_input_partial_map_occ_and_sem.yaml` configuration file.      
+Key options include:
+* Adjust `BATCH_SIZE`, `EPOCHS`, and `NUM_WORKERS` based on your computer hardware and GPU memory.
+
