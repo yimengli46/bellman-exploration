@@ -103,7 +103,7 @@ When initiating a new task, create a new configuration file and save it in the `
 Before executing the demo, download the pre-generated `scene_maps`, `scene_floor_heights` from [here](https://drive.google.com/file/d/1P0AtKn5k2xm5rm2YP1kABuulsSTAU_X7/view?usp=sharing "here").    
 Unzip the file and place the folders under `bellman-exploration/output`.
 
-The trained learning module is available for download [here](https://drive.google.com/file/d/1uABj4F0KAvKsUC2mzgpA_ahpYxdayL9B/view?usp=sharing).    
+The trained learning module is available for download [here](https://drive.google.com/file/d/1SYnq1Zntk0wFSbB6EMx7wcHN3XSFMOul/view?usp=sharing).    
 Unzip it and place the folders under `bellman-exploration/output`.
 
 (b) **Large-Scale Evaluation**     
